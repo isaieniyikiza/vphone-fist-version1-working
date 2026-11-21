@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Virtual Phone Browser</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css">
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        :root { color-scheme: light; font-family: "Segoe UI", sans-serif; color: #172033; background: #e8edf2; }
+        body { margin: 0; min-height: 100vh; min-height: 100dvh; background: linear-gradient(145deg,#e8f0f3,#e7ebf3); }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        .browser { display: flex; flex-direction: column; width: min(100%, 980px); height: 100vh; height: 100dvh; margin: auto; overflow: hidden; background: #f7f9fc; box-shadow: 0 0 38px #1c2b4018; }
+        .topbar { display: flex; flex: none; align-items: center; gap: 10px; padding: 11px 14px; color: #fff; background: #192b3c; }
+        .brand { display:flex; align-items:center; gap:9px; flex:1; min-width:0; font-size:13px; font-weight:700; }
+        .brand-mark { display:grid; place-items:center; width:31px; height:31px; flex:none; border-radius:10px; background:#deeff2; color:#1e7184; }
+        .home-link { display:grid; place-items:center; width:34px; height:34px; flex:none; border-radius:10px; color:#fff; background:#ffffff19; text-decoration:none; }
+        .navigation { display:flex; flex:none; align-items:center; gap:5px; padding:9px 10px; background:#fff; border-bottom:1px solid #e4e9ef; }
+        .nav-button { display:grid; place-items:center; width:34px; height:34px; flex:none; border:0; border-radius:10px; color:#58677a; background:transparent; }
+        .nav-button:hover,.nav-button.active { color:#216d89; background:#e9f2f6; }
+        .nav-button:disabled { opacity:.4; cursor:default; }
+        .address { display:flex; align-items:center; gap:7px; flex:1; min-width:0; height:37px; padding:0 10px; border:1px solid #e1e7ed; border-radius:12px; color:#718095; background:#f6f8fa; }
+        .address:focus-within { border-color:#4b91ac; box-shadow:0 0 0 3px #4b91ac20; }
+        .address input { width:100%; min-width:0; border:0; outline:0; color:#1b2b3c; background:transparent; font-size:12px; }
+        .content { position:relative; flex:1; min-height:0; background:#fff; }
+        .home-view { position:absolute; inset:0; overflow-y:auto; padding:clamp(22px,6vh,60px) 20px 24px; background:linear-gradient(150deg,#f6fafb,#f2f6fa); }
+        .home-center { width:min(100%,620px); margin:auto; }
+        .home-logo { display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:22px; color:#1f7189; font-size:24px; font-weight:750; }
+        .home-logo .brand-mark { width:46px; height:46px; border-radius:15px; font-size:19px; }
+        .search-form { display:flex; gap:8px; padding:7px; border:1px solid #e1e8ed; border-radius:15px; background:#fff; box-shadow:0 8px 26px #1833490d; }
+        .search-form input { flex:1; min-width:0; padding:9px 10px; border:0; outline:0; background:transparent; font-size:13px; }
+        .go-button { width:39px; height:39px; border:0; border-radius:11px; color:#fff; background:#287d9e; }
+        .resume-card { display:flex; align-items:center; gap:9px; margin-top:12px; padding:10px; border:1px solid #dfe7ed; border-radius:13px; background:#fff; }
+        .resume-copy { flex:1; min-width:0; color:#26364a; font-size:10px; }
+        .resume-copy span { display:block; overflow:hidden; margin-top:3px; color:#7c8a9b; text-overflow:ellipsis; white-space:nowrap; }
+        .resume-action { width:34px; height:34px; flex:none; border:0; border-radius:10px; color:#fff; background:#287d9e; }
+        .resume-action.secondary { color:#40566b; background:#edf2f5; }
+        #resumeCard[hidden] { display:none; }
+        .view-tabs { display:flex; gap:8px; margin:20px 0 12px; }
+        .view-tab { padding:8px 11px; border:0; border-radius:10px; color:#647184; background:#e9eef2; font-size:11px; font-weight:700; }
+        .view-tab.active { color:#fff; background:#2b758f; }
+        .saved-list { display:grid; gap:8px; }
+        .saved-item { display:flex; align-items:center; gap:10px; padding:10px 11px; border:1px solid #e4eaf0; border-radius:12px; background:#fff; }
+        .saved-open { display:flex; align-items:center; gap:9px; flex:1; min-width:0; padding:0; border:0; color:#243246; background:transparent; text-align:left; }
+        .saved-open span { overflow:hidden; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+        .saved-open small { display:block; overflow:hidden; margin-top:3px; color:#8390a0; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+        .saved-action { display:grid; place-items:center; width:30px; height:30px; border:0; border-radius:9px; color:#627287; background:#f1f4f6; }
+        .empty { padding:18px 12px; border:1px dashed #d6e0e7; border-radius:12px; color:#7b8998; font-size:11px; text-align:center; }
+        .frame { display:none; width:100%; height:100%; border:0; background:#fff; }
+        .content.browsing .frame { display:block; }
+        .content.browsing .home-view { display:none; }
+        .footer { display:flex; flex:none; align-items:center; gap:6px; min-height:34px; padding:5px 12px; border-top:1px solid #e4e9ef; color:#7b8997; background:#fbfcfd; font-size:9px; }
+        .footer span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .external-notice { margin-top:15px; color:#748193; font-size:10px; line-height:1.5; text-align:center; }
+        html.embedded-app,html.embedded-app body { width:100%; height:100%; min-height:0; overflow:hidden; }
+        html.embedded-app .browser { width:100%; height:100%; min-height:0; box-shadow:none; }
+        html.embedded-app .home-link { display:none; }
+        @media(max-width:520px) { .topbar { padding:8px 9px; } .navigation { gap:2px; padding:6px 4px; } .nav-button { width:26px; height:31px; } .nav-button.external { display:grid; } .address { height:34px; padding:0 5px; } .address > i { display:none; } .address input { font-size:10px; } .home-view { padding:28px 14px; } }
+    </style>
+    <script>if (new URLSearchParams(location.search).get('embedded') === '1') document.documentElement.classList.add('embedded-app');</script>
+</head>
+<body>
+<div class="browser">
+    <header class="topbar"><div class="brand"><span class="brand-mark"><i class="fa-solid fa-globe"></i></span><span>Virtual Phone Browser</span></div><a class="home-link" href="/virtual-phone/user/user_phone_dashboard.html" title="Return to phone" aria-label="Return to phone"><i class="fa-solid fa-house"></i></a></header>
+    <form id="navigationForm" class="navigation">
+        <button id="backButton" class="nav-button" type="button" title="Back" aria-label="Back" disabled><i class="fa-solid fa-arrow-left"></i></button>
+        <button id="forwardButton" class="nav-button" type="button" title="Forward" aria-label="Forward" disabled><i class="fa-solid fa-arrow-right"></i></button>
+        <button id="reloadButton" class="nav-button" type="button" title="Reload" aria-label="Reload"><i class="fa-solid fa-rotate"></i></button>
+        <button id="homeButton" class="nav-button" type="button" title="Home" aria-label="Home"><i class="fa-solid fa-house"></i></button>
+        <label class="address"><i class="fa-solid fa-lock" aria-hidden="true"></i><input id="addressInput" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="Search or enter a website"></label>
+        <button class="nav-button" type="submit" title="Go" aria-label="Go"><i class="fa-solid fa-arrow-right"></i></button>
+        <button id="bookmarkButton" class="nav-button" type="button" title="Bookmark this page" aria-label="Bookmark this page"><i class="fa-regular fa-star"></i></button>
+        <button id="externalButton" class="nav-button external" type="button" title="Open in device browser" aria-label="Open in device browser"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>
+    </form>
+    <main id="content" class="content">
+        <iframe id="webFrame" class="frame" title="Website" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <section class="home-view">
+            <div class="home-center">
+                <div class="home-logo"><span class="brand-mark"><i class="fa-solid fa-globe"></i></span><span>Browse</span></div>
+                <form id="homeSearch" class="search-form"><input id="homeSearchInput" type="text" placeholder="Search or enter a website" autocomplete="off"><button class="go-button" type="submit" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button></form>
+                <div id="resumeCard" class="resume-card" hidden><div class="resume-copy"><strong>Continue your last page</strong><span id="resumeAddress"></span></div><button id="resumeLast" class="resume-action" type="button" title="Resume last page" aria-label="Resume last page"><i class="fa-solid fa-arrow-right"></i></button><button id="resumeExternal" class="resume-action secondary" type="button" title="Open last page in device browser" aria-label="Open last page externally"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></div>
+                <div class="view-tabs" role="tablist"><button class="view-tab active" type="button" data-list="bookmarks">Bookmarks</button><button class="view-tab" type="button" data-list="history">History</button></div>
+                <div id="savedList" class="saved-list"></div>
+                <p class="external-notice">Some websites block in-app display. Use the external-browser button when a site cannot load here.</p>
+            </div>
+        </section>
+    </main>
+    <footer class="footer"><i class="fa-solid fa-circle-info"></i><span id="statusText">Ready</span></footer>
+</div>
+<script>
+(() => {
+    const userKey = (() => {
+        try {
+            const user = JSON.parse(localStorage.getItem('vphone_user') || 'null');
+            return encodeURIComponent(String(user?.id || user?.username || 'guest'));
+        } catch { return 'guest'; }
+    })();
+    const bookmarksKey = `vphone_browser_bookmarks_${userKey}`;
+    const historyKey = `vphone_browser_history_${userKey}`;
+    const lastUrlKey = `vphone_browser_last_url_${userKey}`;
+    const content = document.getElementById('content');
+    const frame = document.getElementById('webFrame');
+    const address = document.getElementById('addressInput');
+    const savedList = document.getElementById('savedList');
+    const status = document.getElementById('statusText');
+    let currentUrl = '';
+    let listMode = 'bookmarks';
+    let bookmarks = readList(bookmarksKey);
+    let historyEntries = readList(historyKey);
+
+    function readList(key) {
+        try {
+            const value = JSON.parse(localStorage.getItem(key) || '[]');
+            return Array.isArray(value) ? value : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function writeList(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); }
+        catch { status.textContent = 'This browser could not save its local browsing data.'; }
+    }
+
+    function normalizeAddress(value) {
+        const input = value.trim();
+        if (!input) return null;
+        let candidate = input;
+        if (!/^[a-z][a-z\d+.-]*:/i.test(candidate)) {
+            candidate = /\s/.test(candidate) || !candidate.includes('.')
+                ? `https://www.google.com/search?q=${encodeURIComponent(candidate)}`
+                : `https://${candidate}`;
+        }
+        try {
+            const url = new URL(candidate);
+            if (!['http:', 'https:'].includes(url.protocol)) return null;
+            return url.href;
+        } catch {
+            return null;
+        }
+    }
+
+    function navigate(value, saveHistory = true) {
+        const url = normalizeAddress(value);
+        if (!url) {
+            status.textContent = 'Enter a valid HTTP or HTTPS address.';
+            return;
+        }
+        currentUrl = url;
+        address.value = url;
+        content.classList.add('browsing');
+        status.textContent = 'Loading…';
+        frame.src = url;
+        localStorage.setItem(lastUrlKey, url);
+        if (saveHistory) {
+            historyEntries = [{ url, visitedAt: new Date().toISOString() }, ...historyEntries.filter(item => item.url !== url)].slice(0, 100);
+            writeList(historyKey, historyEntries);
+            renderSavedList();
+        }
+    }
+
+    function renderSavedList() {
+        const entries = listMode === 'bookmarks' ? bookmarks : historyEntries;
+        savedList.replaceChildren();
+        if (!entries.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = listMode === 'bookmarks' ? 'No bookmarks saved yet.' : 'No browsing history yet.';
+            savedList.append(empty);
+            return;
+        }
+        entries.forEach((entry, index) => {
+            const item = document.createElement('div');
+            item.className = 'saved-item';
+            const open = document.createElement('button');
+            open.type = 'button';
+            open.className = 'saved-open';
+            const icon = document.createElement('i');
+            icon.className = `fa-solid ${listMode === 'bookmarks' ? 'fa-star' : 'fa-clock'}`;
+            const copy = document.createElement('span');
+            const title = document.createElement('span');
+            title.textContent = entry.title || entry.url;
+            const url = document.createElement('small');
+            url.textContent = entry.url;
+            copy.append(title, url);
+            open.append(icon, copy);
+            open.addEventListener('click', () => navigate(entry.url));
+            item.append(open);
+            if (listMode === 'bookmarks') {
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'saved-action';
+                remove.title = 'Remove bookmark';
+                remove.setAttribute('aria-label', 'Remove bookmark');
+                remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                remove.addEventListener('click', () => {
+                    bookmarks.splice(index, 1);
+                    writeList(bookmarksKey, bookmarks);
+                    renderSavedList();
+                });
+                item.append(remove);
+            }
+            savedList.append(item);
+        });
+    }
+
+    function toggleBookmark() {
+        if (!currentUrl) return;
+        const existing = bookmarks.findIndex(item => item.url === currentUrl);
+        if (existing >= 0) {
+            bookmarks.splice(existing, 1);
+            status.textContent = 'Bookmark removed.';
+        } else {
+            bookmarks.unshift({ title: currentUrl, url: currentUrl });
+            status.textContent = 'Bookmark saved on this device.';
+        }
+        writeList(bookmarksKey, bookmarks);
+        updateBookmarkIcon();
+        renderSavedList();
+    }
+
+    function updateBookmarkIcon() {
+        const icon = document.querySelector('#bookmarkButton i');
+        const saved = bookmarks.some(item => item.url === currentUrl);
+        icon.className = saved ? 'fa-solid fa-star' : 'fa-regular fa-star';
+        document.getElementById('bookmarkButton').title = saved ? 'Remove bookmark' : 'Bookmark this page';
+    }
+
+    function openInDeviceBrowser(url) {
+        const externalLink = document.createElement('a');
+        externalLink.href = url;
+        externalLink.target = '_blank';
+        externalLink.rel = 'noopener noreferrer';
+        externalLink.click();
+    }
+
+    document.getElementById('navigationForm').addEventListener('submit', event => {
+        event.preventDefault();
+        navigate(address.value);
+    });
+    document.getElementById('homeSearch').addEventListener('submit', event => {
+        event.preventDefault();
+        navigate(document.getElementById('homeSearchInput').value);
+    });
+    document.getElementById('backButton').addEventListener('click', () => {
+        try { frame.contentWindow.history.back(); } catch { status.textContent = 'Use the device browser for this site’s navigation history.'; }
+    });
+    document.getElementById('forwardButton').addEventListener('click', () => {
+        try { frame.contentWindow.history.forward(); } catch { status.textContent = 'Use the device browser for this site’s navigation history.'; }
+    });
+    document.getElementById('reloadButton').addEventListener('click', () => {
+        if (currentUrl) frame.src = currentUrl;
+    });
+    document.getElementById('homeButton').addEventListener('click', () => {
+        currentUrl = '';
+        address.value = '';
+        content.classList.remove('browsing');
+        frame.src = 'about:blank';
+        localStorage.removeItem(lastUrlKey);
+        status.textContent = 'Ready';
+        updateBookmarkIcon();
+    });
+    document.getElementById('bookmarkButton').addEventListener('click', toggleBookmark);
+    document.getElementById('externalButton').addEventListener('click', () => {
+        if (!currentUrl) return;
+        openInDeviceBrowser(currentUrl);
+        status.textContent = 'Opened in the device browser.';
+    });
+    document.getElementById('resumeLast').addEventListener('click', () => {
+        const lastUrl = localStorage.getItem(lastUrlKey);
+        if (lastUrl) navigate(lastUrl, false);
+    });
+    document.getElementById('resumeExternal').addEventListener('click', () => {
+        const lastUrl = localStorage.getItem(lastUrlKey);
+        if (lastUrl) openInDeviceBrowser(lastUrl);
+    });
+    document.querySelectorAll('[data-list]').forEach(button => button.addEventListener('click', () => {
+        listMode = button.dataset.list;
+        document.querySelectorAll('[data-list]').forEach(tab => tab.classList.toggle('active', tab === button));
+        renderSavedList();
+    }));
+    frame.addEventListener('load', () => {
+        if (!currentUrl) return;
+        status.textContent = 'Loaded. If the site blocks in-app display, open it in the device browser.';
+        updateBookmarkIcon();
+    });
+    frame.addEventListener('loadstart', () => { status.textContent = 'Loading…'; });
+
+    renderSavedList();
+    const lastUrl = localStorage.getItem(lastUrlKey);
+    if (lastUrl && normalizeAddress(lastUrl)) {
+        document.getElementById('resumeCard').hidden = false;
+        document.getElementById('resumeAddress').textContent = lastUrl;
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Premium Virtual Smartphone</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+    <style>
+        /* ─── RESET & BASE ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+        }
+
+        /* ─── PHONE SHELL ─── */
+        .phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .phone-power-btn {
+            position: absolute;
+            right: -4px;
+            top: 140px;
+            width: 4px;
+            height: 60px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+        }
+
+        /* ─── SCREEN ─── */
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+        }
+
+        /* ─── DYNAMIC ISLAND ─── */
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85px;
+            height: 22px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .dynamic-island.notify-error {
+            width: 220px;
+            height: 38px;
+            background: #ff3b30;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+        .dynamic-island.notify-success {
+            width: 220px;
+            height: 38px;
+            background: #34c759;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+
+        /* ─── STATUS BAR ─── */
+        .status {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 900;
+        }
+        .status .left-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .status .time {
+            pointer-events: none;
+        }
+        .status .icons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .status .icons i {
+            font-size: 10px;
+        }
+        .notification-trigger-btn {
+            font-size: 12px;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .notification-trigger-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ─── WALLPAPER ─── */
+        .wallpaper {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.8s ease, filter 0.3s ease;
+        }
+
+        /* ─── CLOCK ─── */
+        .clock {
+            position: absolute;
+            top: 60px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            z-index: 5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+        .clock h1 {
+            font-size: 46px;
+            font-weight: 500;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .clock p {
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .apps-open-active .clock {
+            transform: translateY(-20px);
+            opacity: 0.3;
+        }
+
+        /* ─── SCROLL INDICATOR ─── */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            animation: bounce 2s infinite;
+            z-index: 50;
+            cursor: pointer;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+            transition: opacity 0.3s ease, transform 0.1s ease;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .scroll-indicator:active {
+            transform: translate(-50%, -2px) scale(0.95);
+        }
+        .scroll-indicator.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .scroll-indicator i {
+            display: block;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        @keyframes bounce {
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translate(-50%, 0);
+            }
+            40% {
+                transform: translate(-50%, -6px);
+            }
+            60% {
+                transform: translate(-50%, -3px);
+            }
+        }
+
+        /* ─── APPS CONTAINER ─── */
+        .apps-container {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 88%;
+            z-index: 10;
+            padding: 12px 10px 16px;
+            overflow-y: auto;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94), opacity 0.3s ease;
+            pointer-events: none;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 32px 32px 0 0;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .apps-container.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .apps-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .app-drawer-header {
+            margin-bottom: 10px;
+        }
+        .app-drawer-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .app-drawer-heading h2 {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .app-drawer-heading p {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 10px;
+            margin-top: 3px;
+        }
+        .app-count {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        .app-search {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            height: 38px;
+            padding: 0 11px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .app-search i {
+            font-size: 12px;
+        }
+        .app-search input {
+            flex: 1;
+            width: 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #fff;
+            font: inherit;
+            font-size: 11px;
+        }
+        .app-search input::placeholder {
+            color: rgba(255, 255, 255, 0.58);
+        }
+        .app-search input::-webkit-search-cancel-button {
+            cursor: pointer;
+        }
+        .recent-apps-section {
+            margin-bottom: 10px;
+        }
+        .recent-apps-section[hidden],
+        .app-search-empty[hidden] {
+            display: none;
+        }
+        .app-section-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            margin: 0 0 10px 2px;
+            text-transform: uppercase;
+        }
+        .recent-apps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px 4px;
+        }
+        .app-search-empty {
+            grid-column: 1 / -1;
+            padding: 14px 8px;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 11px;
+            text-align: center;
+        }
+        .apps-grid > .app[hidden] {
+            display: none;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px 4px;
+            padding-bottom: 12px;
+        }
+        .app {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative; /* for badge positioning */
+        }
+        .app:active {
+            transform: scale(0.9);
+        }
+        .icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 2px;
+            border-radius: 13px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: 0.25s ease;
+        }
+        .app:hover .icon {
+            transform: scale(1.1);
+        }
+        .app span {
+            display: block;
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            margin-top: 0;
+        }
+        /* Badge on app icon */
+        .app-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid #1c1c1e;
+            line-height: 1;
+            z-index: 2;
+        }
+        .app-badge.show {
+            display: flex;
+        }
+
+        /* App Colors */
+        .instagram {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+        .whatsapp {
+            background: #25D366;
+        }
+        .facebook {
+            background: #1877F2;
+        }
+        .camera {
+            background: linear-gradient(45deg, #434343 0%, #000000 100%);
+        }
+        .gallery {
+            background: #ff9800;
+        }
+        .settings {
+            background: #555;
+        }
+        .browser {
+            background: #00BCD4;
+        }
+        .phoneicon {
+            background: #4CAF50;
+        }
+        .messages {
+            background: #34C759;
+        }
+        .mail {
+            background: #007AFF;
+        }
+        .music {
+            background: #FF2D55;
+        }
+        .photos {
+            background: #FF6B6B;
+        }
+        .maps {
+            background: #4CAF50;
+        }
+        .calendar {
+            background: #FF3B30;
+        }
+        .notes {
+            background: #FFCC00;
+        }
+        .appstore {
+            background: #007AFF;
+        }
+        .icon-rewards {
+            overflow: hidden;
+            background: linear-gradient(135deg, #34316f, #8054c6);
+        }
+        .icon-rewards img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .app-storage {
+            background: linear-gradient(135deg, #f6a623, #ef6c43);
+        }
+        .google-drive {
+            background: linear-gradient(135deg, #4285F4, #1A73E8);
+        }
+        .google-photos {
+            background: linear-gradient(135deg, #FBBC04, #EA4335 55%, #4285F4);
+        }
+        .google-contacts {
+            background: linear-gradient(135deg, #34A853, #188038);
+        }
+        .installed-app-icon {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            object-fit: cover;
+        }
+        .logout-icon {
+            background: #ff3b30;
+        }
+        .chat-app-icon {
+            background-image: url('/virtual-phone/uploads/icon/chat.png');
+            background-color: #5865F2;
+        }
+
+        /* Hide logout app by default */
+        #logoutApp {
+            display: none;
+        }
+        #logoutApp.show {
+            display: flex;
+        }
+
+        /* ─── DOCK ─── */
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            z-index: 1001;
+            cursor: pointer;
+        }
+
+        /* ─── CONTROL CENTER ─── */
+        .control-center {
+            position: absolute;
+            top: -480px;
+            left: 0;
+            right: 0;
+            height: 410px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 0 0 32px 32px;
+            padding: 35px 16px 16px;
+            z-index: 950;
+            transition: top 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .control-center.open {
+            top: 0;
+        }
+
+        /* ─── NOTIFICATION CENTER (legacy, replaced by new panel) ─── */
+        .notification-center {
+            position: absolute;
+            top: -480px;
+            left: 0;
+            right: 0;
+            height: 410px;
+            background: rgba(10, 10, 15, 0.93);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 0 0 32px 32px;
+            padding: 40px 18px 16px;
+            z-index: 960;
+            transition: top 0.45s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .notification-center.open {
+            top: 0;
+        }
+        .nc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+        .nc-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .nc-header .clear-btn {
+            font-size: 11px;
+            color: #ff3b30;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .nc-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 2px;
+        }
+        .nc-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .nc-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .nc-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-left: 3px solid #007AFF;
+            animation: fadeIn 0.3s ease;
+        }
+        .nc-item.unread {
+            border-left-color: #34c759;
+        }
+        .nc-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .nc-item-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .nc-item-body {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.3;
+        }
+        .nc-handle-bar {
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 10px auto 0;
+            cursor: pointer;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── CC TOGGLES ─── */
+        .cc-grid-block {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .cc-card-4 {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .cc-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .cc-toggle:active {
+            transform: scale(0.95);
+        }
+        .cc-toggle.active {
+            background: #007AFF;
+        }
+        .cc-toggle.active-green {
+            background: #34c759;
+        }
+        .cc-toggle.active-orange {
+            background: #ff9500;
+        }
+        .cc-toggle i {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .cc-toggle span {
+            font-size: 9px;
+            font-weight: 500;
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cc-slider-group {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+        }
+        .cc-slider-group label {
+            font-size: 11px;
+            font-weight: 500;
+            opacity: 0.8;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .cc-slider {
+            width: 100%;
+            height: 4px;
+            appearance: none;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+        .cc-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+        }
+        .cc-handle-bar {
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 12px auto 0;
+            cursor: pointer;
+        }
+
+        /* ─── LOGIN PANEL ─── */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -430px;
+            height: min(475px, 76%);
+            min-height: 430px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 45px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            transition: bottom 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            padding: 18px 18px 22px;
+            max-height: calc(100% - 16px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show {
+            bottom: 0;
+        }
+        .login-panel .handle {
+            width: 40px;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            cursor: pointer;
+        }
+        .login-panel h2 {
+            text-align: center;
+            margin-bottom: 2px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #111;
+        }
+        .login-panel p {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+        .login-panel input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.03);
+            color: #111;
+        }
+        .login-panel input:focus {
+            border-color: #007AFF;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        }
+        .login-panel button {
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            background: #007AFF;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+        .login-panel button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .login-panel button.signup {
+            background: #34C759;
+        }
+        .login-panel button.google-switch {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            color: #007AFF;
+            font-size: 12px;
+        }
+        #googleSignIn {
+            display: flex;
+            justify-content: center;
+            min-height: 44px;
+            margin: 2px 0 8px;
+        }
+        #googleStartBtn {
+            width: 100%;
+            border: 1px solid rgba(0, 0, 0, 0.16);
+            border-radius: 14px;
+            background: #fff;
+            color: #222;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        #googleAuthEmail {
+            color: #333;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 0 8px;
+            overflow-wrap: anywhere;
+        }
+        .login-panel [hidden] {
+            display: none !important;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .login-error {
+            color: #ff3b30;
+            font-size: 11px;
+            text-align: center;
+            margin-top: -6px;
+            margin-bottom: 8px;
+            min-height: 18px;
+            font-weight: 500;
+        }
+
+        /* ─── KEYBOARD ─── */
+        .keyboard {
+            position: absolute;
+            bottom: -240px;
+            left: 0;
+            right: 0;
+            height: 210px;
+            background: rgba(220, 224, 230, 0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 18px 18px 0 0;
+            padding: 8px 5px 24px;
+            box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.2);
+            transition: bottom 0.35s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .keyboard.active {
+            bottom: 0;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .key {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            height: 38px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: background 0.1s, transform 0.1s;
+        }
+        .key:active,
+        .key.physical-active {
+            background: #abb4be !important;
+            transform: scale(0.92);
+        }
+        .key.special {
+            background: #acb5be;
+            flex: 1.35;
+            font-size: 13px;
+        }
+        .key.space {
+            flex: 5.2;
+        }
+        .login-panel.keyboard-open {
+            bottom: 210px;
+            height: min(460px, calc(100% - 220px));
+            min-height: 320px;
+            max-height: 460px;
+        }
+
+        /* ─── LOGIN OVERLAY (blocks taps on apps when not logged in) ─── */
+        .login-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 8;
+            background: transparent;
+            pointer-events: none;
+            display: none;
+        }
+        .login-overlay.active {
+            display: block;
+            pointer-events: auto;
+        }
+        .phone-app-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1800;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: inherit;
+            background: #10131f;
+        }
+        .phone-app-overlay.open {
+            display: flex;
+            animation: phoneAppEnter .24s ease-out;
+        }
+        .phone-app-overlay-header {
+            min-height: 42px;
+            display: flex;
+            flex: none;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            background: #171d2b;
+            color: #fff;
+            border-bottom: 1px solid #ffffff18;
+        }
+        .phone-app-overlay-header strong {
+            flex: 1;
+            overflow: hidden;
+            font-size: 12px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .phone-app-overlay-header button {
+            width: 29px;
+            height: 29px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 9px;
+            background: #ffffff17;
+            color: #fff;
+            cursor: pointer;
+        }
+        .phone-app-overlay iframe {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            border: 0;
+            background: #f5f7fc;
+        }
+        @keyframes phoneAppEnter {
+            from { opacity: 0; transform: scale(.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* ─── PROFILE APP ─── */
+        #profileApp .icon {
+            background: #555;
+            font-size: 18px;
+        }
+        #profileApp .icon.has-image {
+            background-size: cover;
+            background-position: center;
+            font-size: 0;
+        }
+
+        /* ─── DRAGGABLE BELL ─── */
+        #draggableBell {
+            position: absolute;
+            z-index: 99999;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #1c1c1e;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: grab;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            transition: box-shadow 0.2s, transform 0.15s;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: auto;
+        }
+        #draggableBell:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+            transform: scale(1.05);
+        }
+        #draggableBell:active {
+            cursor: grabbing;
+            transform: scale(0.92);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        }
+        #draggableBell .bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid #1c1c1e;
+            line-height: 1;
+        }
+        #draggableBell .bell-badge.show {
+            display: flex;
+        }
+
+        /* ─── NOTIFICATION PANEL (slide-up inside phone) ─── */
+        .notif-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+            opacity: 0;
+            box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+        .notif-panel.open {
+            max-height: 70%;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .notif-panel .panel-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin: 8px auto 4px;
+            flex-shrink: 0;
+            cursor: grab;
+        }
+        .notif-panel .panel-header {
+            padding: 8px 16px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1c1c1e;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+        .notif-panel .panel-header .clear-btn {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 10px;
+            cursor: pointer;
+            color: #1c1c1e;
+            font-weight: 500;
+        }
+        .notif-panel .panel-header .clear-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .notif-panel .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+            background: #f8f9fa;
+        }
+        .notif-panel .panel-body .notif-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            background: #fff;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .notif-panel .panel-body .notif-item:hover {
+            background: #f1f3f5;
+        }
+        .notif-panel .panel-body .notif-item .notif-sender {
+            font-weight: 600;
+            font-size: 12px;
+            color: #1c1c1e;
+        }
+        .notif-panel .panel-body .notif-item .notif-msg {
+            font-size: 11px;
+            color: #374151;
+            margin-top: 2px;
+            word-break: break-word;
+        }
+        .notif-panel .panel-body .notif-item .notif-time {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 4px;
+            display: block;
+        }
+        .notif-panel .panel-body .empty-notif {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 120px;
+            color: #9ca3af;
+            font-size: 13px;
+            padding: 20px;
+            text-align: center;
+        }
+        .notif-panel .panel-body .empty-notif i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.4;
+        }
+
+        .notif-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 55;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            border-radius: 36px;
+        }
+        .notif-overlay.show {
+            display: block;
+        }
+
+        /* ─── SNIPPET BANNERS (floating on top of the page) ─── */
+        #notifSnippetContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 99998;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 8px;
+        }
+        #notifSnippetContainer .notif-banner {
+            pointer-events: auto;
+            background: #1c1c1e;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            max-width: 92%;
+            width: auto;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            animation: slideDownNotif 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        #notifSnippetContainer .notif-banner.hiding {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        #notifSnippetContainer .notif-banner .notif-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #5865F2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            color: #fff;
+            font-weight: 600;
+        }
+        #notifSnippetContainer .notif-banner .notif-text {
+            flex: 1;
+            min-width: 0;
+        }
+        #notifSnippetContainer .notif-banner .notif-text .notif-sender {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f4f4f5;
+        }
+        #notifSnippetContainer .notif-banner .notif-text .notif-msg {
+            font-size: 11px;
+            color: #b0b0b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #notifSnippetContainer .notif-banner .notif-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        #notifSnippetContainer .notif-banner .notif-close:hover {
+            color: #fff;
+        }
+
+        @keyframes slideDownNotif {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 360px) {
+            .phone {
+                width: 290px;
+                height: 480px;
+                border-radius: 40px;
+                padding: 10px;
+            }
+            .screen {
+                border-radius: 30px;
+            }
+            .clock h1 {
+                font-size: 38px;
+            }
+            .icon {
+                width: 42px;
+                height: 42px;
+                font-size: 17px;
+                border-radius: 11px;
+            }
+            .app span {
+                font-size: 9px;
+            }
+            .apps-grid {
+                gap: 8px 4px;
+            }
+            .login-panel {
+                height: 380px;
+                padding: 14px 14px 18px;
+            }
+            .login-panel h2 {
+                font-size: 17px;
+            }
+            .login-panel input {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+            .login-panel button {
+                padding: 10px;
+                font-size: 12px;
+            }
+            #notifSnippetContainer .notif-banner {
+                padding: 8px 12px;
+                font-size: 12px;
+                max-width: 96%;
+            }
+            #notifSnippetContainer .notif-banner .notif-text .notif-sender {
+                font-size: 11px;
+            }
+            #notifSnippetContainer .notif-banner .notif-text .notif-msg {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone">
+        <div class="phone-power-btn"></div>
+        <div class="screen" id="screen">
+
+            <!-- Wallpaper -->
+            <div class="wallpaper" id="wallpaper"></div>
+
+            <!-- Dynamic Island -->
+            <div class="dynamic-island" id="dynamicIsland"></div>
+
+            <!-- DRAGGABLE BELL -->
+            <div id="draggableBell">
+                <i class="fas fa-bell"></i>
+                <span class="bell-badge" id="bellBadgeDrag">0</span>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status" id="statusBar">
+                <div class="left-side" id="openCCBtn">
+                    <div class="time" id="time">12:00</div>
+                </div>
+                <div class="icons">
+                    <i class="fas fa-bell notification-trigger-btn" id="ncTriggerBtn" title="Notifications" style="display:none;"></i>
+                    <i class="fas fa-signal" id="cellularStatus"></i>
+                    <i class="fas fa-wifi" id="wifiStatus"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <!-- Clock -->
+            <div class="clock" id="clockWidget">
+                <h1 id="clock">12:00</h1>
+                <p id="date">Tuesday, July 14</p>
+            </div>
+
+            <!-- Scroll Indicator (opens apps / shows login) -->
+            <div class="scroll-indicator" id="scrollIndicator">
+                <span id="indicatorText">Login to access your apps</span>
+                <i class="fas fa-chevron-up"></i>
+            </div>
+
+            <!-- Login Overlay – blocks taps on the apps area until logged in -->
+            <div class="login-overlay active" id="loginOverlay"></div>
+
+            <!-- Apps Container -->
+            <div class="apps-container" id="appsContainer">
+                <div class="app-drawer-header">
+                    <div class="app-drawer-heading">
+                        <div>
+                            <h2>App library</h2>
+                            <p>Everything you need, all in one place</p>
+                        </div>
+                        <span class="app-count" id="appCount" aria-live="polite" aria-atomic="true"></span>
+                    </div>
+                    <label class="app-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="search" id="appSearch" placeholder="Search your apps" autocomplete="off" aria-label="Search your apps">
+                    </label>
+                </div>
+                <section class="recent-apps-section" id="recentAppsSection" aria-label="Recently opened apps" hidden>
+                    <h3 class="app-section-label">Recently opened</h3>
+                    <div class="recent-apps-grid" id="recentAppsGrid"></div>
+                </section>
+                <div class="apps-grid" id="appsGrid">
+                    <div class="app-search-empty" id="appSearchEmpty" role="status" hidden>No apps match your search. Try another name.</div>
+
+                    <a href="/virtual-phone/user/apps/play_store.html" class="app">
+                        <div class="icon appstore"><i class="fas fa-store"></i></div>
+                        <span>Play Store</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/icon_rewards/index.php" class="app" id="iconRewardsLauncher">
+                        <div class="icon icon-rewards"><img src="/virtual-phone/user/icon_rewards/icon.svg" alt="" aria-hidden="true"></div>
+                        <span>Icon Rewards</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/apps/app_manager.html" class="app" id="appManagerLauncher">
+                        <div class="icon appstore"><i class="fas fa-grid-2"></i></div>
+                        <span>App Manager</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/storage/store.html" class="app" id="fileManagerLauncher">
+                        <div class="icon app-storage"><i class="fas fa-folder-open"></i></div>
+                        <span>File Manager</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/browser/browser.html" class="app">
+                        <div class="icon browser"><i class="fas fa-globe"></i></div>
+                        <span>Browser</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/calender/calender_App.html" class="app">
+                        <div class="icon calendar"><i class="fas fa-calendar-alt"></i></div>
+                        <span>Calendar</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/storage/uploads/camera_app.php" class="app">
+                        <div class="icon camera"><i class="fas fa-camera"></i></div>
+                        <span>Camera</span>
+                    </a>
+
+                    <!-- ─── CHAT ROOM APP WITH BADGE ─── -->
+                    <a href="/virtual-phone/user/chat_room/vphone_chat.html" class="app" id="chatApp">
+                        <div class="icon chat-app-icon"></div>
+                        <span>Chat Room</span>
+                        <span class="app-badge" id="chatAppBadge">0</span>
+                    </a>
+
+                    <a href="https://www.facebook.com/" class="app" target="_blank" rel="noopener noreferrer">
+                        <div class="icon facebook"><i class="fab fa-facebook-f"></i></div>
+                        <span>Facebook</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/storage/uploads/gallely_app.php" class="app">
+                        <div class="icon gallery"><i class="fas fa-image"></i></div>
+                        <span>Gallery</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/test/instgram.php" class="app">
+                        <div class="icon instagram"><i class="fab fa-instagram"></i></div>
+                        <span>Instagram</span>
+                    </a>
+
+                    <a href="https://mail.google.com/" class="app" target="_blank" rel="noopener noreferrer">
+                        <div class="icon mail"><i class="fas fa-envelope"></i></div>
+                        <span>Mail</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/googlemap/map.html" class="app">
+                        <div class="icon maps"><i class="fas fa-map-marked-alt"></i></div>
+                        <span>Maps</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/google_apps/drive.html" class="app">
+                        <div class="icon google-drive"><i class="fab fa-google-drive"></i></div>
+                        <span>Google Drive</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/google_apps/photos.html" class="app">
+                        <div class="icon google-photos"><i class="fas fa-aperture"></i></div>
+                        <span>Google Photos</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/google_apps/contacts.html" class="app">
+                        <div class="icon google-contacts"><i class="fas fa-address-book"></i></div>
+                        <span>Google Contacts</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/messages/messages.html" class="app">
+                        <div class="icon messages"><i class="fas fa-comment-dots"></i></div>
+                        <span>Messages</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/music/music.html" class="app">
+                        <div class="icon music"><i class="fas fa-music"></i></div>
+                        <span>Music</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/notes/notes.html" class="app">
+                        <div class="icon notes"><i class="fas fa-sticky-note"></i></div>
+                        <span>Notes</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/contact/add_contact.html" class="app">
+                        <div class="icon phoneicon"><i class="fas fa-phone"></i></div>
+                        <span>Phone</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/storage/uploads/gallely_app.php" class="app">
+                        <div class="icon photos"><i class="fas fa-images"></i></div>
+                        <span>Photos</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/settings/settings.html" class="app">
+                        <div class="icon settings"><i class="fas fa-cog"></i></div>
+                        <span>Settings</span>
+                    </a>
+
+                    <a href="https://web.whatsapp.com/" class="app" target="_blank" rel="noopener noreferrer">
+                        <div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div>
+                        <span>WhatsApp</span>
+                    </a>
+
+                    <!-- ─── LOGOUT BUTTON ─── -->
+                    <a href="javascript:void(0)" class="app" id="logoutApp">
+                        <div class="icon logout-icon">
+                            <i class="fas fa-power-off"></i>
+                        </div>
+                        <span>Logout</span>
+                    </a>
+
+                </div>
+            </div>
+
+            <!-- Dock -->
+            <div class="dock" id="homeIndicator"></div>
+
+            <!-- Control Center -->
+            <div class="control-center" id="controlCenter">
+                <div class="cc-grid-block">
+                    <div class="cc-card-4">
+                        <div class="cc-toggle active" data-toggle="wifi" id="wifiToggle"><i class="fas fa-wifi"></i><span>Wi-Fi</span></div>
+                        <div class="cc-toggle active" data-toggle="cellular" id="cellularToggle"><i class="fas fa-signal"></i><span>Cellular</span></div>
+                        <div class="cc-toggle active" data-toggle="bluetooth"><i class="fab fa-bluetooth-b"></i><span>Bluetooth</span></div>
+                        <div class="cc-toggle" data-toggle="hotspot" id="hotspotToggle"><i class="fas fa-wifi-slash"></i><span>Hotspot</span></div>
+                    </div>
+                    <div class="cc-card-4">
+                        <div class="cc-toggle active-green" data-toggle="location"><i class="fas fa-location-arrow"></i><span>Location</span></div>
+                        <div class="cc-toggle" data-toggle="sound" id="muteToggle"><i class="fas fa-volume-up"></i><span>Sound</span></div>
+                        <div class="cc-toggle" data-toggle="flashlight" id="flashlightToggle"><i class="fas fa-lightbulb"></i><span>Flashlight</span></div>
+                        <div class="cc-toggle active-orange" data-toggle="airplane" id="airplaneToggle"><i class="fas fa-plane"></i><span>Airplane</span></div>
+                    </div>
+                </div>
+                <div class="cc-slider-group">
+                    <label>Brightness <span id="brightnessValue">50%</span></label>
+                    <input type="range" min="10" max="100" value="50" class="cc-slider" id="brightnessSlider">
+                </div>
+                <div class="cc-slider-group">
+                    <label>Volume <span id="volumeValue">50%</span></label>
+                    <input type="range" min="0" max="100" value="50" class="cc-slider" id="volumeSlider">
+                </div>
+                <div class="cc-handle-bar" id="ccHandle"></div>
+            </div>
+
+            <!-- Notification Center (legacy, kept for compatibility) -->
+            <div class="notification-center" id="notificationCenter">
+                <div class="nc-header">
+                    <h3>Notifications</h3>
+                    <span class="clear-btn" id="ncClearBtn">Clear All</span>
+                </div>
+                <div class="nc-list" id="ncList">
+                    <div class="nc-item unread">
+                        <div class="nc-item-header"><span>SYSTEM</span><span>Just now</span></div>
+                        <div class="nc-item-title">Welcome to Virtual Phone!</div>
+                        <div class="nc-item-body">Swipe up from the bottom to see all your apps.</div>
+                    </div>
+                    <div class="nc-item">
+                        <div class="nc-item-header"><span>CHAT</span><span>5m ago</span></div>
+                        <div class="nc-item-title">New group message</div>
+                        <div class="nc-item-body">Open the Chat app to join the conversation.</div>
+                    </div>
+                </div>
+                <div class="nc-handle-bar" id="ncHandle"></div>
+            </div>
+
+            <!-- ─── NEW NOTIFICATION PANEL (slide-up) ─── -->
+            <div class="notif-overlay" id="notifOverlay"></div>
+            <div class="notif-panel" id="notifPanel">
+                <div class="panel-handle" id="panelHandle"></div>
+                <div class="panel-header">
+                    <span><i class="fas fa-bell" style="margin-right:8px;"></i>Notifications</span>
+                    <button class="clear-btn" id="clearNotifBtn"><i class="fas fa-trash-alt"></i> Clear</button>
+                </div>
+                <div class="panel-body" id="notifPanelBody">
+                    <div class="empty-notif">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <section class="phone-app-overlay" id="phoneAppOverlay" aria-label="Phone app" aria-hidden="true">
+                <div class="phone-app-overlay-header">
+                    <button id="phoneAppBackBtn" type="button" aria-label="Close app" title="Close app"><i class="fas fa-chevron-left"></i></button>
+                    <strong id="phoneAppTitle">App</strong>
+                    <button id="phoneAppHomeBtn" type="button" aria-label="Return to phone home" title="Return to phone home"><i class="fas fa-house"></i></button>
+                </div>
+                <iframe id="phoneAppFrame" title="Phone app" allow="camera; microphone; geolocation"></iframe>
+            </section>
+
+            <!-- Login Panel -->
+            <div id="loginPanel" class="login-panel">
+                <div class="handle" id="loginHandle"></div>
+                <h2>Welcome</h2>
+                <p>Sign in to access your Virtual Phone</p>
+                <form id="loginForm" onsubmit="return false;">
+                    <input type="text" id="usernameInput" placeholder="Username" inputmode="none" autocomplete="off" required />
+                    <input type="password" id="passwordInput" placeholder="Password" inputmode="none" required />
+                    <input type="password" id="confirmPasswordInput" placeholder="Confirm password" inputmode="none" autocomplete="new-password" hidden />
+                    <div class="login-error" id="loginError"></div>
+                    <button type="submit" id="loginBtn">
+                        <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                        <span id="btnText">Login</span>
+                    </button>
+                    <div id="googleSignIn">
+                        <button type="button" id="googleStartBtn" aria-label="Continue with Google">
+                            <i class="fab fa-google" aria-hidden="true"></i>
+                            <span>Continue with Google</span>
+                        </button>
+                    </div>
+                    <div id="googleAuthFields" hidden>
+                        <p id="googleAuthEmail"></p>
+                        <button type="button" class="google-switch" id="googleLinkExistingBtn" hidden>Already have an account? Link it</button>
+                        <button type="button" class="google-switch" id="googleRegisterInsteadBtn" hidden>Create a new account instead</button>
+                        <button type="button" class="google-switch" id="googleRecoverBtn" hidden>Forgot your phone password? Reset with Google</button>
+                        <button type="button" class="google-switch" id="googleCancelBtn">Back to username login</button>
+                    </div>
+                    <button type="button" class="signup" id="signupBtn">Create Account</button>
+                </form>
+            </div>
+
+            <!-- Keyboard -->
+            <div id="keyboard" class="keyboard">
+                <div class="keyboard-row" id="row-1">
+                    <button class="key" data-key="q">q</button>
+                    <button class="key" data-key="w">w</button>
+                    <button class="key" data-key="e">e</button>
+                    <button class="key" data-key="r">r</button>
+                    <button class="key" data-key="t">t</button>
+                    <button class="key" data-key="y">y</button>
+                    <button class="key" data-key="u">u</button>
+                    <button class="key" data-key="i">i</button>
+                    <button class="key" data-key="o">o</button>
+                    <button class="key" data-key="p">p</button>
+                </div>
+                <div class="keyboard-row" id="row-2">
+                    <button class="key" data-key="a">a</button>
+                    <button class="key" data-key="s">s</button>
+                    <button class="key" data-key="d">d</button>
+                    <button class="key" data-key="f">f</button>
+                    <button class="key" data-key="g">g</button>
+                    <button class="key" data-key="h">h</button>
+                    <button class="key" data-key="j">j</button>
+                    <button class="key" data-key="k">k</button>
+                    <button class="key" data-key="l">l</button>
+                </div>
+                <div class="keyboard-row" id="row-3">
+                    <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                    <button class="key" data-key="z">z</button>
+                    <button class="key" data-key="x">x</button>
+                    <button class="key" data-key="c">c</button>
+                    <button class="key" data-key="v">v</button>
+                    <button class="key" data-key="b">b</button>
+                    <button class="key" data-key="n">n</button>
+                    <button class="key" data-key="m">m</button>
+                    <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key special" id="mode-btn" data-key="mode">123</button>
+                    <button class="key space" id="space-btn" data-key=" ">space</button>
+                    <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+                </div>
+            </div>
+
+        </div><!-- /screen -->
+    </div><!-- /phone -->
+
+    <!-- ─── SNIPPET BANNERS ─── -->
+    <div id="notifSnippetContainer"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── DOM REFS ───
+            const $ = id => document.getElementById(id);
+            const qs = (sel, ctx = document) => ctx.querySelector(sel);
+            const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+            const DOM = {
+                screen: $('screen'),
+                clock: $('clock'),
+                time: $('time'),
+                date: $('date'),
+                clockWidget: $('clockWidget'),
+                wallpaper: $('wallpaper'),
+                loginPanel: $('loginPanel'),
+                loginHandle: $('loginHandle'),
+                loginOverlay: $('loginOverlay'),
+                scrollIndicator: $('scrollIndicator'),
+                indicatorText: $('indicatorText'),
+                keyboard: $('keyboard'),
+                usernameInput: $('usernameInput'),
+                passwordInput: $('passwordInput'),
+                confirmPasswordInput: $('confirmPasswordInput'),
+                loginForm: $('loginForm'),
+                loginBtn: $('loginBtn'),
+                btnText: $('btnText'),
+                loginSpinner: $('loginSpinner'),
+                loginError: $('loginError'),
+                signupBtn: $('signupBtn'),
+                dynamicIsland: $('dynamicIsland'),
+                logoutApp: $('logoutApp'),
+                allKeys: qsa('.key'),
+                row1: $('row-1'),
+                row2: $('row-2'),
+                row3: $('row-3'),
+                shiftBtn: $('shift-btn'),
+                backspaceBtn: $('backspace-btn'),
+                spaceBtn: $('space-btn'),
+                modeBtn: $('mode-btn'),
+                controlCenter: $('controlCenter'),
+                ccHandle: $('ccHandle'),
+                openCCBtn: $('openCCBtn'),
+                notificationCenter: $('notificationCenter'),
+                ncTriggerBtn: $('ncTriggerBtn'),
+                ncHandle: $('ncHandle'),
+                ncClearBtn: $('ncClearBtn'),
+                ncList: $('ncList'),
+                brightnessSlider: $('brightnessSlider'),
+                volumeSlider: $('volumeSlider'),
+                brightnessValue: $('brightnessValue'),
+                volumeValue: $('volumeValue'),
+                appsContainer: $('appsContainer'),
+                appsGrid: $('appsGrid'),
+                appSearch: $('appSearch'),
+                appCount: $('appCount'),
+                appSearchEmpty: $('appSearchEmpty'),
+                recentAppsSection: $('recentAppsSection'),
+                recentAppsGrid: $('recentAppsGrid'),
+                statusBar: $('statusBar'),
+                homeIndicator: $('homeIndicator'),
+                googleSignIn: $('googleSignIn'),
+                googleStartBtn: $('googleStartBtn'),
+                googleAuthFields: $('googleAuthFields'),
+                googleAuthEmail: $('googleAuthEmail'),
+                googleLinkExistingBtn: $('googleLinkExistingBtn'),
+                googleRegisterInsteadBtn: $('googleRegisterInsteadBtn'),
+                googleRecoverBtn: $('googleRecoverBtn'),
+                googleCancelBtn: $('googleCancelBtn'),
+                // New notification elements
+                draggableBell: $('draggableBell'),
+                bellBadgeDrag: $('bellBadgeDrag'),
+                notifPanel: $('notifPanel'),
+                notifOverlay: $('notifOverlay'),
+                notifPanelBody: $('notifPanelBody'),
+                clearNotifBtn: $('clearNotifBtn'),
+                panelHandle: $('panelHandle'),
+                notifSnippetContainer: $('notifSnippetContainer'),
+                // Chat app badge
+                chatAppBadge: $('chatAppBadge'),
+            };
+
+            // ─── STATE ───
+            const STATE = {
+                isShifted: false,
+                isNumMode: false,
+                activeInput: null,
+                isLoggedIn: false,
+                isLoginPending: false,
+                isLoggingOut: false,
+                activityTimer: null,
+                currentActivity: null,
+                wallpaperIndex: 0,
+                sessionUser: null,
+                googleAuthMode: null,
+                googleEmail: '',
+                accountMode: 'login',
+                isControlCenterOpen: false,
+                isNotificationCenterOpen: false,
+                isAppsOpen: false,
+                // Notification state
+                notifications: [],
+                notifCount: 0,
+                isNotifPanelOpen: false,
+                bellPos: { x: 0, y: 0 },
+                isDraggingBell: false,
+                bellVisible: false,
+                bannerTimeouts: [],
+                // Socket
+                socket: null,
+                recentApps: [],
+            };
+
+            const CONFIG = {
+                CLOCK_INTERVAL: 1000,
+                NOTIFICATION_DURATION: 3000,
+                LOGIN_TIMEOUT: 15000,
+                STORAGE_KEY: 'vphone_user',
+                DEMO_USERNAME: 'admin',
+                DEMO_PASSWORD: 'admin',
+                NOTIF_API: '/virtual-phone/user/api/notification_api.php',
+                STORAGE_NOTIF_KEY: 'vphone_notifications',
+                POLL_INTERVAL: 5000,
+                BANNER_DURATION: 6000,
+                MAX_BANNERS: 3,
+                SERVER_URL: 'http://localhost:3001',
+            };
+
+            // ─── WALLPAPER IMAGES (no gradients, just URLs) ───
+            const WALLPAPER_URLS = [
+                'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
+                'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
+                'https://images.unsplash.com/photo-1470071459604-7b8ec44ffd5d?auto=format&fit=crop&w=900&q=80',
+                'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80',
+            ];
+
+            function getRecentAppsStorageKey() {
+                const user = STATE.sessionUser;
+                const userId = user?.id || user?.username || 'guest';
+                return `vphone_recent_apps_${userId}`;
+            }
+
+            function loadRecentApps() {
+                try {
+                    const saved = localStorage.getItem(getRecentAppsStorageKey());
+                    const parsed = saved ? JSON.parse(saved) : [];
+                    STATE.recentApps = Array.isArray(parsed)
+                        ? parsed.filter(app => app && typeof app.url === 'string' && typeof app.title === 'string').slice(0, 4)
+                        : [];
+                } catch (error) {
+                    console.warn('Could not load recently opened apps:', error);
+                    STATE.recentApps = [];
+                }
+                renderRecentApps();
+            }
+
+            function renderRecentApps() {
+                if (!DOM.recentAppsGrid || !DOM.recentAppsSection) return;
+                const query = DOM.appSearch?.value.trim().toLowerCase() || '';
+                DOM.recentAppsGrid.replaceChildren();
+
+                STATE.recentApps
+                    .filter(app => app.title.toLowerCase().includes(query))
+                    .forEach(app => {
+                        const original = Array.from(DOM.appsGrid.querySelectorAll('a.app'))
+                            .find(launcher => launcher.href === app.url);
+                        if (!original) return;
+                        const shortcut = original.cloneNode(true);
+                        shortcut.removeAttribute('id');
+                        shortcut.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+                        shortcut.querySelectorAll('.app-badge').forEach(badge => badge.remove());
+                        DOM.recentAppsGrid.append(shortcut);
+                    });
+
+                DOM.recentAppsSection.hidden = DOM.recentAppsGrid.childElementCount === 0;
+            }
+
+            function renderAppSearch() {
+                if (!DOM.appsGrid || !DOM.appSearch) return;
+                const query = DOM.appSearch.value.trim().toLowerCase();
+                const launchers = Array.from(DOM.appsGrid.querySelectorAll('a.app'))
+                    .filter(launcher => launcher.id !== 'logoutApp');
+                let visibleCount = 0;
+
+                launchers.forEach(launcher => {
+                    const title = Array.from(launcher.querySelectorAll('span'))
+                        .find(item => !item.classList.contains('app-badge'))?.textContent?.trim() || '';
+                    const visible = title.toLowerCase().includes(query);
+                    launcher.hidden = !visible;
+                    if (visible) visibleCount++;
+                });
+
+                DOM.appCount.textContent = query
+                    ? `${visibleCount} of ${launchers.length} apps`
+                    : `${launchers.length} apps`;
+                DOM.appSearchEmpty.hidden = visibleCount > 0;
+                renderRecentApps();
+            }
+
+            function recordRecentApp(url, title) {
+                if (!STATE.isLoggedIn) return;
+                STATE.recentApps = [
+                    { url, title },
+                    ...STATE.recentApps.filter(app => app.url !== url),
+                ].slice(0, 4);
+                try {
+                    localStorage.setItem(getRecentAppsStorageKey(), JSON.stringify(STATE.recentApps));
+                } catch (error) {
+                    console.warn('Could not save recently opened apps:', error);
+                }
+                renderRecentApps();
+            }
+
+            const KEYS_ALPHABET = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k',
+                'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm'
+            ];
+            const KEYS_NUMBERS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/', ':', ';', '(', '7', '&', '@',
+                '"', '.', ',', '?', '!', "'", '_'
+            ];
+
+            // ─── HELPERS ───
+            function showNotification(message, isSuccess = false) {
+                const island = DOM.dynamicIsland;
+                if (!island) return;
+                island.textContent = message;
+                island.className = 'dynamic-island ' + (isSuccess ? 'notify-success' : 'notify-error');
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => {
+                    island.className = 'dynamic-island';
+                    island.textContent = '';
+                }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            function setLoginError(msg) {
+                if (DOM.loginError) DOM.loginError.textContent = msg || '';
+            }
+
+            function getSenderName(senderId) {
+                try {
+                    const users = JSON.parse(localStorage.getItem('vphone_users') || '[]');
+                    const found = users.find(u => u.id == senderId);
+                    if (found) return found.username || found.name || 'User';
+                } catch (e) {}
+                return 'User ' + senderId;
+            }
+
+            function formatTime(value) {
+                try {
+                    return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch (e) { return ''; }
+            }
+
+            function getInitials(name) {
+                return (name || '?').charAt(0).toUpperCase();
+            }
+
+            // ─── WALLPAPER (full screen, no repeat) ───
+
+            let wallpaperTimer = null;
+            let liveWallpaperTimer = null;
+            let liveWallpaperUrls = [];
+            let currentLiveWallpaper = '';
+
+            function setWallpaperImage(url, isLiveWallpaper = false) {
+                const selectedWallpaper = window.VPhoneSettings?.getWallpaperUrl();
+                if (selectedWallpaper && !isLiveWallpaper) url = selectedWallpaper;
+                if (DOM.wallpaper) {
+                    DOM.wallpaper.style.backgroundImage = url ? `url("${url}")` : '';
+                    // ensure size, position, repeat are already set in CSS
+                }
+            }
+
+            async function applyRandomLiveWallpaper() {
+                if (!STATE.isLoggedIn || !window.VPhoneSettings?.isLiveWallpaperEnabled()) return;
+                try {
+                    const response = await fetch('/virtual-phone/user/api/live_wallpapers.php', {
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || 'Live wallpapers could not be loaded.');
+                    liveWallpaperUrls = (data.wallpapers || []).map(item => item.url).filter(Boolean);
+                    if (!liveWallpaperUrls.length) return;
+                    let nextWallpaper = liveWallpaperUrls[Math.floor(Math.random() * liveWallpaperUrls.length)];
+                    if (liveWallpaperUrls.length > 1 && nextWallpaper === currentLiveWallpaper) {
+                        nextWallpaper = liveWallpaperUrls[(liveWallpaperUrls.indexOf(nextWallpaper) + 1) % liveWallpaperUrls.length];
+                    }
+                    currentLiveWallpaper = nextWallpaper;
+                    setWallpaperImage(nextWallpaper, true);
+                } catch (error) {
+                    console.warn('Live wallpaper could not be applied:', error);
+                }
+            }
+
+            function startLiveWallpaperRotation() {
+                if (liveWallpaperTimer) clearInterval(liveWallpaperTimer);
+                if (wallpaperTimer) {
+                    clearInterval(wallpaperTimer);
+                    wallpaperTimer = null;
+                }
+                applyRandomLiveWallpaper();
+                const intervalSeconds = window.VPhoneSettings?.getLiveWallpaperInterval() || 60;
+                liveWallpaperTimer = setInterval(applyRandomLiveWallpaper, intervalSeconds * 1000);
+            }
+
+            function rotateWallpaper() {
+                if (STATE.isLoggedIn && window.VPhoneSettings?.isLiveWallpaperEnabled()) {
+                    applyRandomLiveWallpaper();
+                    return;
+                }
+                if (window.VPhoneSettings) {
+                    setWallpaperImage(window.VPhoneSettings.getWallpaperUrl());
+                    return;
+                }
+                if (STATE.isLoggedIn && STATE.sessionUser && STATE.sessionUser.profile_image) {
+                    // Use user's profile image if available
+                    setWallpaperImage(STATE.sessionUser.profile_image);
+                    return;
+                }
+                // Otherwise rotate through default images
+                setWallpaperImage(WALLPAPER_URLS[STATE.wallpaperIndex]);
+                STATE.wallpaperIndex = (STATE.wallpaperIndex + 1) % WALLPAPER_URLS.length;
+            }
+
+            function startWallpaperRotation() {
+                if (wallpaperTimer) clearInterval(wallpaperTimer);
+                if (window.VPhoneSettings?.isLiveWallpaperEnabled() && STATE.isLoggedIn) {
+                    startLiveWallpaperRotation();
+                    return;
+                }
+                if (liveWallpaperTimer) {
+                    clearInterval(liveWallpaperTimer);
+                    liveWallpaperTimer = null;
+                }
+                rotateWallpaper();
+                wallpaperTimer = setInterval(rotateWallpaper, 10000);
+            }
+
+            function updateWallpaperForUser(user) {
+                if (window.VPhoneSettings?.isLiveWallpaperEnabled()) {
+                    startLiveWallpaperRotation();
+                    return;
+                }
+                if (user && user.profile_image) {
+                    setWallpaperImage(user.profile_image);
+                    if (wallpaperTimer) { clearInterval(wallpaperTimer);
+                        wallpaperTimer = null; }
+                } else {
+                    if (!wallpaperTimer) startWallpaperRotation();
+                }
+            }
+
+            // ─── NOTIFICATION SYSTEM ───
+
+            function getNotifStorageKey() { return CONFIG.STORAGE_NOTIF_KEY; }
+
+            function loadNotifsFromStorage() {
+                try {
+                    const data = localStorage.getItem(getNotifStorageKey());
+                    if (data) {
+                        STATE.notifications = JSON.parse(data);
+                        STATE.notifCount = STATE.notifications.length;
+                        renderNotificationPanel();
+                        updateBadge();
+                        updateChatAppBadge();
+                        return true;
+                    }
+                } catch (e) {}
+                return false;
+            }
+
+            function saveNotifsToStorage() {
+                try {
+                    localStorage.setItem(getNotifStorageKey(), JSON.stringify(STATE.notifications));
+                } catch (e) {}
+            }
+
+            async function fetchNotificationsFromAPI() {
+                if (!STATE.isLoggedIn) return;
+                try {
+                    const res = await fetch(CONFIG.NOTIF_API);
+                    const data = await res.json();
+                    const newNotifs = data.notifications || [];
+                    const existingKeys = new Set(STATE.notifications.map(n => n.sender_id + '|' + n.time + '|' + (n.message ||
+                        '')));
+                    let added = 0;
+                    newNotifs.forEach(n => {
+                        const key = n.sender_id + '|' + n.time + '|' + (n.message || '');
+                        if (!existingKeys.has(key)) {
+                            STATE.notifications.push(n);
+                            existingKeys.add(key);
+                            added++;
+                            showBanner(n);
+                            window.virtualPhoneDesktop?.showNotification({
+                                title: getSenderName(n.sender_id) || 'New message',
+                                body: n.message || 'Sent a message'
+                            });
+                        }
+                    });
+                    if (added > 0) {
+                        STATE.notifCount = STATE.notifications.length;
+                        saveNotifsToStorage();
+                        renderNotificationPanel();
+                        updateBadge();
+                        updateChatAppBadge();
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch notifications:', e);
+                }
+            }
+
+            async function clearNotificationsAPI() {
+                try {
+                    await fetch(CONFIG.NOTIF_API, { method: 'DELETE' });
+                } catch (e) {}
+                STATE.notifications = [];
+                STATE.notifCount = 0;
+                saveNotifsToStorage();
+                renderNotificationPanel();
+                updateBadge();
+                updateChatAppBadge();
+                showNotification('Cleared', true);
+            }
+
+            function renderNotificationPanel() {
+                const body = DOM.notifPanelBody;
+                if (!STATE.notifications.length) {
+                    body.innerHTML =
+                        `<div class="empty-notif"><i class="fas fa-bell-slash"></i><p>No notifications yet</p></div>`;
+                    return;
+                }
+                body.innerHTML = '';
+                const sorted = [...STATE.notifications].reverse();
+                sorted.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = 'notif-item';
+                    const senderName = getSenderName(n.sender_id);
+                    div.innerHTML = `
+                        <div class="notif-sender">${senderName}</div>
+                        <div class="notif-msg">${n.message || 'Sent a message'}</div>
+                        <span class="notif-time">${n.time ? new Date(n.time).toLocaleString() : ''}</span>
+                    `;
+                    div.addEventListener('click', () => {
+                        if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                        window.location.href = '/virtual-phone/user/chat_room/vphone_chat.html?user_id=' + n
+                        .sender_id;
+                    });
+                    body.appendChild(div);
+                });
+            }
+
+            function updateBadge() {
+                const count = STATE.notifCount;
+                const dragBadge = DOM.bellBadgeDrag;
+                if (dragBadge) {
+                    if (count > 0) {
+                        dragBadge.textContent = count > 99 ? '99+' : count;
+                        dragBadge.classList.add('show');
+                    } else {
+                        dragBadge.classList.remove('show');
+                    }
+                }
+            }
+
+            // ─── UPDATE CHAT APP BADGE ───
+            function updateChatAppBadge() {
+                const badge = DOM.chatAppBadge;
+                if (!badge) return;
+                const count = STATE.notifCount;
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.add('show');
+                } else {
+                    badge.classList.remove('show');
+                }
+            }
+
+            function showBanner(notification) {
+                const container = DOM.notifSnippetContainer;
+                if (!container) return;
+                const name = getSenderName(notification.sender_id);
+                const banner = document.createElement('div');
+                banner.className = 'notif-banner';
+                banner.innerHTML = `
+                    <div class="notif-icon">${getInitials(name)}</div>
+                    <div class="notif-text">
+                        <div class="notif-sender">${name}</div>
+                        <div class="notif-msg">${notification.message || 'Sent a message'}</div>
+                    </div>
+                    <button class="notif-close"><i class="fas fa-times"></i></button>
+                `;
+                banner.addEventListener('click', (e) => {
+                    if (e.target.closest('.notif-close')) return;
+                    window.location.href = '/virtual-phone/user/chat_room/vphone_chat.html?user_id=' + notification
+                        .sender_id;
+                });
+                banner.querySelector('.notif-close').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hideBanner(banner);
+                });
+                container.appendChild(banner);
+
+                const timeout = setTimeout(() => {
+                    hideBanner(banner);
+                }, CONFIG.BANNER_DURATION);
+                STATE.bannerTimeouts.push(timeout);
+
+                while (container.children.length > CONFIG.MAX_BANNERS) {
+                    const first = container.firstChild;
+                    if (first) hideBanner(first);
+                }
+            }
+
+            function hideBanner(el) {
+                if (!el || !el.parentNode) return;
+                el.classList.add('hiding');
+                setTimeout(() => {
+                    if (el.parentNode) el.remove();
+                }, 300);
+            }
+
+            // ─── NOTIFICATION PANEL TOGGLE (guarded by login) ───
+
+            function toggleNotifPanel(forceOpen) {
+                if (!STATE.isLoggedIn) {
+                    showNotification('Please login first', false);
+                    return;
+                }
+                const panel = DOM.notifPanel;
+                const overlay = DOM.notifOverlay;
+                const isOpen = panel.classList.contains('open');
+
+                if (forceOpen === true || (forceOpen !== false && !isOpen)) {
+                    panel.classList.add('open');
+                    overlay.classList.add('show');
+                    STATE.isNotifPanelOpen = true;
+                    fetchNotificationsFromAPI();
+                } else {
+                    panel.classList.remove('open');
+                    overlay.classList.remove('show');
+                    STATE.isNotifPanelOpen = false;
+                }
+            }
+
+            // ─── SOCKET.IO (real-time notifications) ───
+
+            function connectSocket() {
+                if (!STATE.sessionUser) return;
+                if (STATE.socket) {
+                    STATE.socket.disconnect();
+                }
+                STATE.socket = io(CONFIG.SERVER_URL, { transports: ['websocket', 'polling'] });
+
+                STATE.socket.on('connect', () => {
+                    STATE.socket.emit('identify', STATE.sessionUser.id);
+                });
+
+                STATE.socket.on('new_message', (message) => {
+                    if (message.receiver_id === STATE.sessionUser.id) {
+                        const senderName = getSenderName(message.sender_id);
+                        addLocalNotification(message.sender_id, message.message || 'Sent a message');
+                        showBanner({ sender_id: message.sender_id, message: message.message || 'Sent a message',
+                            time: new Date().toISOString() });
+                        STATE.notifCount = STATE.notifications.length;
+                        saveNotifsToStorage();
+                        renderNotificationPanel();
+                        updateBadge();
+                        updateChatAppBadge();
+                        showNotification(`${senderName}: ${message.message || '📎 Media'}`, 'info');
+                    }
+                });
+
+                STATE.socket.on('disconnect', () => {});
+                STATE.socket.on('connect_error', () => {});
+            }
+
+            function addLocalNotification(senderId, messageText) {
+                const entry = {
+                    sender_id: senderId,
+                    message: messageText || 'Sent a message',
+                    time: new Date().toISOString()
+                };
+                STATE.notifications.push(entry);
+                STATE.notifCount = STATE.notifications.length;
+                saveNotifsToStorage();
+                renderNotificationPanel();
+                updateBadge();
+                updateChatAppBadge();
+                try {
+                    fetch(CONFIG.NOTIF_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: STATE.sessionUser.id,
+                            sender_id: senderId,
+                            message: messageText || 'Sent a message'
+                        })
+                    }).catch(() => {});
+                } catch (e) {}
+            }
+
+            // ─── DRAGGABLE BELL ───
+
+            function initDraggableBell() {
+                const bell = DOM.draggableBell;
+                if (!bell) return;
+
+                const bellSize = 38;
+
+                function constrainPosition(x, y) {
+                    const screenWidth = DOM.screen.clientWidth;
+                    const screenHeight = DOM.screen.clientHeight;
+                    const margin = 4;
+                    const maxX = screenWidth - bellSize - margin;
+                    const maxY = screenHeight - bellSize - margin;
+                    return {
+                        x: Math.max(margin, Math.min(x, maxX)),
+                        y: Math.max(margin, Math.min(y, maxY))
+                    };
+                }
+
+                function setBellPosition(x, y, animate) {
+                    const pos = constrainPosition(x, y);
+                    STATE.bellPos.x = pos.x;
+                    STATE.bellPos.y = pos.y;
+                    if (animate) {
+                        bell.style.transition = 'left 0.15s ease, top 0.15s ease';
+                    } else {
+                        bell.style.transition = 'none';
+                    }
+                    bell.style.left = pos.x + 'px';
+                    bell.style.top = pos.y + 'px';
+                    if (animate) {
+                        setTimeout(() => { bell.style.transition = ''; }, 200);
+                    }
+                }
+
+                function setInitialBellPosition() {
+                    const screenWidth = DOM.screen.clientWidth;
+                    const screenHeight = DOM.screen.clientHeight;
+                    let x = screenWidth - bellSize - 12;
+                    let y = 52;
+                    const statusIcons = document.querySelector('.status .icons');
+                    if (statusIcons) {
+                        const rect = statusIcons.getBoundingClientRect();
+                        const screenRect = DOM.screen.getBoundingClientRect();
+                        x = rect.right - screenRect.left - bellSize - 4;
+                        y = rect.top - screenRect.top + 4;
+                    }
+                    const pos = constrainPosition(x, y);
+                    setBellPosition(pos.x, pos.y, false);
+                }
+
+                function showBell() {
+                    bell.style.display = 'flex';
+                    STATE.bellVisible = true;
+                    setInitialBellPosition();
+                }
+
+                function hideBell() {
+                    bell.style.display = 'none';
+                    STATE.bellVisible = false;
+                }
+
+                let isDragging = false;
+                let dragStartX = 0,
+                    dragStartY = 0;
+                let startPosX = 0,
+                    startPosY = 0;
+
+                function onDragStart(e) {
+                    if (e.button !== undefined && e.button !== 0) return;
+                    e.preventDefault();
+
+                    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+                    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+                    const rect = bell.getBoundingClientRect();
+                    dragStartX = clientX - rect.left;
+                    dragStartY = clientY - rect.top;
+                    startPosX = STATE.bellPos.x;
+                    startPosY = STATE.bellPos.y;
+                    isDragging = true;
+                    STATE.isDraggingBell = true;
+                    bell.style.cursor = 'grabbing';
+                    bell.style.transition = 'none';
+                    bell.style.transform = 'scale(0.92)';
+                }
+
+                function onDragMove(e) {
+                    if (!isDragging) return;
+                    e.preventDefault();
+
+                    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+                    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+
+                    const screenRect = DOM.screen.getBoundingClientRect();
+                    const relX = clientX - screenRect.left - dragStartX;
+                    const relY = clientY - screenRect.top - dragStartY;
+
+                    const pos = constrainPosition(relX, relY);
+                    setBellPosition(pos.x, pos.y, false);
+                }
+
+                function onDragEnd(e) {
+                    if (isDragging) {
+                        isDragging = false;
+                        STATE.isDraggingBell = false;
+                        bell.style.cursor = 'grab';
+                        bell.style.transition = '';
+                        bell.style.transform = '';
+                        try {
+                            localStorage.setItem('vphone_bell_pos', JSON.stringify(STATE.bellPos));
+                        } catch (err) {}
+                    }
+                }
+
+                bell.addEventListener('mousedown', onDragStart);
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd);
+
+                bell.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const ev = { clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => e
+                            .preventDefault(), button: 0 };
+                    onDragStart(ev);
+                }, { passive: false });
+
+                document.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const ev = { clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => e
+                            .preventDefault() };
+                    onDragMove(ev);
+                }, { passive: false });
+
+                document.addEventListener('touchend', (e) => {
+                    onDragEnd(e);
+                }, { passive: true });
+
+                try {
+                    const saved = localStorage.getItem('vphone_bell_pos');
+                    if (saved) {
+                        const pos = JSON.parse(saved);
+                        if (pos.x !== undefined && pos.y !== undefined) {
+                            const constrained = constrainPosition(pos.x, pos.y);
+                            setBellPosition(constrained.x, constrained.y, false);
+                            bell.style.display = 'flex';
+                            STATE.bellVisible = true;
+                            return;
+                        }
+                    }
+                } catch (err) {}
+
+                // Bell is shown only when logged in – handle via login state updates
+                if (STATE.isLoggedIn) {
+                    showBell();
+                } else {
+                    hideBell();
+                }
+
+                bell.addEventListener('click', (e) => {
+                    if (!STATE.isDraggingBell) {
+                        e.stopPropagation();
+                        toggleNotifPanel();
+                    }
+                });
+
+                window.addEventListener('resize', () => {
+                    if (STATE.bellVisible) {
+                        const pos = constrainPosition(STATE.bellPos.x, STATE.bellPos.y);
+                        setBellPosition(pos.x, pos.y, true);
+                    }
+                });
+            }
+
+            // ─── UI UPDATE BASED ON LOGIN STATE ───
+
+            function updateUIForLoginState() {
+                const isLoggedIn = STATE.isLoggedIn;
+                if (DOM.ncTriggerBtn) {
+                    DOM.ncTriggerBtn.style.display = isLoggedIn ? '' : 'none';
+                }
+                if (DOM.draggableBell) {
+                    if (isLoggedIn) {
+                        DOM.draggableBell.style.display = 'flex';
+                        STATE.bellVisible = true;
+                        // reposition
+                        const screenWidth = DOM.screen.clientWidth;
+                        const bellSize = 38;
+                        let x = screenWidth - bellSize - 12;
+                        let y = 52;
+                        const statusIcons = document.querySelector('.status .icons');
+                        if (statusIcons) {
+                            const rect = statusIcons.getBoundingClientRect();
+                            const screenRect = DOM.screen.getBoundingClientRect();
+                            x = rect.right - screenRect.left - bellSize - 4;
+                            y = rect.top - screenRect.top + 4;
+                        }
+                        const pos = constrainPosition(x, y);
+                        setBellPosition(pos.x, pos.y, false);
+                    } else {
+                        DOM.draggableBell.style.display = 'none';
+                        STATE.bellVisible = false;
+                    }
+                }
+                if (!isLoggedIn && STATE.isNotifPanelOpen) {
+                    toggleNotifPanel(false);
+                }
+                // Also hide chat app badge if logged out
+                if (!isLoggedIn && DOM.chatAppBadge) {
+                    DOM.chatAppBadge.classList.remove('show');
+                }
+            }
+
+            // ─── CLOCK ───
+
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const timeStr = h + ':' + m;
+                if (DOM.clock) DOM.clock.textContent = timeStr;
+                if (DOM.time) DOM.time.textContent = timeStr;
+                if (DOM.date) {
+                    DOM.date.textContent = now.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+
+            // ─── APP DRAWER ───
+
+            function toggleApps(open) {
+                const container = DOM.appsContainer;
+                const indicator = DOM.scrollIndicator;
+                if (open === undefined) open = !STATE.isAppsOpen;
+
+                if (open) {
+                    if (!STATE.isLoggedIn) {
+                        showLoginPanel();
+                        return;
+                    }
+                    loadRecentApps();
+                    renderAppSearch();
+                    container.classList.add('open');
+                    indicator.classList.add('hidden');
+                    DOM.screen.classList.add('apps-open-active');
+                    STATE.isAppsOpen = true;
+                } else {
+                    container.classList.remove('open');
+                    indicator.classList.remove('hidden');
+                    DOM.screen.classList.remove('apps-open-active');
+                    STATE.isAppsOpen = false;
+                    if (DOM.appSearch) DOM.appSearch.value = '';
+                    renderAppSearch();
+                }
+            }
+
+            // ─── LOGIN PANEL ───
+
+            function showLoginPanel() {
+                if (STATE.isLoggedIn) return;
+                DOM.loginPanel.classList.add('show');
+                DOM.loginOverlay.classList.add('active');
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.classList.add('hidden');
+                }
+                toggleApps(false);
+                setLoginError('');
+            }
+
+            function hideLoginPanel() {
+                DOM.loginPanel.classList.remove('show');
+                DOM.loginOverlay.classList.remove('active');
+                hideKeyboard();
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.classList.remove('hidden');
+                }
+                setLoginError('');
+            }
+
+            // ─── KEYBOARD ───
+
+            function showKeyboard(inputTarget) {
+                if (!inputTarget) return;
+                STATE.activeInput = inputTarget;
+                DOM.keyboard.classList.add('active');
+                DOM.loginPanel.classList.add('keyboard-open');
+                inputTarget.focus();
+            }
+
+            function hideKeyboard() {
+                DOM.keyboard.classList.remove('active');
+                DOM.loginPanel.classList.remove('keyboard-open');
+                if (STATE.activeInput) {
+                    STATE.activeInput.blur();
+                    STATE.activeInput = null;
+                }
+            }
+
+            function handleKeyInput(char) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                switch (char) {
+                    case 'space':
+                        input.value += ' ';
+                        break;
+                    case '⌫':
+                    case 'backspace':
+                        input.value = input.value.slice(0, -1);
+                        break;
+                    case '⇧':
+                        toggleShift();
+                        return;
+                    case '123':
+                    case 'ABC':
+                        toggleMode();
+                        return;
+                    case '▼':
+                        hideKeyboard();
+                        return;
+                    default:
+                        input.value += char;
+                        if (STATE.isShifted) toggleShift();
+                        break;
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            function toggleShift() {
+                STATE.isShifted = !STATE.isShifted;
+                if (DOM.shiftBtn) {
+                    DOM.shiftBtn.style.background = STATE.isShifted ? '#ffffff' : '#acb5be';
+                }
+                DOM.allKeys.forEach(key => {
+                    const val = key.getAttribute('data-key');
+                    if (val && val.length === 1 && /^[a-zA-Z]$/.test(val)) {
+                        key.textContent = STATE.isShifted ? val.toUpperCase() : val.toLowerCase();
+                    }
+                });
+            }
+
+            function toggleMode() {
+                STATE.isNumMode = !STATE.isNumMode;
+                if (DOM.modeBtn) DOM.modeBtn.textContent = STATE.isNumMode ? 'ABC' : '123';
+                if (DOM.shiftBtn) DOM.shiftBtn.textContent = STATE.isNumMode ? '#+=' : '⇧';
+                const currentSet = STATE.isNumMode ? KEYS_NUMBERS : KEYS_ALPHABET;
+                const rows = [DOM.row1, DOM.row2, DOM.row3];
+                let idx = 0;
+                rows.forEach(row => {
+                    if (!row) return;
+                    row.querySelectorAll('.key').forEach(key => {
+                        if (key.id === 'shift-btn' || key.id === 'backspace-btn' || key.id ===
+                            'mode-btn') return;
+                        if (idx < currentSet.length) {
+                            key.textContent = currentSet[idx];
+                            key.setAttribute('data-key', currentSet[idx]);
+                            idx++;
+                        }
+                    });
+                });
+            }
+
+            function onKeyClick(e) {
+                const key = e.currentTarget;
+                if (!key || !STATE.activeInput) return;
+                if (key.id === 'close-keyboard-btn') {
+                    hideKeyboard();
+                    return;
+                }
+                const text = key.textContent.trim();
+                let char = text;
+                if (key.id === 'shift-btn') char = '⇧';
+                else if (key.id === 'backspace-btn') char = '⌫';
+                else if (key.id === 'mode-btn') char = STATE.isNumMode ? 'ABC' : '123';
+                else if (key.id === 'space-btn') char = 'space';
+                handleKeyInput(char);
+            }
+
+            function highlightPhysicalKey(el) {
+                if (!el) return;
+                el.classList.add('physical-active');
+                clearTimeout(el._phyTimer);
+                el._phyTimer = setTimeout(() => el.classList.remove('physical-active'), 100);
+            }
+
+            // ─── CONTROL CENTER ───
+
+            function toggleControlCenter(open) {
+                const cc = DOM.controlCenter;
+                if (open === undefined) open = !STATE.isControlCenterOpen;
+                if (open) {
+                    toggleNotificationCenter(false);
+                    cc.classList.add('open');
+                    STATE.isControlCenterOpen = true;
+                } else {
+                    cc.classList.remove('open');
+                    STATE.isControlCenterOpen = false;
+                }
+            }
+
+            // ─── LEGACY NOTIFICATION CENTER ───
+
+            function toggleNotificationCenter(open) {
+                const nc = DOM.notificationCenter;
+                if (open === undefined) open = !STATE.isNotificationCenterOpen;
+                if (open) {
+                    toggleControlCenter(false);
+                    nc.classList.add('open');
+                    STATE.isNotificationCenterOpen = true;
+                } else {
+                    nc.classList.remove('open');
+                    STATE.isNotificationCenterOpen = false;
+                }
+            }
+
+            // ─── LOGIN / LOGOUT ───
+
+            function toggleLogoutButton(show) {
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.classList.toggle('show', show);
+                }
+            }
+
+            function updateIndicatorText() {
+                if (DOM.indicatorText) {
+                    DOM.indicatorText.textContent = STATE.isLoggedIn ?
+                        'Swipe up to open apps' :
+                        'Login to access your apps';
+                }
+            }
+
+            async function loadInstalledPhoneApps() {
+                document.querySelectorAll('[data-catalog-app-id]').forEach(app => app.remove());
+                if (!STATE.isLoggedIn) return;
+
+                try {
+                    const response = await fetch('/virtual-phone/user/apps/api/installed.php', {
+                        credentials: 'same-origin',
+                        signal: AbortSignal.timeout(8000),
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || 'Could not load installed apps.');
+                    }
+
+                    const logoutApp = DOM.logoutApp;
+                    for (const appData of data.apps || []) {
+                        const app = document.createElement('a');
+                        app.className = 'app';
+                        app.dataset.catalogAppId = String(appData.id);
+                        app.href = '/virtual-phone/user/apps/runtime.php?id=' + encodeURIComponent(appData.id);
+
+                        const icon = document.createElement('div');
+                        icon.className = 'icon';
+                        const image = document.createElement('img');
+                        image.className = 'installed-app-icon';
+                        image.src = appData.icon_path;
+                        image.alt = '';
+                        icon.appendChild(image);
+
+                        const name = document.createElement('span');
+                        name.textContent = appData.name;
+                        app.append(icon, name);
+                        DOM.appsGrid.insertBefore(app, logoutApp);
+                    }
+                } catch (error) {
+                    console.error('Could not load installed apps:', error);
+                    showNotification('Installed apps could not be loaded: ' + error.message, false);
+                }
+            }
+
+            function activatePhoneSession(user, announce = true) {
+                STATE.isLoggedIn = true;
+                STATE.sessionUser = user;
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+                window.VPhoneSettings?.apply();
+                if (announce) showNotification('✓ Welcome, ' + user.username + '!', true);
+                hideLoginPanel();
+                toggleLogoutButton(true);
+                updateIndicatorText();
+                updateWallpaperForUser(user);
+                toggleApps(false);
+                toggleControlCenter(false);
+                toggleNotificationCenter(false);
+
+                loadNotifsFromStorage();
+                fetchNotificationsFromAPI();
+                loadInstalledPhoneApps();
+                grantDailyIconBonus(user);
+                updateUIForLoginState();
+                startPhoneActivity('Phone Home');
+
+                if (window._notifPoll) clearInterval(window._notifPoll);
+                window._notifPoll = setInterval(fetchNotificationsFromAPI, CONFIG.POLL_INTERVAL);
+                connectSocket();
+            }
+
+            function onLoginSuccess(user) {
+                activatePhoneSession(user);
+            }
+
+            function recordIconRewardNotification(category, title, message) {
+                const identity = STATE.sessionUser?.id || STATE.sessionUser?.username;
+                if (!identity) return true;
+                const key = 'vphone_icon_rewards_notifications_' + encodeURIComponent(String(identity));
+                try {
+                    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+                    if (saved.preferences?.[category] === false) return false;
+                    const history = Array.isArray(saved.history) ? saved.history : [];
+                    history.unshift({
+                        category,
+                        title,
+                        message,
+                        created_at: new Date().toISOString()
+                    });
+                    localStorage.setItem(key, JSON.stringify({
+                        preferences: saved.preferences || { daily: true, activity: true, purchase: true },
+                        history: history.slice(0, 30)
+                    }));
+                } catch (error) {
+                    console.error('Could not save an Icon Rewards notification:', error);
+                }
+                return true;
+            }
+
+            async function grantDailyIconBonus(user) {
+                if (user?.offlineDemo) return;
+                try {
+                    const response = await fetch('/virtual-phone/user/api/icon_rewards.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'login_bonus' }),
+                        signal: AbortSignal.timeout(CONFIG.LOGIN_TIMEOUT),
+                    });
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || 'The daily Icon bonus could not be added.');
+                    }
+                    if (result.awarded > 0) {
+                        const showRewardAlert = recordIconRewardNotification(
+                            'daily',
+                            'Daily sign-in bonus',
+                            '+' + result.awarded + ' Icons added to your balance.'
+                        );
+                        if (showRewardAlert) {
+                            showNotification('Daily reward: +' + result.awarded + ' Icons.', true);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Virtual Phone daily Icon bonus failed:', error);
+                    showNotification('Icon Rewards could not add today’s sign-in bonus. Open Icon Rewards to retry.', false);
+                }
+            }
+
+            function setAccountMode(mode) {
+                STATE.accountMode = mode === 'register' ? 'register' : 'login';
+                const registering = STATE.accountMode === 'register';
+                DOM.loginPanel.querySelector('h2').textContent = registering ? 'Create your account' : 'Welcome';
+                DOM.loginPanel.querySelector(':scope > p').textContent = registering
+                    ? 'Choose a username and password for your Virtual Phone'
+                    : 'Sign in to access your Virtual Phone';
+                DOM.confirmPasswordInput.hidden = !registering;
+                DOM.confirmPasswordInput.required = registering;
+                DOM.confirmPasswordInput.value = '';
+                DOM.passwordInput.value = '';
+                DOM.usernameInput.value = '';
+                DOM.usernameInput.hidden = false;
+                DOM.usernameInput.required = true;
+                DOM.usernameInput.placeholder = registering ? 'Choose a username' : 'Username';
+                DOM.passwordInput.placeholder = registering ? 'Create a password (6+ characters)' : 'Password';
+                DOM.btnText.textContent = registering ? 'Create account' : 'Login';
+                DOM.signupBtn.textContent = registering ? 'Already have an account? Login' : 'Create Account';
+                setLoginError('');
+                showKeyboard(DOM.usernameInput);
+            }
+
+            async function handleRegister() {
+                if (STATE.isLoginPending) return;
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                const confirmPassword = DOM.confirmPasswordInput.value;
+                setLoginError('');
+
+                if (username.length < 3 || username.length > 50) {
+                    setLoginError('⚠ Choose a username between 3 and 50 characters.');
+                    showKeyboard(DOM.usernameInput);
+                    return;
+                }
+                if (password.length < 6 || password.length > 72) {
+                    setLoginError('⚠ Your password must be between 6 and 72 characters.');
+                    showKeyboard(DOM.passwordInput);
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    setLoginError('⚠ The passwords do not match.');
+                    showKeyboard(DOM.confirmPasswordInput);
+                    return;
+                }
+
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Creating account…';
+                DOM.loginSpinner.style.display = 'inline-block';
+                try {
+                    const response = await fetch('/virtual-phone/user/api/register_api.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ username, password, confirm_password: confirmPassword }),
+                        signal: AbortSignal.timeout(CONFIG.LOGIN_TIMEOUT),
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success || !data.user) {
+                        throw new Error(data.message || 'Your account could not be created.');
+                    }
+                    STATE.accountMode = 'login';
+                    DOM.confirmPasswordInput.hidden = true;
+                    DOM.confirmPasswordInput.required = false;
+                    onLoginSuccess(data.user);
+                    showNotification('✓ Your Virtual Phone account is ready.', true);
+                } catch (error) {
+                    setLoginError('⚠ ' + error.message);
+                } finally {
+                    STATE.isLoginPending = false;
+                    DOM.loginBtn.disabled = false;
+                    DOM.loginSpinner.style.display = 'none';
+                    if (!STATE.isLoggedIn) DOM.btnText.textContent = STATE.accountMode === 'register' ? 'Create account' : 'Login';
+                }
+            }
+
+            async function handleLogin(e) {
+                e.preventDefault();
+                if (STATE.googleAuthMode) {
+                    await handleGoogleAuthSubmit();
+                    return;
+                }
+                if (STATE.accountMode === 'register') {
+                    await handleRegister();
+                    return;
+                }
+                if (STATE.isLoginPending) return;
+
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                setLoginError('');
+
+                if (!username || !password) {
+                    setLoginError('⚠ Please enter username and password.');
+                    return;
+                }
+
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Wait...';
+                DOM.loginSpinner.style.display = 'inline-block';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    formData.append('password', password);
+
+                    const response = await fetch('/virtual-phone/user/api/login_api.php', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                        signal: AbortSignal.timeout(CONFIG.LOGIN_TIMEOUT),
+                    });
+
+                    const text = await response.text();
+                    let data;
+                    try { data = JSON.parse(text); } catch (_) { data = null; }
+
+                    if (response.ok && data && data.success && data.user) {
+                        onLoginSuccess(data.user);
+                        return;
+                    }
+
+                    if (username === CONFIG.DEMO_USERNAME && password === CONFIG.DEMO_PASSWORD) {
+                        const demoUser = {
+                            id: 1,
+                            username: username,
+                            profile_image: null,
+                            offlineDemo: true,
+                        };
+                        onLoginSuccess(demoUser);
+                        return;
+                    }
+
+                    const msg = data && data.message ? data.message : 'Invalid credentials.';
+                    setLoginError('⚠ ' + msg);
+                    showNotification('Login failed: ' + msg, false);
+
+                } catch (err) {
+                    if (username === CONFIG.DEMO_USERNAME && password === CONFIG.DEMO_PASSWORD) {
+                        const demoUser = {
+                            id: 1,
+                            username: username,
+                            profile_image: null,
+                            offlineDemo: true,
+                        };
+                        onLoginSuccess(demoUser);
+                        showNotification('✓ Offline login successful (demo)', true);
+                        return;
+                    }
+                    setLoginError('⚠ Connection error. Please try again.');
+                    showNotification('⚠ Login failed. Check your connection.', false);
+                } finally {
+                    STATE.isLoginPending = false;
+                    DOM.loginBtn.disabled = false;
+                    DOM.btnText.textContent = 'Login';
+                    DOM.loginSpinner.style.display = 'none';
+                }
+            }
+
+            function setGoogleAuthMode(mode, email) {
+                STATE.googleAuthMode = mode;
+                STATE.googleEmail = email;
+                DOM.loginPanel.querySelector('h2').textContent = mode === 'register'
+                    ? 'Create your account'
+                    : mode === 'recover' ? 'Reset your password'
+                    : mode === 'password' ? 'Welcome back' : 'Link your account';
+                DOM.loginPanel.querySelector(':scope > p').textContent = mode === 'register'
+                    ? 'Create a Virtual Phone account for this Google email'
+                    : mode === 'recover' ? 'Choose a new phone password for this verified Google account'
+                    : mode === 'password' ? 'Enter your phone password to continue' : 'Confirm your existing phone account';
+                DOM.usernameInput.hidden = mode === 'password' || mode === 'recover';
+                DOM.usernameInput.required = mode !== 'password' && mode !== 'recover';
+                DOM.confirmPasswordInput.hidden = mode !== 'register' && mode !== 'recover';
+                DOM.confirmPasswordInput.required = mode === 'register' || mode === 'recover';
+                if (mode !== 'password' && mode !== 'recover') DOM.usernameInput.value = '';
+                DOM.passwordInput.placeholder = mode === 'password'
+                    ? 'Virtual Phone password'
+                    : mode === 'recover' ? 'New phone password'
+                    : mode === 'register' ? 'Create a phone password' : 'Existing phone password';
+                DOM.usernameInput.placeholder = mode === 'register' ? 'Choose a username' : 'Existing username';
+                DOM.googleSignIn.hidden = true;
+                DOM.googleAuthFields.hidden = false;
+                DOM.googleAuthEmail.textContent = 'Google account: ' + email;
+                DOM.signupBtn.hidden = true;
+                DOM.loginBtn.hidden = false;
+                DOM.btnText.textContent = mode === 'password'
+                    ? 'Continue'
+                    : mode === 'recover' ? 'Reset password'
+                    : mode === 'register' ? 'Create account' : 'Link and continue';
+                DOM.googleLinkExistingBtn.hidden = mode !== 'register';
+                DOM.googleRegisterInsteadBtn.hidden = mode !== 'link';
+                DOM.googleRecoverBtn.hidden = mode !== 'password';
+                DOM.passwordInput.value = '';
+                DOM.confirmPasswordInput.value = '';
+                setLoginError('');
+                showKeyboard(mode === 'password' || mode === 'recover' ? DOM.passwordInput : DOM.usernameInput);
+            }
+
+            function resetGoogleAuthMode() {
+                STATE.googleAuthMode = null;
+                STATE.googleEmail = '';
+                hideKeyboard();
+                DOM.usernameInput.hidden = false;
+                DOM.usernameInput.required = true;
+                DOM.usernameInput.placeholder = 'Username';
+                DOM.usernameInput.value = '';
+                DOM.passwordInput.value = '';
+                DOM.passwordInput.placeholder = 'Password';
+                DOM.confirmPasswordInput.hidden = true;
+                DOM.confirmPasswordInput.required = false;
+                DOM.confirmPasswordInput.value = '';
+                DOM.googleSignIn.hidden = false;
+                DOM.googleAuthFields.hidden = true;
+                DOM.signupBtn.hidden = false;
+                DOM.loginBtn.hidden = false;
+                DOM.btnText.textContent = 'Login';
+                STATE.accountMode = 'login';
+                DOM.signupBtn.textContent = 'Create Account';
+                DOM.loginPanel.querySelector('h2').textContent = 'Welcome';
+                DOM.loginPanel.querySelector(':scope > p').textContent = 'Sign in to access your Virtual Phone';
+                setLoginError('');
+            }
+
+            async function postGoogleAuth(values) {
+                const response = await fetch('/virtual-phone/user/api/google_auth.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                    body: new URLSearchParams(values),
+                    credentials: 'same-origin',
+                    signal: AbortSignal.timeout(CONFIG.LOGIN_TIMEOUT),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Google sign-in failed.');
+                }
+                return data;
+            }
+
+            async function handleGoogleAuthSubmit() {
+                if (STATE.isLoginPending) return;
+                const mode = STATE.googleAuthMode;
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                const confirmPassword = DOM.confirmPasswordInput.value;
+                if (mode !== 'password' && mode !== 'recover' && !username) {
+                    setLoginError('⚠ Enter a username to continue.');
+                    return;
+                }
+                if (!password) {
+                    setLoginError(mode === 'recover' ? '⚠ Enter a new phone password.' : '⚠ Enter your Virtual Phone password.');
+                    return;
+                }
+                if ((mode === 'register' || mode === 'recover') && (password.length < 6 || password.length > 72)) {
+                    setLoginError('⚠ Your password must be between 6 and 72 characters.');
+                    return;
+                }
+                if ((mode === 'register' || mode === 'recover') && password !== confirmPassword) {
+                    setLoginError('⚠ The passwords do not match.');
+                    showKeyboard(DOM.confirmPasswordInput);
+                    return;
+                }
+
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Wait...';
+                DOM.loginSpinner.style.display = 'inline-block';
+                setLoginError('');
+                try {
+                    const data = await postGoogleAuth({
+                        action: 'complete',
+                        mode,
+                        username,
+                        password,
+                        confirm_password: confirmPassword,
+                    });
+                    onLoginSuccess(data.user);
+                    resetGoogleAuthMode();
+                } catch (error) {
+                    setLoginError('⚠ ' + error.message);
+                } finally {
+                    STATE.isLoginPending = false;
+                    DOM.loginBtn.disabled = false;
+                    DOM.loginSpinner.style.display = 'none';
+                    if (STATE.googleAuthMode) {
+                        DOM.btnText.textContent = STATE.googleAuthMode === 'password'
+                            ? 'Continue'
+                            : STATE.googleAuthMode === 'recover' ? 'Reset password'
+                            : STATE.googleAuthMode === 'register' ? 'Create account' : 'Link and continue';
+                    }
+                }
+            }
+
+            async function initializeGoogleSignIn(expectGoogleReturn = false) {
+                try {
+                    const response = await fetch('/virtual-phone/user/api/google_auth.php?action=status', {
+                        credentials: 'same-origin',
+                        signal: AbortSignal.timeout(CONFIG.LOGIN_TIMEOUT),
+                    });
+                    const status = await response.json();
+                    if (!response.ok || !status.success) {
+                        throw new Error(status.message || 'Could not load Google sign-in.');
+                    }
+                    if (status.pending) {
+                        toggleApps(false);
+                        showLoginPanel();
+                        setGoogleAuthMode(status.mode, status.email);
+                    } else if (expectGoogleReturn) {
+                        throw new Error('Your Google sign-in expired. Please choose Continue with Google again.');
+                    }
+                } catch (error) {
+                    if (expectGoogleReturn) showLoginPanel();
+                    setLoginError('⚠ ' + error.message);
+                }
+            }
+
+            function loadCurrentUser() {
+                try {
+                    const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                    if (!stored) return null;
+                    const user = JSON.parse(stored);
+                    if (user && user.id) {
+                        return user;
+                    }
+                    return null;
+                } catch (_) { return null; }
+            }
+
+            async function checkSession() {
+                let user = loadCurrentUser();
+                if (user) {
+                    if (!user.offlineDemo) {
+                        try {
+                            const response = await fetch('/virtual-phone/user/api/check_logged_user.php', {
+                                credentials: 'same-origin',
+                                cache: 'no-store',
+                                signal: AbortSignal.timeout(CONFIG.LOGIN_TIMEOUT),
+                            });
+                            const data = await response.json();
+                            if (!response.ok || !data.success || !data.logged_in || !data.user) {
+                                throw new Error(data.message || 'Your saved sign-in has expired.');
+                            }
+                            user = data.user;
+                        } catch (error) {
+                            localStorage.removeItem(CONFIG.STORAGE_KEY);
+                            STATE.isLoggedIn = false;
+                            STATE.sessionUser = null;
+                            toggleLogoutButton(false);
+                            toggleApps(false);
+                            updateIndicatorText();
+                            updateUIForLoginState();
+                            showLoginPanel();
+                            setLoginError('⚠ Your session could not be verified. Please sign in again.');
+                            return false;
+                        }
+                    }
+
+                    activatePhoneSession(user, false);
+                    return true;
+                }
+
+                toggleLogoutButton(false);
+                showLoginPanel();
+                updateIndicatorText();
+                if (!wallpaperTimer) startWallpaperRotation();
+                updateUIForLoginState();
+                return false;
+            }
+
+            // ─── LOGOUT ───
+
+            async function logout() {
+                if (STATE.isLoggingOut) return;
+                STATE.isLoggingOut = true;
+                showNotification('⏳ Logging out...', false);
+                stopPhoneActivity();
+
+                try {
+                    await fetch('/virtual-phone/user/api/logout_api.php', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({}),
+                        signal: AbortSignal.timeout(5000),
+                    });
+                } catch (_) { /* ignore */ }
+
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+                STATE.isLoggedIn = false;
+                STATE.sessionUser = null;
+                window.VPhoneSettings?.apply();
+                document.querySelectorAll('[data-catalog-app-id]').forEach(app => app.remove());
+                STATE.isLoggingOut = false;
+
+                DOM.usernameInput.value = '';
+                DOM.passwordInput.value = '';
+                toggleLogoutButton(false);
+                toggleApps(false);
+                updateIndicatorText();
+                startWallpaperRotation();
+                updateUIForLoginState();
+
+                if (window._notifPoll) clearInterval(window._notifPoll);
+                if (STATE.socket) {
+                    STATE.socket.disconnect();
+                    STATE.socket = null;
+                }
+
+                showLoginPanel();
+                showNotification('✓ Logged out successfully.', true);
+            }
+
+            window.addEventListener('pagehide', stopPhoneActivity);
+            document.addEventListener('visibilitychange', () => {
+                if (!STATE.isLoggedIn) return;
+                if (document.visibilityState !== 'visible') {
+                    stopPhoneActivity();
+                    return;
+                }
+                const current = STATE.currentActivity || { name: 'Phone Home', path: '', icon: '' };
+                startPhoneActivity(current.name, current.path, current.icon);
+            });
+            window.addEventListener('storage', event => {
+                const userKey = window.VPhoneSettings?.userKey();
+                if (event.key === 'vphone_live_wallpaper_' + userKey || event.key === 'vphone_live_wallpaper_interval_' + userKey) {
+                    if (window.VPhoneSettings?.isLiveWallpaperEnabled() && STATE.isLoggedIn) {
+                        startLiveWallpaperRotation();
+                    } else {
+                        if (liveWallpaperTimer) clearInterval(liveWallpaperTimer);
+                        liveWallpaperTimer = null;
+                        startWallpaperRotation();
+                    }
+                }
+            });
+            document.addEventListener('vphone:preferences-changed', () => {
+                if (STATE.isLoggedIn && window.VPhoneSettings?.isLiveWallpaperEnabled()) applyRandomLiveWallpaper();
+            });
+
+            // ─── TOUCH / SWIPE ───
+
+            let touchStartY = 0;
+            let touchStartX = 0;
+            const SWIPE_THRESHOLD = 40;
+
+            function onTouchStart(e) {
+                touchStartY = e.touches[0].clientY;
+                touchStartX = e.touches[0].clientX;
+            }
+
+            function onTouchMove(e) {
+                const currentY = e.touches[0].clientY;
+                const currentX = e.touches[0].clientX;
+                const diffY = touchStartY - currentY;
+                const diffX = Math.abs(touchStartX - currentX);
+                if (diffX > 30) return;
+
+                if (diffY > SWIPE_THRESHOLD) {
+                    if (!STATE.isLoggedIn) {
+                        showLoginPanel();
+                    } else {
+                        toggleApps(true);
+                    }
+                } else if (diffY < -SWIPE_THRESHOLD) {
+                    if (STATE.isAppsOpen) {
+                        toggleApps(false);
+                    }
+                }
+            }
+
+            function onDocumentClick(e) {
+                const cc = DOM.controlCenter;
+                if (cc.classList.contains('open') && !cc.contains(e.target) && !DOM.statusBar.contains(e.target)) {
+                    toggleControlCenter(false);
+                }
+
+                const nc = DOM.notificationCenter;
+                if (nc.classList.contains('open') && !nc.contains(e.target) && !DOM.ncTriggerBtn.contains(e.target)) {
+                    toggleNotificationCenter(false);
+                }
+
+                const panel = DOM.notifPanel;
+                if (panel.classList.contains('open') && !panel.contains(e.target) && e.target.id !== 'draggableBell' && !DOM
+                    .ncTriggerBtn.contains(e.target)) {
+                    toggleNotifPanel(false);
+                }
+            }
+
+            // ─── CC TOGGLES ───
+
+            qsa('.cc-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const label = this.querySelector('span')?.textContent || 'Toggle';
+                    showNotification(label + ' toggled', true);
+                });
+            });
+
+            DOM.brightnessSlider?.addEventListener('input', function() {
+                const val = this.value;
+                DOM.brightnessValue.textContent = val + '%';
+                DOM.screen.style.filter = `brightness(${val/100 + 0.35})`;
+            });
+
+            DOM.volumeSlider?.addEventListener('input', function() {
+                DOM.volumeValue.textContent = this.value + '%';
+            });
+
+            function closePhoneApp() {
+                const overlay = document.getElementById('phoneAppOverlay');
+                const frame = document.getElementById('phoneAppFrame');
+                if (!overlay || !frame) return;
+                overlay.classList.remove('open');
+                overlay.setAttribute('aria-hidden', 'true');
+                frame.src = 'about:blank';
+                startPhoneActivity('Phone Home');
+            }
+
+            function openPhoneApp(path, title, icon = '') {
+                const overlay = document.getElementById('phoneAppOverlay');
+                const frame = document.getElementById('phoneAppFrame');
+                const titleElement = document.getElementById('phoneAppTitle');
+                if (!overlay || !frame || !titleElement) return;
+                titleElement.textContent = title;
+                overlay.classList.add('open');
+                overlay.setAttribute('aria-hidden', 'false');
+                startPhoneActivity(title, path, icon);
+                frame.src = path + (path.includes('?') ? '&' : '?') + 'embedded=1';
+            }
+
+            function sendPhoneActivity(action = 'heartbeat', activity = null, keepalive = false) {
+                if (!STATE.sessionUser?.id) return Promise.resolve();
+                if (action !== 'stop' && document.visibilityState !== 'visible') return Promise.resolve();
+                const current = activity || STATE.currentActivity || { name: 'Phone Home', path: '', icon: '' };
+                return fetch('/virtual-phone/user/api/app_activity.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    keepalive,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action,
+                        app_name: current.name,
+                        app_path: current.path,
+                        app_icon: current.icon,
+                    }),
+                }).catch(() => {});
+            }
+
+            function startPhoneActivity(name, path = '', icon = '') {
+                STATE.currentActivity = { name, path, icon };
+                sendPhoneActivity();
+                if (STATE.activityTimer) clearInterval(STATE.activityTimer);
+                STATE.activityTimer = setInterval(() => sendPhoneActivity(), 20000);
+            }
+
+            function stopPhoneActivity() {
+                if (STATE.activityTimer) clearInterval(STATE.activityTimer);
+                STATE.activityTimer = null;
+                sendPhoneActivity('stop', null, true);
+            }
+
+            // ─── INIT ───
+
+            async function init() {
+                updateClock();
+                setInterval(updateClock, CONFIG.CLOCK_INTERVAL);
+                const url = new URL(window.location.href);
+                const googleReturn = url.searchParams.get('google');
+                if (googleReturn) {
+                    url.searchParams.delete('google');
+                    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+                }
+                if (googleReturn === 'continue') {
+                    localStorage.removeItem(CONFIG.STORAGE_KEY);
+                    STATE.isLoggedIn = false;
+                    STATE.sessionUser = null;
+                }
+                initializeGoogleSignIn(googleReturn === 'continue');
+                showLoginPanel();
+
+                startWallpaperRotation();
+
+                document.addEventListener('touchstart', onTouchStart, { passive: true });
+                document.addEventListener('touchmove', onTouchMove, { passive: true });
+                document.addEventListener('click', onDocumentClick);
+
+                DOM.appSearch?.addEventListener('input', renderAppSearch);
+
+                DOM.appsContainer?.addEventListener('click', async function(e) {
+                    const launcher = e.target.closest('a.app');
+                    if (!launcher || launcher.id === 'logoutApp') return;
+                    const appUrl = new URL(launcher.href, window.location.href);
+                    const path = appUrl.pathname + appUrl.search;
+                    const label = Array.from(launcher.querySelectorAll('span'))
+                        .find(item => !item.classList.contains('app-badge'))?.textContent?.trim();
+                    const title = label || launcher.getAttribute('aria-label') || 'Virtual Phone app';
+                    const icon = launcher.querySelector('.icon img')?.getAttribute('src') || '';
+                    const embeddedPaths = new Set([
+                        '/virtual-phone/user/apps/play_store.html',
+                        '/virtual-phone/user/icon_rewards/index.php',
+                        '/virtual-phone/user/apps/app_manager.html',
+                        '/virtual-phone/user/google_apps/drive.html',
+                        '/virtual-phone/user/google_apps/photos.html',
+                        '/virtual-phone/user/google_apps/contacts.html',
+                        '/virtual-phone/user/music/music.html',
+                        '/virtual-phone/user/settings/settings.html',
+                        '/virtual-phone/user/messages/messages.html',
+                        '/virtual-phone/user/browser/browser.html'
+                    ]);
+                    const shouldEmbed = embeddedPaths.has(appUrl.pathname);
+                    const appLock = window.VPhoneAppLock;
+                    const isLocked = Boolean(appLock?.hasLock(launcher.href));
+                    if (!shouldEmbed && !isLocked) {
+                        recordRecentApp(launcher.href, title);
+                        startPhoneActivity(title, path, icon);
+                        sendPhoneActivity('heartbeat', { name: title, path, icon }, true);
+                        return;
+                    }
+
+                    e.preventDefault();
+                    if (isLocked) {
+                        const allowed = await appLock.requestUnlock(launcher.href);
+                        if (!allowed) return;
+                    }
+                    recordRecentApp(launcher.href, title);
+                    startPhoneActivity(title, path, icon);
+                    await sendPhoneActivity('heartbeat', { name: title, path, icon }, true);
+                    if (shouldEmbed) openPhoneApp(path, title, icon);
+                    else window.location.assign(launcher.href);
+                });
+
+                document.getElementById('phoneAppBackBtn')?.addEventListener('click', closePhoneApp);
+                document.getElementById('phoneAppHomeBtn')?.addEventListener('click', closePhoneApp);
+                window.addEventListener('message', function(event) {
+                    if (event.origin === window.location.origin && event.data?.type === 'vphone:close-app') {
+                        closePhoneApp();
+                    }
+                });
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && document.getElementById('phoneAppOverlay')?.classList.contains('open')) {
+                        closePhoneApp();
+                    }
+                });
+
+                DOM.scrollIndicator?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) {
+                        showLoginPanel();
+                    } else {
+                        toggleApps(true);
+                    }
+                });
+                DOM.scrollIndicator?.addEventListener('wheel', function(e) {
+                    if (Math.abs(e.deltaY) < 12) return;
+                    e.preventDefault();
+                    if (e.deltaY < 0 && STATE.isLoggedIn) toggleApps(true);
+                    else if (e.deltaY > 0) toggleApps(false);
+                }, { passive: false });
+
+                DOM.homeIndicator?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleApps(false);
+                    toggleControlCenter(false);
+                    toggleNotificationCenter(false);
+                    toggleNotifPanel(false);
+                });
+
+                DOM.openCCBtn?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleControlCenter(true);
+                });
+                DOM.ccHandle?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleControlCenter(false);
+                });
+
+                DOM.ncTriggerBtn?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) {
+                        showNotification('Please login first', false);
+                        return;
+                    }
+                    toggleNotifPanel();
+                });
+                DOM.ncHandle?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleNotificationCenter(false);
+                });
+                DOM.ncClearBtn?.addEventListener('click', function() {
+                    DOM.ncList.innerHTML =
+                        '<div class="nc-item"><div class="nc-item-title" style="text-align:center;color:rgba(255,255,255,0.4)">No notifications</div></div>';
+                });
+
+                DOM.loginHandle?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) {
+                        showNotification('Please login to continue', false);
+                    } else {
+                        hideLoginPanel();
+                    }
+                });
+
+                DOM.usernameInput?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) showKeyboard(this);
+                });
+                DOM.passwordInput?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) showKeyboard(this);
+                });
+                DOM.confirmPasswordInput?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) showKeyboard(this);
+                });
+
+                DOM.allKeys.forEach(key => key.addEventListener('click', onKeyClick));
+                DOM.keyboard?.addEventListener('click', function(e) { e.stopPropagation(); });
+
+                document.addEventListener('keydown', function(e) {
+                    const input = STATE.activeInput;
+                    if (!input) {
+                        const target = e.target;
+                        const isTyping = target instanceof HTMLElement && (target.isContentEditable ||
+                            ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName));
+                        if ((e.code === 'Space' || e.key === ' ') && STATE.isLoggedIn && !isTyping) {
+                            e.preventDefault();
+                            toggleApps();
+                        }
+                        return;
+                    }
+                    const key = e.key;
+                    if (key === 'Backspace') { handleKeyInput('⌫');
+                        e.preventDefault();
+                        highlightPhysicalKey(DOM.backspaceBtn); return; }
+                    if (key === ' ') { handleKeyInput('space');
+                        e.preventDefault();
+                        highlightPhysicalKey(DOM.spaceBtn); return; }
+                    if (key === 'Shift') { toggleShift();
+                        e.preventDefault();
+                        highlightPhysicalKey(DOM.shiftBtn); return; }
+                    if (key === 'Enter') {
+                        if (input === DOM.usernameInput) {
+                            DOM.passwordInput.focus();
+                            showKeyboard(DOM.passwordInput);
+                        } else if (input === DOM.passwordInput && !DOM.confirmPasswordInput.hidden) {
+                            DOM.confirmPasswordInput.focus();
+                            showKeyboard(DOM.confirmPasswordInput);
+                        } else {
+                            hideKeyboard();
+                            DOM.loginForm.dispatchEvent(new Event('submit', { bubbles: true }));
+                        }
+                        e.preventDefault();
+                        return;
+                    }
+                    if (key.length === 1) {
+                        const targetKey = Array.from(DOM.allKeys).find(k => k.getAttribute('data-key') === key
+                            .toLowerCase());
+                        if (targetKey) {
+                            const char = STATE.isShifted ? key.toUpperCase() : key.toLowerCase();
+                            handleKeyInput(char);
+                            e.preventDefault();
+                            highlightPhysicalKey(targetKey);
+                        }
+                    }
+                });
+
+                DOM.loginForm?.addEventListener('submit', handleLogin);
+                DOM.googleLinkExistingBtn?.addEventListener('click', () => {
+                    setGoogleAuthMode('link', STATE.googleEmail);
+                });
+                DOM.googleRegisterInsteadBtn?.addEventListener('click', () => {
+                    setGoogleAuthMode('register', STATE.googleEmail);
+                });
+                DOM.googleRecoverBtn?.addEventListener('click', () => {
+                    setGoogleAuthMode('recover', STATE.googleEmail);
+                });
+                DOM.googleCancelBtn?.addEventListener('click', resetGoogleAuthMode);
+                DOM.googleStartBtn?.addEventListener('click', function() {
+                    window.location.href = '/virtual-phone/user/api/google_auth.php?action=authorize';
+                });
+
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        toggleApps(false);
+                        logout();
+                    });
+                }
+
+                DOM.signupBtn?.addEventListener('click', function() {
+                    setAccountMode(STATE.accountMode === 'register' ? 'login' : 'register');
+                });
+
+                DOM.clearNotifBtn?.addEventListener('click', async () => {
+                    const ok = confirm('Clear all notifications?');
+                    if (ok) {
+                        await clearNotificationsAPI();
+                    }
+                });
+
+                DOM.panelHandle?.addEventListener('click', () => {
+                    if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                });
+                DOM.notifOverlay?.addEventListener('click', () => {
+                    if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                });
+
+                initDraggableBell();
+
+                window.addEventListener('online', () => showNotification('📶 Back online.', true));
+                window.addEventListener('offline', () => showNotification('📡 Disconnected.', false));
+
+                if (!STATE.isLoggedIn) {
+                    DOM.loginOverlay.classList.add('active');
+                }
+
+                await checkSession();
+            }
+
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted && STATE.isLoggedIn) {
+                    loadInstalledPhoneApps();
+                }
+            });
+
+            // Expose helper for draggable bell
+            function constrainPosition(x, y) {
+                const screenWidth = DOM.screen.clientWidth;
+                const screenHeight = DOM.screen.clientHeight;
+                const bellSize = 38;
+                const margin = 4;
+                const maxX = screenWidth - bellSize - margin;
+                const maxY = screenHeight - bellSize - margin;
+                return {
+                    x: Math.max(margin, Math.min(x, maxX)),
+                    y: Math.max(margin, Math.min(y, maxY))
+                };
+            }
+
+            function setBellPosition(x, y, animate) {
+                const bell = DOM.draggableBell;
+                if (!bell) return;
+                const pos = constrainPosition(x, y);
+                STATE.bellPos.x = pos.x;
+                STATE.bellPos.y = pos.y;
+                if (animate) {
+                    bell.style.transition = 'left 0.15s ease, top 0.15s ease';
+                } else {
+                    bell.style.transition = 'none';
+                }
+                bell.style.left = pos.x + 'px';
+                bell.style.top = pos.y + 'px';
+                if (animate) {
+                    setTimeout(() => { bell.style.transition = ''; }, 200);
+                }
+            }
+
+            // ─── START ───
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+</body>
+</html>

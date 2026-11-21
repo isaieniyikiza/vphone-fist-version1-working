@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f8fc">
+    <title>Google Photos | Virtual Phone</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css">
+    <link rel="stylesheet" href="/virtual-phone/user/google_apps/google_apps.css">
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <script defer src="/virtual-phone/user/google_apps/google_apps.js"></script>
+</head>
+<body data-google-app="photos">
+    <div class="google-app">
+        <header class="app-header">
+            <div class="brand-mark photos-mark" aria-hidden="true"><i class="fa-solid fa-aperture"></i></div>
+            <div class="brand-copy"><strong>Google Photos</strong><span>Memories made simple</span></div>
+            <button class="close-app" type="button" aria-label="Close app" title="Back to phone"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <section class="account-card">
+            <div class="account-status-icon"><i class="fa-brands fa-google"></i></div>
+            <div class="account-copy"><strong id="accountTitle">Connect Google</strong><span id="accountEmail">Choose photos to save on your phone</span></div>
+            <button id="accountButton" class="button button-primary" type="button">Connect</button>
+        </section>
+        <main class="app-main">
+            <div id="notice" class="notice" role="status" hidden></div>
+            <section id="appContent" hidden>
+                <div class="welcome-card photos-welcome">
+                    <span class="eyebrow">GOOGLE PHOTOS</span>
+                    <h1>Your favorite moments.</h1>
+                    <p>Choose photos in Google Photos, then bring selected images into your Virtual Phone File Manager.</p>
+                </div>
+                <button id="pickerStart" class="button button-primary picker-button" type="button"><i class="fa-solid fa-images"></i> Choose photos</button>
+                <div id="pickerStatus" class="picker-status" aria-live="polite">Your selection will stay private until you choose to import it.</div>
+                <div id="photoGrid" class="photo-grid"></div>
+            </section>
+            <section id="connectPrompt" class="empty-card">
+                <div class="empty-art photos-art"><i class="fa-solid fa-aperture"></i></div>
+                <h2>Bring your memories along</h2>
+                <p>Google's secure photo picker lets you choose exactly which images this phone can import.</p>
+                <button class="button button-primary connect-cta" type="button">Connect Google Photos</button>
+            </section>
+            <p class="privacy-note"><i class="fa-solid fa-lock"></i> Photos are only imported after you select them.</p>
+        </main>
+    </div>
+</body>
+</html>

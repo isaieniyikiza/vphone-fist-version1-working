@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Phone - Online Device Ecosystem</title>
+    <style>
+        :root {
+            --primary-yellow: #facc15;
+            --accent-yellow: #eab308;
+            --light-yellow: #fef08a;
+            --banner-bg: #fde047;
+            --bg-color: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #f1f5f9;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* --- Header / Navigation --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 8%;
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--accent-yellow);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-yellow);
+        }
+
+        /* --- Hero Banner --- */
+        .hero {
+            background-color: var(--primary-yellow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4rem 8%;
+            min-height: 520px;
+        }
+
+        .hero-text {
+            max-width: 500px;
+        }
+
+        .hero-text .subtitle {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #78350f;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .hero-text h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+        }
+
+        .btn-action {
+            display: inline-block;
+            background-color: #ffffff;
+            color: #0f172a;
+            font-weight: 700;
+            padding: 0.9rem 2.2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            background-color: #f8fafc;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Hero Image - Increased size */
+        .hero-image {
+            width: 50%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .hero-image img {
+            max-width: 100%;
+            max-height: 380px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.15));
+        }
+
+        /* --- Description Section --- */
+        .intro-section {
+            text-align: center;
+            padding: 4rem 15%;
+            background-color: #ffffff;
+        }
+
+        .intro-section h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .intro-section p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* --- Yellow Announcement Bar --- */
+        .announcement-bar {
+            background-color: var(--banner-bg);
+            text-align: center;
+            padding: 1.2rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #78350f;
+        }
+
+        /* --- Hottest Features Section --- */
+        .featured-section {
+            padding: 4rem 8%;
+            background-color: #ffffff;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        .three-column-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .feature-card-content {
+            background-color: var(--banner-bg);
+            padding: 1.25rem;
+        }
+
+        .feature-card-content h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #78350f;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-card-content p {
+            font-size: 0.85rem;
+            color: #854d0e;
+        }
+
+        /* --- Grid Section (Meet Our Devices) --- */
+        .device-grid-section {
+            padding: 2rem 8% 4rem;
+        }
+
+        .eight-item-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .grid-item {
+            background-color: var(--primary-yellow);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 180px;
+        }
+
+        .grid-item img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* --- Bottom Banner --- */
+        .preorder-banner {
+            background-color: var(--banner-bg);
+            padding: 2rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preorder-text h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #78350f;
+        }
+
+        /* --- Footer Info Section --- */
+        .footer-highlights {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding: 3rem 8%;
+            text-align: center;
+            background-color: #ffffff;
+        }
+
+        .highlight-item h4 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        /* --- Creator Profile Section --- */
+        .creator-section {
+            background-color: #f8fafc;
+            padding: 3rem 8%;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .creator-container {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .creator-photo img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-yellow);
+            box-shadow: var(--shadow);
+        }
+
+        .creator-info h3 {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .creator-info .badge {
+            display: inline-block;
+            background-color: var(--primary-yellow);
+            color: #78350f;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            margin-bottom: 0.75rem;
+        }
+
+        .creator-info p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 900px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                gap: 2rem;
+            }
+
+            .hero-image {
+                width: 80%;
+            }
+
+            .eight-item-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .footer-highlights {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .creator-container {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">📱 Virtual<span>Phone</span></a>
+        <div class="nav-right">
+            <a href="/virtual-phone/user/user_phone_dashboard.html" class="user-profile">
+                <span>My Profile</span>
+                <img src="profile.jpg" alt="Profile" class="profile-img">
+            </a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-text">
+            <span class="subtitle">THINKING OF USING A VIRTUAL PHONE?</span>
+            <h1>Virtual Phone Ecosystem</h1>
+            <a href="/virtual-phone/user/user_phone_dashboard.html" class="btn-action">Get Started</a>
+        </div>
+        <div class="hero-image">
+            <img src="vphone.png" alt="Virtual Phone">
+        </div>
+    </section>
+
+    <section class="intro-section">
+        <h2>Find a quality and right virtual phone experience effortlessly</h2>
+        <p>Run calls, play music, manage wallpapers, and test apps seamlessly across isolated, secure virtual environments straight from your browser.</p>
+    </section>
+
+    <div class="announcement-bar">
+        Virtual Phone Environment Free Access
+    </div>
+
+    <section class="featured-section">
+        <h2 class="section-title">Hottest features of the month</h2>
+        <div class="three-column-grid">
+            
+            <div class="feature-card">
+                <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80" alt="Wallpaper Screen">
+                <div class="feature-card-content">
+                    <h3>WALLPAPERS</h3>
+                    <p>Customize system screens and themes freely.</p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <img src="https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&auto=format&fit=crop&q=80" alt="Calling Screen">
+                <div class="feature-card-content">
+                    <h3>PHONE CALLING</h3>
+                    <p>Interactive dialer interface and call simulation.</p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80" alt="Music Player Screen">
+                <div class="feature-card-content">
+                    <h3>MUSIC PLAYER</h3>
+                    <p>Listen to music and manage media files directly.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="device-grid-section">
+        <h2 class="section-title">Meet Our Devices 📱</h2>
+        <div class="eight-item-grid">
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+            <div class="grid-item"><img src="vphone.png" alt="Device"></div>
+        </div>
+    </section>
+
+    <div class="preorder-banner">
+        <div class="preorder-text">
+            <h3>Like it? Start now and launch your virtual device!</h3>
+        </div>
+        <a href="/virtual-phone/user/user_phone_dashboard.html" class="btn-action">Get Started</a>
+    </div>
+
+    <div class="footer-highlights">
+        <div class="highlight-item">
+            <h4>01. HIGH QUALITY</h4>
+        </div>
+        <div class="highlight-item">
+            <h4>02. FAST DEVICES</h4>
+        </div>
+        <div class="highlight-item">
+            <h4>03. 100% SECURE</h4>
+        </div>
+        <div class="highlight-item">
+            <h4>04. ACCESSIBLE</h4>
+        </div>
+    </div>
+
+    <section class="creator-section">
+        <div class="creator-container">
+            <div class="creator-photo">
+                <img src="profile.jpg" alt="Creator Profile">
+            </div>
+            <div class="creator-info">
+                <span class="badge">Platform Creator</span>
+                <h3>Professional Programmer</h3>
+                <p>AI Engineering &amp; Software Development Expert</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Virtual Phone Ecosystem. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

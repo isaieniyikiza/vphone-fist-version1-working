@@ -1,0 +1,299 @@
+:root {
+    --vphone-accent: #4f83e5;
+    --vphone-accent-strong: #3869c8;
+    --vphone-accent-soft: #eaf1ff;
+    --vphone-page: #f3f6fc;
+    --vphone-surface: #ffffff;
+    --vphone-text: #20283a;
+    --vphone-muted: #748097;
+    --vphone-border: rgba(91, 111, 153, .16);
+    --vphone-shadow: 0 16px 42px rgba(27, 44, 80, .12);
+}
+
+html[data-vphone-theme="ocean"] {
+    --vphone-accent: #4f83e5;
+    --vphone-accent-strong: #3869c8;
+    --vphone-accent-soft: #eaf1ff;
+    --vphone-page: #f3f6fc;
+    --vphone-surface: #ffffff;
+    --vphone-text: #20283a;
+    --vphone-muted: #748097;
+    --vphone-border: rgba(91, 111, 153, .16);
+}
+
+html[data-vphone-theme="forest"] {
+    --vphone-accent: #168a68;
+    --vphone-accent-strong: #0c7052;
+    --vphone-accent-soft: #e4f6ee;
+    --vphone-page: #eef7f1;
+    --vphone-surface: #ffffff;
+    --vphone-text: #19362d;
+    --vphone-muted: #668078;
+    --vphone-border: rgba(37, 115, 86, .18);
+}
+
+html[data-vphone-theme="midnight"] {
+    --vphone-accent: #33b8ae;
+    --vphone-accent-strong: #16978f;
+    --vphone-accent-soft: #173a40;
+    --vphone-page: #10191e;
+    --vphone-surface: #1b282e;
+    --vphone-text: #f1f6f7;
+    --vphone-muted: #a4b7bc;
+    --vphone-border: rgba(172, 210, 214, .18);
+}
+
+html[data-vphone-theme="sunrise"] {
+    --vphone-accent: #e87055;
+    --vphone-accent-strong: #cb543c;
+    --vphone-accent-soft: #fff0e8;
+    --vphone-page: #fff6f0;
+    --vphone-surface: #ffffff;
+    --vphone-text: #412b2a;
+    --vphone-muted: #917774;
+    --vphone-border: rgba(174, 101, 82, .18);
+}
+
+html[data-vphone-theme="aurora"] {
+    --vphone-accent: #7862d8;
+    --vphone-accent-strong: #5b45b7;
+    --vphone-accent-soft: #eeeaff;
+    --vphone-page: #f5f2ff;
+    --vphone-surface: #ffffff;
+    --vphone-text: #2d2850;
+    --vphone-muted: #797397;
+    --vphone-border: rgba(104, 87, 165, .2);
+}
+
+html[data-vphone-theme] {
+    accent-color: var(--vphone-accent);
+    color-scheme: light;
+}
+
+html[data-vphone-theme="midnight"] {
+    color-scheme: dark;
+}
+
+html:not(.vphone-dashboard)[data-vphone-theme] body {
+    color: var(--vphone-text);
+    background-color: var(--vphone-page) !important;
+}
+
+html:not(.vphone-dashboard)[data-vphone-has-wallpaper] body {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, .76), rgba(255, 255, 255, .86)),
+        var(--vphone-wallpaper) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+}
+
+html:not(.vphone-dashboard)[data-vphone-theme="midnight"] body {
+    background-image: none !important;
+}
+
+html:not(.vphone-dashboard)[data-vphone-theme="midnight"][data-vphone-has-wallpaper] body {
+    background-image:
+        linear-gradient(rgba(12, 21, 25, .78), rgba(12, 21, 25, .88)),
+        var(--vphone-wallpaper) !important;
+}
+
+html[data-vphone-theme] :is(input, select, textarea) {
+    accent-color: var(--vphone-accent);
+}
+
+html[data-vphone-theme] :is(input, select, textarea):focus {
+    border-color: var(--vphone-accent) !important;
+    outline-color: var(--vphone-accent);
+}
+
+html[data-vphone-theme] :is(a:not(.app), .text-primary, .accent-color) {
+    color: var(--vphone-accent-strong);
+}
+
+html[data-vphone-theme] :is(header, .topbar, .navbar, .app-header, .page-header) {
+    border-color: var(--vphone-border);
+}
+
+html[data-vphone-theme="midnight"]:not(.vphone-dashboard) :is(header, .topbar, .navbar, .app-header, .page-header) {
+    background-color: var(--vphone-surface);
+    color: var(--vphone-text);
+}
+
+html[data-vphone-theme] :is(button[type="submit"], .btn-primary, .primary-btn, .submit-btn, .save-btn, .settings-primary) {
+    background-color: var(--vphone-accent) !important;
+    border-color: var(--vphone-accent) !important;
+    color: #fff !important;
+}
+
+html[data-vphone-theme] :is(.card, .panel, .modal-content, .settings-card, .settings-section, .post-card, .app-shell, .app-header, .list-card) {
+    border-color: var(--vphone-border);
+}
+
+html[data-vphone-theme="midnight"]:not(.vphone-dashboard) :is(.card, .panel, .modal-content, .settings-card, .settings-section, .post-card, .app-shell, .app-header, .list-card) {
+    background-color: var(--vphone-surface);
+    color: var(--vphone-text);
+}
+
+html.vphone-dashboard .wallpaper {
+    background-color: var(--vphone-page);
+    background-image: linear-gradient(145deg, #173d70, #659bd2 56%, #bdd9ed);
+}
+
+html.vphone-dashboard[data-vphone-theme="forest"] .wallpaper {
+    background-image: linear-gradient(145deg, #123b32, #31856c 55%, #c4dfc8);
+}
+
+html.vphone-dashboard[data-vphone-theme="midnight"] .wallpaper {
+    background-image: linear-gradient(145deg, #10151d, #123b46 58%, #315c70);
+}
+
+html.vphone-dashboard[data-vphone-theme="sunrise"] .wallpaper {
+    background-image: linear-gradient(145deg, #703e50, #e98f75 55%, #f7d8b6);
+}
+
+html.vphone-dashboard .apps-container {
+    border-color: var(--vphone-border);
+}
+
+html.vphone-dashboard[data-vphone-theme="forest"] .apps-container {
+    background: rgba(13, 47, 37, .88);
+}
+
+html.vphone-dashboard[data-vphone-theme="midnight"] .apps-container {
+    background: rgba(8, 17, 22, .9);
+}
+
+html.vphone-dashboard[data-vphone-theme="sunrise"] .apps-container {
+    background: rgba(77, 37, 34, .86);
+}
+
+html.vphone-dashboard[data-vphone-theme="aurora"] .wallpaper {
+    background-image: linear-gradient(145deg, #29275d, #6c64bb 55%, #c4a8e8);
+}
+
+html.vphone-dashboard[data-vphone-theme="aurora"] .apps-container {
+    background: rgba(43, 35, 83, .88);
+}
+
+html[data-vphone-layout="compact"] .apps-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 12px 4px !important;
+}
+
+html[data-vphone-layout="compact"] .apps-grid .app .icon {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+}
+
+html[data-vphone-layout="comfortable"] .apps-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px 10px !important;
+}
+
+html[data-vphone-layout="comfortable"] .apps-grid .app .icon {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+}
+
+html[data-vphone-layout="compact"] .apps-grid .app span {
+    font-size: 8px;
+}
+
+.vphone-lock-overlay {
+    position: fixed;
+    z-index: 2147483000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(10, 20, 35, .72);
+    backdrop-filter: blur(8px);
+}
+
+.screen .vphone-lock-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1600;
+    padding: 16px;
+    background: rgba(7, 16, 28, .74);
+}
+
+.screen { position: relative; }
+
+.vphone-lock-dialog {
+    width: min(390px, 100%);
+    padding: 26px;
+    border: 1px solid var(--vphone-border);
+    border-radius: 24px;
+    background: var(--vphone-surface);
+    color: var(--vphone-text);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, .28);
+    font: 15px/1.5 Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.vphone-lock-dialog h2 { margin: 0 0 5px; font-size: 21px; }
+.vphone-lock-dialog p { color: var(--vphone-muted); }
+.vphone-lock-dialog input {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 13px;
+    border: 1px solid var(--vphone-border);
+    border-radius: 12px;
+    background: var(--vphone-page);
+    color: var(--vphone-text);
+    font: inherit;
+}
+.vphone-lock-submit {
+    width: 100%;
+    min-height: 45px;
+    margin-top: 16px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--vphone-accent) !important;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.vphone-lock-submit:disabled { opacity: .6; cursor: wait; }
+.vphone-lock-cancel {
+    display: block;
+    margin: 12px auto 0;
+    border: 0;
+    background: transparent;
+    color: var(--vphone-muted);
+    font: inherit;
+    cursor: pointer;
+}
+.vphone-lock-error { min-height: 20px; margin-bottom: 0; color: #c0394a !important; font-size: 13px; }
+.vphone-pattern-pad {
+    display: grid;
+    width: min(220px, 100%);
+    aspect-ratio: 1;
+    grid-template-columns: repeat(3, 1fr);
+    place-items: center;
+    margin: 16px auto 6px;
+    border-radius: 18px;
+    background: var(--vphone-page);
+    touch-action: manipulation;
+}
+.vphone-pattern-dot {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 4px solid var(--vphone-accent);
+    border-radius: 50%;
+    background: var(--vphone-surface);
+    cursor: pointer;
+}
+.vphone-pattern-dot.selected { background: var(--vphone-accent); box-shadow: 0 0 0 5px var(--vphone-accent-soft); }
+.vphone-pattern-reset {
+    display: block;
+    margin: 7px auto;
+    border: 0;
+    background: transparent;
+    color: var(--vphone-accent-strong);
+    cursor: pointer;
+}

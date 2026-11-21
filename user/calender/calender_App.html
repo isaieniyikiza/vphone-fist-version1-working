@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Virtual Phone – Calendar</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+        }
+     .phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+        .phone::before {
+            content: "";
+            position: absolute;
+            left: -5px;
+            top: 130px;
+            width: 5px;
+            height: 50px;
+            background: #2c2c2c;
+            border-radius: 5px 0 0 5px;
+            box-shadow: inset -1px 0 2px rgba(255,255,255,0.2);
+        }
+        .phone-power-btn {
+            position: absolute;
+            right: -5px;
+            top: 170px;
+            width: 5px;
+            height: 75px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 1px 0 2px rgba(255,255,255,0.2);
+        }
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        .screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 32px;
+            pointer-events: none;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+        .dynamic-island {
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 25px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .dynamic-island.notify-error { width: 220px; height: 38px; background: #ff3b30; border-radius: 19px; box-shadow: 0 4px 15px rgba(255,59,48,0.4); padding: 0 15px; pointer-events: auto; }
+        .dynamic-island.notify-success { width: 220px; height: 38px; background: #34c759; border-radius: 19px; box-shadow: 0 4px 15px rgba(52,199,89,0.4); padding: 0 15px; pointer-events: auto; }
+        .status {
+            position: absolute;
+            top: 14px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 90;
+            pointer-events: none;
+        }
+        .status .icons i { margin-left: 5px; font-size: 10px; }
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #3b82f6, #1d4ed8, #0f172a);
+            background-size: cover;
+            background-position: center;
+            animation: bgMove 12s infinite alternate ease-in-out;
+            z-index: 1;
+            transition: background 1s ease, transform 1s ease;
+        }
+        @keyframes bgMove { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.15) rotate(2deg); } }
+        /* home screen */
+        .home-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .home-screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
+        .clock {
+            text-align: center;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin-top: 70px;
+        }
+        .clock h1 { font-size: 42px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+        .clock p { font-size: 12px; font-weight: 500; opacity: 0.9; margin-top: 4px; }
+        .scroll-indicator {
+            margin-top: 45px;
+            text-align: center;
+            color: rgba(255,255,255,0.85);
+            font-size: 10px;
+            font-weight: 500;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .scroll-indicator i { display: block; font-size: 14px; margin-top: 4px; }
+        @keyframes bounce { 0%,20%,50%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-6px); } 60% { transform: translateY(-3px); } }
+        .apps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+        .app { text-align: center; cursor: pointer; transition: transform 0.2s; }
+        .app:active { transform: scale(0.9); }
+        .app .icon {
+            width: 44px;
+            height: 44px;
+            margin: auto;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        }
+        .app span { display: block; margin-top: 5px; font-size: 9px; font-weight: 500; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+        .whatsapp { background: #25D366; }
+        .facebook { background: #1877F2; }
+        .camera { background: linear-gradient(45deg, #434343 0%, #000000 100%); }
+        .gallery { background: #ff9800; }
+        .settings { background: #555; }
+        .browser { background: #00BCD4; }
+        .phoneicon { background: #4CAF50; }
+        .logout-icon { background: #ff3b30; }
+        .calendar-icon { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        #logoutApp { display: none; }
+        #logoutApp.show { display: block; }
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 30px;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        /* ===== CALENDAR OVERLAY ===== */
+        .calendar-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            display: flex;
+            flex-direction: column;
+            border-radius: 32px;
+            overflow: hidden;
+            padding: 48px 12px 12px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .calendar-header .month-year { color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
+        .calendar-header .nav-btn {
+            background: rgba(255,255,255,0.06);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .calendar-header .nav-btn:active { transform: scale(0.88); background: rgba(255,255,255,0.15); }
+        .calendar-header .close-calendar { background: rgba(255,59,48,0.2); color: #ff3b30; }
+        .calendar-header .close-calendar:active { background: rgba(255,59,48,0.4); }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            padding: 8px 0 4px;
+            text-align: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            padding: 2px 0 6px;
+        }
+        .calendar-days .day-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            aspect-ratio: 1;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: background 0.15s, transform 0.15s, color 0.15s;
+            position: relative;
+        }
+        .calendar-days .day-cell:active { transform: scale(0.85); }
+        .calendar-days .day-cell.other-month { color: rgba(255,255,255,0.2); }
+        .calendar-days .day-cell.today { background: #007AFF; color: #fff; font-weight: 600; box-shadow: 0 2px 12px rgba(0,122,255,0.35); }
+        .calendar-days .day-cell.today:active { background: #0055b3; }
+        .calendar-days .day-cell.selected { background: rgba(0,122,255,0.3); color: #fff; font-weight: 600; border: 1.5px solid rgba(0,122,255,0.4); }
+        .calendar-days .day-cell.has-event::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #ff6b6b;
+        }
+        .calendar-days .day-cell.today.has-event::after { background: #fff; }
+
+        /* ===== EVENTS PANEL ===== */
+        .events-panel {
+            flex: 1;
+            margin-top: 6px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .events-panel .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+            flex-wrap: wrap;
+        }
+        .events-panel .events-header .date-label { color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500; }
+        .events-panel .events-header .date-label strong { color: #fff; }
+        .events-panel .events-header .header-actions { display: flex; gap: 6px; align-items: center; }
+        .events-panel .add-event-btn {
+            background: rgba(255,255,255,0.06);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            padding: 2px 12px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .events-panel .add-event-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.15); }
+        .event-item {
+            background: rgba(255,255,255,0.04);
+            border-radius: 10px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .event-item:hover { background: rgba(255,255,255,0.07); }
+        .event-item .event-check {
+            margin-top: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            transition: background 0.15s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+        .event-item .event-check.done { background: #34c759; border-color: #34c759; }
+        .event-item .event-details { flex: 1; color: rgba(255,255,255,0.8); font-size: 11px; line-height: 1.4; }
+        .event-item .event-details .event-title { font-weight: 500; color: #fff; }
+        .event-item .event-details .event-title.done-text { text-decoration: line-through; color: rgba(255,255,255,0.3); }
+        .event-item .event-details .event-meta { font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+        .event-item .event-details .event-meta i { margin-right: 4px; }
+        .event-item .event-delete {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.2);
+            cursor: pointer;
+            font-size: 10px;
+            padding: 2px;
+            transition: color 0.2s;
+        }
+        .event-item .event-delete:active { color: #ff3b30; }
+        .no-events { color: rgba(255,255,255,0.2); font-size: 11px; text-align: center; padding: 12px 0; }
+
+        /* Add event form */
+        .add-event-form {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            padding: 6px 4px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 10px;
+            margin-top: 4px;
+        }
+        .add-event-form.active { display: flex; }
+        .add-event-form input, .add-event-form textarea {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: #fff;
+            font-size: 11px;
+            outline: none;
+            width: 100%;
+        }
+        .add-event-form input::placeholder, .add-event-form textarea::placeholder { color: rgba(255,255,255,0.2); }
+        .add-event-form input:focus, .add-event-form textarea:focus { border-color: #007AFF; }
+        .add-event-form .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .add-event-form .form-actions button {
+            background: rgba(255,255,255,0.06);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            padding: 4px 14px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .add-event-form .form-actions button:active { transform: scale(0.92); }
+        .add-event-form .form-actions .save-event { background: #007AFF; }
+        .add-event-form .form-actions .cancel-event { background: rgba(255,255,255,0.08); }
+
+        /* History panel (modal-like overlay) */
+        .history-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 15;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(20px);
+            display: none;
+            flex-direction: column;
+            border-radius: 32px;
+            padding: 48px 16px 16px;
+            overflow-y: auto;
+        }
+        .history-overlay.active { display: flex; }
+        .history-overlay .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 12px;
+        }
+        .history-overlay .history-header h3 { color: #fff; font-weight: 600; font-size: 16px; }
+        .history-overlay .history-header .close-history {
+            background: rgba(255,59,48,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: #ff3b30;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .history-overlay .history-list .history-item {
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-left: 3px solid #34c759;
+        }
+        .history-overlay .history-list .history-item .h-title { color: #fff; font-size: 12px; font-weight: 500; }
+        .history-overlay .history-list .history-item .h-date { color: rgba(255,255,255,0.4); font-size: 10px; }
+        .history-overlay .history-empty { color: rgba(255,255,255,0.2); text-align: center; padding: 20px 0; }
+
+        /* Camera overlay (minimal) */
+        .camera-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            border-radius: 32px;
+            overflow: hidden;
+        }
+        .camera-overlay.active { display: flex; }
+        .camera-viewfinder { flex: 1; background: #111; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .camera-viewfinder video { width: 100%; height: 100%; object-fit: cover; }
+        .camera-viewfinder .placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); font-size: 14px; }
+        .camera-viewfinder .placeholder i { font-size: 48px; margin-bottom: 12px; display: block; }
+        .capture-flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; transition: opacity 0.1s; }
+        .capture-flash.active { opacity: 0.5; transition: opacity 0s; }
+        .camera-controls { position: absolute; bottom: 20px; left: 0; right: 0; display: flex; justify-content: space-around; align-items: center; padding: 0 20px; z-index: 20; }
+        .control-btn { background: rgba(255,255,255,0.12); border: none; border-radius: 50%; width: 44px; height: 44px; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); transition: background 0.2s, transform 0.15s; }
+        .control-btn:active { transform: scale(0.88); background: rgba(255,255,255,0.25); }
+        .shutter-btn { width: 64px; height: 64px; border-radius: 50%; background: transparent; border: 3px solid rgba(255,255,255,0.8); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+        .shutter-btn:active { transform: scale(0.92); }
+        .shutter-btn .inner { width: 50px; height: 50px; border-radius: 50%; background: #fff; transition: background 0.2s, transform 0.15s; }
+        .top-camera-controls { position: absolute; top: 56px; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; padding: 0 16px; pointer-events: none; }
+        .top-camera-controls .left, .top-camera-controls .right { display: flex; gap: 8px; pointer-events: auto; }
+        .top-camera-controls .top-btn { background: rgba(0,0,0,0.5); border: none; border-radius: 12px; color: #fff; padding: 6px 10px; cursor: pointer; backdrop-filter: blur(8px); font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; transition: background 0.2s, transform 0.15s; }
+        .top-camera-controls .top-btn:active { transform: scale(0.92); background: rgba(0,0,0,0.7); }
+
+        /* Login Panel */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -430px;
+            height: 420px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 45px rgba(0,0,0,.35);
+            border: 1px solid rgba(255,255,255,0.45);
+            transition: bottom 0.4s cubic-bezier(0.1,0.76,0.55,0.94);
+            padding: 18px 18px 22px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show { bottom: 0; }
+        .login-panel .handle { width: 40px; height: 5px; background: rgba(0,0,0,0.15); border-radius: 10px; margin: 0 auto 15px; cursor: pointer; }
+        .login-panel h2 { text-align: center; font-size: 20px; font-weight: 700; color: #111; }
+        .login-panel p { text-align: center; color: #666; font-size: 12px; margin-bottom: 18px; }
+        .login-panel input { width: 100%; padding: 12px 16px; border: 1.5px solid rgba(0,0,0,0.08); border-radius: 14px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 500; background: rgba(0,0,0,0.03); color: #111; }
+        .login-panel input:focus { border-color: #007AFF; background: #fff; box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+        .login-panel button { padding: 12px; border: none; border-radius: 14px; background: #007AFF; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: opacity 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .login-panel button:active { opacity: 0.9; transform: scale(0.98); }
+        .login-panel button.signup { background: #34C759; }
+        .login-panel button:disabled { opacity: 0.6; cursor: default; }
+        .spinner { animation: spin 1s linear infinite; display: none; }
+        .login-panel.keyboard-open { height: 460px; }
+
+        /* Keyboard */
+        .keyboard {
+            position: absolute;
+            bottom: -240px;
+            left: 0;
+            right: 0;
+            height: 210px;
+            background: rgba(220,224,230,0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 18px 18px 0 0;
+            padding: 8px 5px 24px;
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.2);
+            transition: bottom 0.35s cubic-bezier(0.1,0.76,0.55,0.94);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .keyboard.active { bottom: 0; }
+        .keyboard-row { display: flex; justify-content: center; gap: 5px; width: 100%; }
+        .key { background: #ffffff; color: #000; border: none; border-radius: 6px; height: 38px; flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: background 0.1s, transform 0.05s; user-select: none; }
+        .key:active, .key.physical-active { background: #abb4be !important; transform: scale(0.92); }
+        .key.special { background: #acb5be; flex: 1.35; font-size: 13px; }
+        .key.space { flex: 5.2; }
+
+        @media (max-width: 400px) {
+            .phone { width: 100vw; height: 100vh; border-radius: 0; padding: 0; }
+            .screen { border-radius: 0; }
+            .phone::before, .phone-power-btn { display: none; }
+            .calendar-overlay, .camera-overlay, .history-overlay { border-radius: 0; }
+        }
+
+        .go-dashboard-btn {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .go-dashboard-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.2); }
+        .events-panel::-webkit-scrollbar { width: 3px; }
+        .events-panel::-webkit-scrollbar-track { background: transparent; }
+        .events-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .history-overlay::-webkit-scrollbar { width: 3px; }
+        .history-overlay::-webkit-scrollbar-track { background: transparent; }
+        .history-overlay::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <div class="phone-power-btn"></div>
+    <div class="screen">
+
+        <!-- Dynamic Island & Status -->
+        <div class="dynamic-island" id="dynamicIsland"></div>
+        <div class="status">
+            <div class="time" id="time">12:00</div>
+            <div class="icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- Wallpaper -->
+        <div class="wallpaper" id="wallpaper"></div>
+
+        <!-- HOME SCREEN (hidden on load) -->
+        <div class="home-screen hidden" id="homeScreen">
+            <div class="clock">
+                <h1 id="clock">12:00</h1>
+                <p id="date">Tuesday, July 14</p>
+                <button class="go-dashboard-btn" id="goDashboardBtn">
+                    <i class="fas fa-arrow-right"></i> Go to Dashboard
+                </button>
+            </div>
+            <div class="scroll-indicator" id="scrollIndicator">
+                Swipe up or Scroll for Login
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="apps">
+                <div class="app"><div class="icon instagram"><i class="fab fa-instagram"></i></div><span>Instagram</span></div>
+                <div class="app"><div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div><span>WhatsApp</span></div>
+                <div class="app"><div class="icon facebook"><i class="fab fa-facebook-f"></i></div><span>Facebook</span></div>
+                <div class="app"><div class="icon browser"><i class="fas fa-globe"></i></div><span>Browser</span></div>
+                <div class="app"><div class="icon gallery"><i class="fas fa-image"></i></div><span>Gallery</span></div>
+                <div class="app" id="cameraApp"><div class="icon camera"><i class="fas fa-camera"></i></div><span>Camera</span></div>
+                <div class="app" id="calendarApp"><div class="icon calendar-icon"><i class="fas fa-calendar-alt"></i></div><span>Calendar</span></div>
+                <div class="app" id="settingsApp"><div class="icon settings"><i class="fas fa-cog"></i></div><span>Settings</span></div>
+                <div class="app" id="profileApp"><div class="icon phoneicon"><i class="fas fa-phone"></i></div><span>Phone</span></div>
+                <div class="app" id="logoutApp"><div class="icon logout-icon"><i class="fas fa-power-off"></i></div><span>Logout</span></div>
+            </div>
+            <div class="dock"></div>
+        </div>
+
+        <!-- CALENDAR OVERLAY (active on load) -->
+        <div class="calendar-overlay" id="calendarOverlay">
+            <div class="calendar-header">
+                <button class="nav-btn" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+                <span class="month-year" id="monthYearDisplay">July 2026</span>
+                <div style="display:flex; gap:4px;">
+                    <button class="nav-btn" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+                    <button class="nav-btn close-calendar" id="closeCalendarBtn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+
+            <!-- Events Panel -->
+            <div class="events-panel" id="eventsPanel">
+                <div class="events-header">
+                    <span class="date-label" id="selectedDateLabel">📌 <strong>No date selected</strong></span>
+                    <div class="header-actions">
+                        <button class="add-event-btn" id="historyBtn"><i class="fas fa-history"></i> History</button>
+                        <button class="add-event-btn" id="addEventBtn"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                </div>
+                <div id="eventsList">
+                    <div class="no-events">Select a date to see events</div>
+                </div>
+                <!-- Add event form (hidden) -->
+                        <div class="add-event-form" id="addEventForm">
+                    <input type="text" id="eventTitleInput" placeholder="Event title (required)" />
+                    <input type="text" id="eventTimeInput" placeholder="Time (e.g., 6:25PM - 7:30PM)" />
+                    <input type="text" id="eventLocationInput" placeholder="Location (optional)" />
+                    <textarea id="eventNotesInput" rows="2" placeholder="Notes / what you will do"></textarea>
+                    <input type="text" id="eventTagsInput" placeholder="Tags (e.g. work,study)" />
+                    <div class="form-actions">
+                        <button class="cancel-event" id="cancelEventBtn">Cancel</button>
+                        <button class="save-event" id="saveEventBtn">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORY OVERLAY -->
+        <div class="history-overlay" id="historyOverlay">
+            <div class="history-header">
+                <h3><i class="fas fa-history"></i> History (Done Tasks)</h3>
+                <button class="close-history" id="closeHistoryBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">No completed tasks yet.</div>
+            </div>
+        </div>
+
+        <!-- CAMERA OVERLAY (minimal) -->
+        <div class="camera-overlay" id="cameraOverlay">
+            <div class="camera-viewfinder" id="viewfinder">
+                <video id="video" autoplay playsinline muted></video>
+                <div class="placeholder" id="placeholder">
+                    <i class="fas fa-camera"></i>
+                    <span>Camera ready</span>
+                </div>
+            </div>
+            <div class="capture-flash" id="captureFlash"></div>
+            <div class="top-camera-controls">
+                <div class="left">
+                    <button class="top-btn" id="flashBtn"><i class="fas fa-bolt"></i> <span id="flashLabel">Auto</span></button>
+                </div>
+                <div class="right">
+                    <button class="top-btn" id="flipBtn"><i class="fas fa-sync-alt"></i></button>
+                    <button class="top-btn" id="closeCameraBtn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="camera-controls">
+                <button class="control-btn" id="galleryBtn"><i class="fas fa-images"></i></button>
+                <div class="shutter-btn" id="shutterBtn">
+                    <div class="inner" id="shutterInner"></div>
+                </div>
+                <button class="control-btn" id="switchModeBtn"><i class="fas fa-arrows-alt-h"></i></button>
+            </div>
+        </div>
+
+        <!-- LOGIN PANEL -->
+        <div id="loginPanel" class="login-panel">
+            <div class="handle"></div>
+            <h2>Welcome</h2>
+            <p>Sign in to your Virtual Phone</p>
+            <form id="loginForm" onsubmit="return false;">
+                <input type="text" id="usernameInput" placeholder="Username" inputmode="none" autocomplete="off" required>
+                <input type="password" id="passwordInput" placeholder="Password" inputmode="none" required>
+                <button type="submit" id="loginBtn">
+                    <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                    <span id="btnText">Login</span>
+                </button>
+                <button type="button" class="signup">Create Account</button>
+            </form>
+        </div>
+
+        <!-- KEYBOARD -->
+        <div id="keyboard" class="keyboard">
+            <div class="keyboard-row" id="row-1">
+                <button class="key" data-key="q">q</button>
+                <button class="key" data-key="w">w</button>
+                <button class="key" data-key="e">e</button>
+                <button class="key" data-key="r">r</button>
+                <button class="key" data-key="t">t</button>
+                <button class="key" data-key="y">y</button>
+                <button class="key" data-key="u">u</button>
+                <button class="key" data-key="i">i</button>
+                <button class="key" data-key="o">o</button>
+                <button class="key" data-key="p">p</button>
+            </div>
+            <div class="keyboard-row" id="row-2">
+                <button class="key" data-key="a">a</button>
+                <button class="key" data-key="s">s</button>
+                <button class="key" data-key="d">d</button>
+                <button class="key" data-key="f">f</button>
+                <button class="key" data-key="g">g</button>
+                <button class="key" data-key="h">h</button>
+                <button class="key" data-key="j">j</button>
+                <button class="key" data-key="k">k</button>
+                <button class="key" data-key="l">l</button>
+            </div>
+            <div class="keyboard-row" id="row-3">
+                <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                <button class="key" data-key="z">z</button>
+                <button class="key" data-key="x">x</button>
+                <button class="key" data-key="c">c</button>
+                <button class="key" data-key="v">v</button>
+                <button class="key" data-key="b">b</button>
+                <button class="key" data-key="n">n</button>
+                <button class="key" data-key="m">m</button>
+                <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key special" id="mode-btn" data-key="mode">123</button>
+                <button class="key space" id="space-btn" data-key=" ">space</button>
+                <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+            </div>
+        </div>
+
+    </div><!-- /screen -->
+</div>
+
+<script>
+/**
+ * ============================================================
+ *  VIRTUAL PHONE – Full Calendar with Backend API
+ *  - Debugged: proper API_BASE, error handling, real-time AJAX
+ * ============================================================
+ */
+(function() {
+    'use strict';
+
+    // ============================================================
+    // 1. CONFIGURATION – CHANGE THIS TO YOUR ACTUAL API PATH
+    // ============================================================
+    const API_BASE = '/virtual-phone/user/calender/api/events.php';
+
+    // ─── DOM REFS ───
+    const $ = id => document.getElementById(id);
+    const qs = (sel, ctx = document) => ctx.querySelector(sel);
+    const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+    const DOM = {
+        homeScreen: $('homeScreen'),
+        clock: $('clock'),
+        time: $('time'),
+        date: $('date'),
+        wallpaper: $('wallpaper'),
+        scrollIndicator: $('scrollIndicator'),
+        cameraApp: $('cameraApp'),
+        calendarApp: $('calendarApp'),
+        settingsApp: $('settingsApp'),
+        profileApp: $('profileApp'),
+        profileIcon: qs('#profileApp .icon'),
+        profileName: qs('#profileApp span'),
+        logoutApp: $('logoutApp'),
+        loginPanel: $('loginPanel'),
+        usernameInput: $('usernameInput'),
+        passwordInput: $('passwordInput'),
+        loginForm: $('loginForm'),
+        loginBtn: $('loginBtn'),
+        btnText: $('btnText'),
+        loginSpinner: $('loginSpinner'),
+        keyboard: $('keyboard'),
+        allKeys: qsa('.key'),
+        row1: $('row-1'),
+        row2: $('row-2'),
+        row3: $('row-3'),
+        shiftBtn: $('shift-btn'),
+        backspaceBtn: $('backspace-btn'),
+        spaceBtn: $('space-btn'),
+        modeBtn: $('mode-btn'),
+        cameraOverlay: $('cameraOverlay'),
+        video: $('video'),
+        viewfinder: $('viewfinder'),
+        placeholder: $('placeholder'),
+        captureFlash: $('captureFlash'),
+        shutterBtn: $('shutterBtn'),
+        shutterInner: $('shutterInner'),
+        flipBtn: $('flipBtn'),
+        flashBtn: $('flashBtn'),
+        flashLabel: $('flashLabel'),
+        closeCameraBtn: $('closeCameraBtn'),
+        galleryBtn: $('galleryBtn'),
+        switchModeBtn: $('switchModeBtn'),
+        dynamicIsland: $('dynamicIsland'),
+        dock: qs('.dock'),
+        goDashboardBtn: $('goDashboardBtn'),
+        // Calendar
+        calendarOverlay: $('calendarOverlay'),
+        monthYearDisplay: $('monthYearDisplay'),
+        calendarDays: $('calendarDays'),
+        prevMonthBtn: $('prevMonthBtn'),
+        nextMonthBtn: $('nextMonthBtn'),
+        closeCalendarBtn: $('closeCalendarBtn'),
+        eventsList: $('eventsList'),
+        selectedDateLabel: $('selectedDateLabel'),
+        addEventBtn: $('addEventBtn'),
+        addEventForm: $('addEventForm'),
+        eventTitleInput: $('eventTitleInput'),
+        eventTimeInput: $('eventTimeInput'),
+        eventLocationInput: $('eventLocationInput'),
+        eventNotesInput: $('eventNotesInput'),
+        eventTagsInput: $('eventTagsInput'),
+        saveEventBtn: $('saveEventBtn'),
+        cancelEventBtn: $('cancelEventBtn'),
+        historyBtn: $('historyBtn'),
+        historyOverlay: $('historyOverlay'),
+        historyList: $('historyList'),
+        closeHistoryBtn: $('closeHistoryBtn'),
+    };
+
+    // ─── STATE ───
+    const STATE = {
+        isLoggedIn: false,
+        sessionUser: null,
+        isLoginPending: false,
+        isLoggingOut: false,
+        wallpaperIndex: 0,
+        isShifted: false,
+        isNumMode: false,
+        activeInput: null,
+        stream: null,
+        facingMode: 'environment',
+        isCameraReady: false,
+        isPermissionGranted: false,
+        isSimulated: false,
+        simInterval: null,
+        // Calendar
+        currentYear: new Date().getFullYear(),
+        currentMonth: new Date().getMonth(),
+        selectedDate: new Date(),
+        today: new Date(),
+        // Events cache for current date
+        currentEvents: [],
+    };
+
+    const CONFIG = {
+        STORAGE_KEY: 'vphone_user',
+        API_ENDPOINT: '/virtual-phone/user/api/login_api.php',
+        LOGOUT_API_ENDPOINT: '/api/logout_api.php',
+        NOTIFICATION_DURATION: 3000,
+        LOGIN_TIMEOUT: 15000,
+        SWIPE_THRESHOLD: 50,
+        SCROLL_THRESHOLD: 15,
+        WALLPAPER_INTERVAL: 9000,
+        CLOCK_INTERVAL: 1000,
+        DASHBOARD_URL: '/virtual-phone/user/user_phone_dashboard.html',
+    };
+
+    const WALLPAPERS = [
+        "linear-gradient(135deg, rgba(3,37,65,0.9), rgba(10,78,120,0.9)), url('https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=900&q=80')",
+        "linear-gradient(135deg, rgba(35,23,68,0.9), rgba(98,0,234,0.8)), url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80')",
+        "linear-gradient(135deg, rgba(7,46,74,0.9), rgba(6,101,166,0.85)), url('https://images.unsplash.com/photo-1499696017737-6d9c6015f3ea?auto=format&fit=crop&w=900&q=80')"
+    ];
+
+    const KEYS_ALPHABET = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m'];
+    const KEYS_NUMBERS = ['1','2','3','4','5','6','7','8','9','0','-','/',':',';','(','7','&','@','"','.',',','?','!',"'",'_'];
+
+    // ─── HELPERS ───
+    function showNotification(message, isSuccess = false) {
+        const island = DOM.dynamicIsland;
+        if (!island) return;
+        island.textContent = message;
+        island.className = 'dynamic-island ' + (isSuccess ? 'notify-success' : 'notify-error');
+        clearTimeout(island._hideTimer);
+        island._hideTimer = setTimeout(() => {
+            island.className = 'dynamic-island';
+            island.textContent = '';
+        }, CONFIG.NOTIFICATION_DURATION);
+    }
+
+    function isOnline() { return navigator.onLine !== false; }
+
+    function safeParseJSON(text) {
+        try { return JSON.parse(text); } catch (_) { return null; }
+    }
+
+    function formatDateKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2,'0');
+        const d = String(date.getDate()).padStart(2,'0');
+        return y + '-' + m + '-' + d;
+    }
+
+    function formatDateDisplay(date) {
+        return date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+    }
+
+    // ─── API CALLS (with robust error handling) ───
+    async function apiFetchEvents(dateKey) {
+        try {
+            const resp = await fetch(`${API_BASE}?date=${encodeURIComponent(dateKey)}`);
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 100)}`);
+            }
+            const data = await resp.json();
+            // If API returns error object
+            if (data && data.success === false) {
+                throw new Error(data.error || 'Unknown API error');
+            }
+            return data; // expected array
+        } catch (e) {
+            console.error('Fetch events error:', e);
+            showNotification(`⚠ Failed to load events: ${e.message}`, false);
+            return [];
+        }
+    }
+
+    async function apiAddEvent(dateKey, title, time, location, notes = '', tags = '') {
+        try {
+            const resp = await fetch(API_BASE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: dateKey, title, time, location, notes: notes || '', tags: tags || '', done: 0 })
+            });
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 100)}`);
+            }
+            const data = await resp.json();
+            if (data && data.success === false) {
+                throw new Error(data.error || 'Unknown error');
+            }
+            return data;
+        } catch (e) {
+            console.error('Add event error:', e);
+            showNotification(`⚠ Failed to add event: ${e.message}`, false);
+            return null;
+        }
+    }
+
+    async function apiUpdateEvent(id, fields) {
+        try {
+            const resp = await fetch(API_BASE, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, ...fields })
+            });
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 100)}`);
+            }
+            const data = await resp.json();
+            if (data && data.success === false) {
+                throw new Error(data.error || 'Unknown error');
+            }
+            return data;
+        } catch (e) {
+            console.error('Update event error:', e);
+            showNotification(`⚠ Failed to update event: ${e.message}`, false);
+            return null;
+        }
+    }
+
+    async function apiDeleteEvent(id) {
+        try {
+            const resp = await fetch(API_BASE, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 100)}`);
+            }
+            const data = await resp.json();
+            if (data && data.success === false) {
+                throw new Error(data.error || 'Unknown error');
+            }
+            return data;
+        } catch (e) {
+            console.error('Delete event error:', e);
+            showNotification(`⚠ Failed to delete event: ${e.message}`, false);
+            return null;
+        }
+    }
+
+    async function apiFetchHistory() {
+        try {
+            const resp = await fetch(`${API_BASE}?history=1`);
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 100)}`);
+            }
+            const data = await resp.json();
+            if (data && data.success === false) {
+                throw new Error(data.error || 'Unknown error');
+            }
+            return data;
+        } catch (e) {
+            console.error('Fetch history error:', e);
+            showNotification(`⚠ Failed to load history: ${e.message}`, false);
+            return [];
+        }
+    }
+
+    // ─── CLOCK ───
+    function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2,'0');
+        const m = String(now.getMinutes()).padStart(2,'0');
+        const timeStr = h + ':' + m;
+        if (DOM.clock) DOM.clock.textContent = timeStr;
+        if (DOM.time) DOM.time.textContent = timeStr;
+        if (DOM.date) {
+            DOM.date.textContent = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+        }
+    }
+
+    // ─── WALLPAPER ───
+    function rotateWallpaper() {
+        const el = DOM.wallpaper;
+        if (!el) return;
+        el.style.background = WALLPAPERS[STATE.wallpaperIndex];
+        el.style.transform = 'scale(1)';
+        requestAnimationFrame(() => { el.style.transform = 'scale(1.02)'; });
+        STATE.wallpaperIndex = (STATE.wallpaperIndex + 1) % WALLPAPERS.length;
+    }
+
+    // ─── SESSION ───
+    function loadCurrentUser() {
+        try {
+            const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+            if (!stored) return null;
+            const user = JSON.parse(stored);
+            if (user && user.id) {
+                STATE.sessionUser = user;
+                STATE.isLoggedIn = true;
+                return user;
+            }
+            return null;
+        } catch (_) { return null; }
+    }
+
+    function updateProfileUI(user) {
+        if (!user) return;
+        if (DOM.profileIcon) {
+            if (user.profile_image) {
+                DOM.profileIcon.style.backgroundImage = 'url(' + user.profile_image + ')';
+                DOM.profileIcon.style.backgroundSize = 'cover';
+                DOM.profileIcon.style.backgroundPosition = 'center';
+                DOM.profileIcon.textContent = '';
+            } else {
+                DOM.profileIcon.style.backgroundImage = '';
+                DOM.profileIcon.textContent = user.username.charAt(0).toUpperCase();
+            }
+        }
+        if (DOM.profileName) DOM.profileName.textContent = user.username;
+    }
+
+    function toggleLogoutButton(show) {
+        if (DOM.logoutApp) {
+            DOM.logoutApp.classList.toggle('show', show);
+        }
+    }
+
+    function checkSession() {
+        const user = loadCurrentUser();
+        if (user) {
+            updateProfileUI(user);
+            hideLoginPanel();
+            toggleLogoutButton(true);
+            return true;
+        } else {
+            toggleLogoutButton(false);
+            return false;
+        }
+    }
+
+    function resetUIAfterLogout() {
+        localStorage.removeItem(CONFIG.STORAGE_KEY);
+        STATE.isLoggedIn = false;
+        STATE.sessionUser = null;
+        if (DOM.profileIcon) {
+            DOM.profileIcon.style.backgroundImage = '';
+            DOM.profileIcon.textContent = '👤';
+        }
+        if (DOM.profileName) DOM.profileName.textContent = 'Profile';
+        DOM.usernameInput.value = '';
+        DOM.passwordInput.value = '';
+        toggleLogoutButton(false);
+    }
+
+    // ─── LOGIN / LOGOUT API ───
+    async function apiRequest(endpoint, options = {}) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.LOGIN_TIMEOUT);
+        try {
+            const response = await fetch(endpoint, {
+                ...options,
+                signal: controller.signal,
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    ...(options.headers || {})
+                }
+            });
+            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error('HTTP_ERROR_' + response.status);
+            const text = await response.text();
+            const data = safeParseJSON(text);
+            if (data === null) throw new Error('INVALID_JSON');
+            return data;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') throw new Error('TIMEOUT');
+            if (error.message === 'INVALID_JSON') throw new Error('INVALID_JSON');
+            if (error.message.startsWith('HTTP_ERROR_')) throw new Error('HTTP_ERROR');
+            if (!isOnline()) throw new Error('OFFLINE');
+            throw new Error('CONNECTION_ERROR');
+        }
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        if (STATE.isLoginPending) return;
+        const username = DOM.usernameInput.value.trim();
+        const password = DOM.passwordInput.value;
+        if (!username || !password) {
+            showNotification('⚠ Username and password are required.', false);
+            return;
+        }
+        if (!isOnline()) {
+            showNotification('⚠ No internet connection.', false);
+            return;
+        }
+        STATE.isLoginPending = true;
+        DOM.loginBtn.disabled = true;
+        DOM.btnText.textContent = 'Signing in...';
+        DOM.loginSpinner.style.display = 'inline-block';
+        try {
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            const data = await apiRequest(CONFIG.API_ENDPOINT, {
+                method: 'POST',
+                body: formData
+            });
+            if (data.success && data.user) {
+                STATE.isLoggedIn = true;
+                STATE.sessionUser = data.user;
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data.user));
+                showNotification('✓ Welcome, ' + data.user.username + '!', true);
+                updateProfileUI(data.user);
+                hideLoginPanel();
+                toggleLogoutButton(true);
+                // Refresh events after login
+                if (STATE.selectedDate) {
+                    await loadEventsForDate(formatDateKey(STATE.selectedDate));
+                    renderEvents();
+                    renderCalendar();
+                }
+            } else {
+                showNotification('⚠ ' + (data.message || 'Login failed.'), false);
+            }
+        } catch (error) {
+            let msg = '⚠ Connection error.';
+            if (error.message === 'OFFLINE') msg = '⚠ No internet connection.';
+            else if (error.message === 'TIMEOUT') msg = '⚠ Request timed out.';
+            else if (error.message === 'HTTP_ERROR') msg = '⚠ Server error.';
+            showNotification(msg, false);
+            console.error(error);
+        } finally {
+            STATE.isLoginPending = false;
+            DOM.loginBtn.disabled = false;
+            DOM.btnText.textContent = 'Login';
+            DOM.loginSpinner.style.display = 'none';
+        }
+    }
+
+    async function logout() {
+        if (STATE.isLoggingOut) return;
+        STATE.isLoggingOut = true;
+        showNotification('⏳ Logging out...', false);
+        try {
+            const data = await apiRequest(CONFIG.LOGOUT_API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            if (data && data.success) showNotification('✓ Logged out.', true);
+            else showNotification('⚠ Logout response error.', false);
+        } catch (error) {
+            showNotification('⚠ Logout failed. Logged out locally.', false);
+            console.error(error);
+        } finally {
+            resetUIAfterLogout();
+            STATE.isLoggingOut = false;
+            showLoginPanel();
+            STATE.currentEvents = [];
+            renderEvents();
+            renderCalendar();
+        }
+    }
+
+    // ─── LOGIN PANEL TOGGLE ───
+    function showLoginPanel() {
+        if (STATE.isLoggedIn) return;
+        DOM.loginPanel.classList.add('show');
+        if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'none';
+    }
+
+    function hideLoginPanel() {
+        DOM.loginPanel.classList.remove('show');
+        hideKeyboard();
+        if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'block';
+    }
+
+    // ─── KEYBOARD ───
+    function showKeyboard(inputTarget) {
+        if (!inputTarget) return;
+        STATE.activeInput = inputTarget;
+        DOM.keyboard.classList.add('active');
+        DOM.loginPanel.classList.add('keyboard-open');
+        inputTarget.focus();
+    }
+
+    function hideKeyboard() {
+        DOM.keyboard.classList.remove('active');
+        DOM.loginPanel.classList.remove('keyboard-open');
+        if (STATE.activeInput) {
+            STATE.activeInput.blur();
+            STATE.activeInput = null;
+        }
+    }
+
+    function handleKeyInput(char) {
+        const input = STATE.activeInput;
+        if (!input) return;
+        switch (char) {
+            case 'space': input.value += ' '; break;
+            case '⌫': case 'backspace': input.value = input.value.slice(0,-1); break;
+            case '⇧': toggleShift(); return;
+            case '123': case 'ABC': toggleMode(); return;
+            case '▼': hideKeyboard(); return;
+            default: input.value += char; if (STATE.isShifted) toggleShift(); break;
+        }
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function toggleShift() {
+        STATE.isShifted = !STATE.isShifted;
+        if (DOM.shiftBtn) DOM.shiftBtn.style.background = STATE.isShifted ? '#ffffff' : '#acb5be';
+        DOM.allKeys.forEach(key => {
+            const val = key.getAttribute('data-key');
+            if (val && val.length === 1 && /^[a-zA-Z]$/.test(val)) {
+                key.textContent = STATE.isShifted ? val.toUpperCase() : val.toLowerCase();
+            }
+        });
+    }
+
+    function toggleMode() {
+        STATE.isNumMode = !STATE.isNumMode;
+        if (DOM.modeBtn) DOM.modeBtn.textContent = STATE.isNumMode ? 'ABC' : '123';
+        if (DOM.shiftBtn) DOM.shiftBtn.textContent = STATE.isNumMode ? '#+=' : '⇧';
+        const currentSet = STATE.isNumMode ? KEYS_NUMBERS : KEYS_ALPHABET;
+        const rows = [DOM.row1, DOM.row2, DOM.row3];
+        let idx = 0;
+        rows.forEach(row => {
+            if (!row) return;
+            row.querySelectorAll('.key').forEach(key => {
+                if (key.id === 'shift-btn' || key.id === 'backspace-btn' || key.id === 'mode-btn') return;
+                if (idx < currentSet.length) {
+                    key.textContent = currentSet[idx];
+                    key.setAttribute('data-key', currentSet[idx]);
+                    idx++;
+                }
+            });
+        });
+    }
+
+    // ─── CALENDAR RENDER ───
+    async function loadEventsForDate(dateKey) {
+        STATE.currentEvents = await apiFetchEvents(dateKey);
+    }
+
+    function renderCalendar() {
+        const year = STATE.currentYear;
+        const month = STATE.currentMonth;
+        const today = STATE.today;
+        const selected = STATE.selectedDate;
+
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        DOM.monthYearDisplay.textContent = monthNames[month] + ' ' + year;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const container = DOM.calendarDays;
+        container.innerHTML = '';
+
+        // Previous month
+        const prevMonthYear = month === 0 ? year-1 : year;
+        const prevMonth = month === 0 ? 11 : month-1;
+        for (let i = firstDay-1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            const cell = document.createElement('div');
+            cell.className = 'day-cell other-month';
+            cell.textContent = day;
+            cell.dataset.date = prevMonthYear + '-' + String(prevMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+            container.appendChild(cell);
+        }
+
+        // Current month
+        for (let d = 1; d <= daysInMonth; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+            cell.textContent = d;
+            const dateObj = new Date(year, month, d);
+            const dateKey = formatDateKey(dateObj);
+            cell.dataset.date = dateKey;
+
+            if (dateObj.toDateString() === today.toDateString()) cell.classList.add('today');
+            if (selected && dateObj.toDateString() === selected.toDateString()) cell.classList.add('selected');
+
+            // Check if this date has events (from currentEvents only for selected date)
+            // We'll show a dot if the date has events in our loaded data
+            if (selected && dateObj.toDateString() === selected.toDateString()) {
+                if (STATE.currentEvents && STATE.currentEvents.length > 0) {
+                    cell.classList.add('has-event');
+                }
+            }
+
+            cell.addEventListener('click', async function() {
+                const clickedDate = new Date(year, month, d);
+                STATE.selectedDate = clickedDate;
+                const dateKey = formatDateKey(clickedDate);
+                await loadEventsForDate(dateKey);
+                renderCalendar();
+                renderEvents();
+            });
+
+            container.appendChild(cell);
+        }
+
+        // Next month
+        const totalCells = firstDay + daysInMonth;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        const nextMonthYear = month === 11 ? year+1 : year;
+        const nextMonth = month === 11 ? 0 : month+1;
+        for (let d = 1; d <= remaining; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell other-month';
+            cell.textContent = d;
+            cell.dataset.date = nextMonthYear + '-' + String(nextMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            container.appendChild(cell);
+        }
+
+        // Update label
+        if (selected) {
+            DOM.selectedDateLabel.innerHTML = '📌 <strong>' + formatDateDisplay(selected) + '</strong>';
+        } else {
+            DOM.selectedDateLabel.innerHTML = '📌 <strong>No date selected</strong>';
+        }
+    }
+
+    // ─── EVENTS RENDER ───
+    function renderEvents() {
+        const container = DOM.eventsList;
+        container.innerHTML = '';
+        const events = STATE.currentEvents;
+
+        if (!events || events.length === 0) {
+            container.innerHTML = '<div class="no-events">No events for this day</div>';
+            return;
+        }
+
+        events.forEach(event => {
+            const item = document.createElement('div');
+            item.className = 'event-item';
+            // Checkbox
+            const check = document.createElement('div');
+            check.className = 'event-check' + (event.done ? ' done' : '');
+            check.innerHTML = event.done ? '<i class="fas fa-check"></i>' : '';
+            check.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                const newDone = !event.done;
+                const result = await apiUpdateEvent(event.id, { done: newDone ? 1 : 0 });
+                if (result && result.success) {
+                    event.done = newDone;
+                    renderEvents();
+                    renderCalendar();
+                    showNotification(newDone ? '✅ Task completed!' : 'Task reopened', true);
+                }
+            });
+            // Details
+            const details = document.createElement('div');
+            details.className = 'event-details';
+            const title = document.createElement('div');
+            title.className = 'event-title' + (event.done ? ' done-text' : '');
+            title.textContent = event.title;
+            details.appendChild(title);
+            if (event.time) {
+                const meta = document.createElement('div');
+                meta.className = 'event-meta';
+                meta.innerHTML = '<i class="far fa-clock"></i> ' + event.time;
+                details.appendChild(meta);
+            }
+            if (event.location) {
+                const meta = document.createElement('div');
+                meta.className = 'event-meta';
+                meta.innerHTML = '<i class="fas fa-map-pin"></i> ' + event.location;
+                details.appendChild(meta);
+            }
+            if (event.notes) {
+                const meta = document.createElement('div');
+                meta.className = 'event-meta';
+                meta.innerHTML = '<i class="fas fa-sticky-note"></i> ' + event.notes;
+                details.appendChild(meta);
+            }
+            if (event.tags) {
+                const meta = document.createElement('div');
+                meta.className = 'event-meta';
+                const tags = String(event.tags).split(',').map(t => t.trim()).filter(Boolean);
+                meta.innerHTML = '<i class="fas fa-tags"></i> ' + tags.join(' • ');
+                details.appendChild(meta);
+            }
+            // Delete
+            const del = document.createElement('button');
+            del.className = 'event-delete';
+            del.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            del.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                if (confirm('Delete this event?')) {
+                    const result = await apiDeleteEvent(event.id);
+                    if (result && result.success) {
+                        STATE.currentEvents = STATE.currentEvents.filter(e => e.id !== event.id);
+                        renderEvents();
+                        renderCalendar();
+                        showNotification('🗑 Event deleted', false);
+                    }
+                }
+            });
+
+            item.appendChild(check);
+            item.appendChild(details);
+            item.appendChild(del);
+            container.appendChild(item);
+        });
+    }
+
+    // ─── HISTORY ───
+    async function showHistory() {
+        const history = await apiFetchHistory();
+        const container = DOM.historyList;
+        container.innerHTML = '';
+        if (!history || history.length === 0) {
+            container.innerHTML = '<div class="history-empty">No completed tasks yet.</div>';
+        } else {
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="h-title">${item.title}</div>
+                    <div class="h-date">${item.event_date} ${item.time ? '· ' + item.time : ''}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        DOM.historyOverlay.classList.add('active');
+    }
+
+    function hideHistory() {
+        DOM.historyOverlay.classList.remove('active');
+    }
+
+    // ─── ADD EVENT UI ───
+    function showAddEventForm() {
+        DOM.addEventForm.classList.add('active');
+        DOM.eventTitleInput.value = '';
+        DOM.eventTimeInput.value = '';
+        DOM.eventLocationInput.value = '';
+        DOM.eventNotesInput.value = '';
+        DOM.eventTagsInput.value = '';
+        DOM.eventTitleInput.focus();
+    }
+
+    function hideAddEventForm() {
+        DOM.addEventForm.classList.remove('active');
+    }
+
+    async function saveNewEvent() {
+        const title = DOM.eventTitleInput.value.trim();
+        if (!title) {
+            showNotification('⚠ Please enter a title.', false);
+            return;
+        }
+        if (!STATE.selectedDate) {
+            showNotification('⚠ Select a date first.', false);
+            return;
+        }
+        const dateKey = formatDateKey(STATE.selectedDate);
+        const result = await apiAddEvent(
+            dateKey,
+            title,
+            DOM.eventTimeInput.value.trim(),
+            DOM.eventLocationInput.value.trim(),
+            DOM.eventNotesInput.value.trim(),
+            DOM.eventTagsInput.value.trim()
+        );
+        if (result && result.success) {
+            hideAddEventForm();
+            await loadEventsForDate(dateKey);
+            renderEvents();
+            renderCalendar();
+            showNotification('✅ Event added!', true);
+        }
+    }
+
+    // ─── CAMERA (minimal) ──────────────────────────────────────
+    function openCamera() {
+        DOM.homeScreen.classList.add('hidden');
+        DOM.cameraOverlay.classList.add('active');
+        if (!STATE.isPermissionGranted) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(stream => {
+                    STATE.isPermissionGranted = true;
+                    STATE.stream = stream;
+                    DOM.video.srcObject = stream;
+                    DOM.video.play().catch(() => {});
+                    DOM.placeholder.style.display = 'none';
+                    showNotification('📷 Camera ready', true);
+                })
+                .catch(() => {
+                    DOM.placeholder.style.display = 'flex';
+                    showNotification('No camera access', false);
+                });
+        } else if (STATE.stream) {
+            DOM.video.srcObject = STATE.stream;
+            DOM.video.play().catch(() => {});
+            DOM.placeholder.style.display = 'none';
+        }
+    }
+
+    function closeCamera() {
+        DOM.cameraOverlay.classList.remove('active');
+        DOM.homeScreen.classList.remove('hidden');
+        if (STATE.stream) {
+            STATE.stream.getTracks().forEach(t => t.stop());
+            STATE.stream = null;
+        }
+        STATE.isPermissionGranted = false;
+        DOM.placeholder.style.display = 'flex';
+        showNotification('Camera closed', false);
+    }
+
+    // ─── CLOSE CALENDAR → NAVIGATE TO DASHBOARD ───
+    function closeCalendarAndGoToDashboard() {
+        window.location.href = CONFIG.DASHBOARD_URL;
+    }
+
+    // ─── INIT ───
+    async function init() {
+        // Clock
+        updateClock();
+        setInterval(updateClock, CONFIG.CLOCK_INTERVAL);
+
+        // Wallpaper
+        rotateWallpaper();
+        setInterval(rotateWallpaper, CONFIG.WALLPAPER_INTERVAL);
+
+        // Session
+        checkSession();
+
+        // Login drawer gestures
+        let touchStartY = 0;
+        document.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchmove', function(e) {
+            const currentY = e.touches[0].clientY;
+            if (touchStartY - currentY > CONFIG.SWIPE_THRESHOLD) showLoginPanel();
+        }, { passive: true });
+        document.addEventListener('wheel', function(e) {
+            if (e.deltaY > CONFIG.SCROLL_THRESHOLD) showLoginPanel();
+        }, { passive: true });
+        document.addEventListener('click', function(e) {
+            const panel = DOM.loginPanel;
+            const indicator = DOM.scrollIndicator;
+            if (panel && !panel.contains(e.target) && indicator !== e.target) {
+                hideLoginPanel();
+            }
+        });
+        if (DOM.scrollIndicator) {
+            DOM.scrollIndicator.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showLoginPanel();
+            });
+        }
+
+        // Keyboard
+        DOM.usernameInput.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showKeyboard(this);
+        });
+        DOM.passwordInput.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showKeyboard(this);
+        });
+        DOM.allKeys.forEach(key => key.addEventListener('click', function(e) {
+            const keyEl = e.currentTarget;
+            if (!keyEl || !STATE.activeInput) return;
+            const text = keyEl.textContent.trim();
+            let char = text;
+            if (keyEl.id === 'shift-btn') char = '⇧';
+            else if (keyEl.id === 'backspace-btn') char = '⌫';
+            else if (keyEl.id === 'mode-btn') char = STATE.isNumMode ? 'ABC' : '123';
+            else if (keyEl.id === 'space-btn') char = 'space';
+            handleKeyInput(char);
+        }));
+        DOM.keyboard.addEventListener('click', function(e) { e.stopPropagation(); });
+        document.addEventListener('keydown', function(e) {
+            const input = STATE.activeInput;
+            if (!input) return;
+            const key = e.key;
+            if (key === 'Backspace') { handleKeyInput('⌫'); e.preventDefault(); highlightPhysicalKey(DOM.backspaceBtn); return; }
+            if (key === ' ') { handleKeyInput('space'); e.preventDefault(); highlightPhysicalKey(DOM.spaceBtn); return; }
+            if (key === 'Shift') { toggleShift(); e.preventDefault(); highlightPhysicalKey(DOM.shiftBtn); return; }
+            if (key === 'Enter') {
+                if (input === DOM.usernameInput) {
+                    DOM.passwordInput.focus();
+                    showKeyboard(DOM.passwordInput);
+                } else {
+                    hideKeyboard();
+                    DOM.loginForm.dispatchEvent(new Event('submit', { bubbles: true }));
+                }
+                e.preventDefault();
+                return;
+            }
+            if (key.length === 1) {
+                const targetKey = Array.from(DOM.allKeys).find(k => k.getAttribute('data-key') === key.toLowerCase());
+                if (targetKey) {
+                    const char = STATE.isShifted ? key.toUpperCase() : key.toLowerCase();
+                    handleKeyInput(char);
+                    e.preventDefault();
+                    highlightPhysicalKey(targetKey);
+                }
+            }
+        });
+
+        function highlightPhysicalKey(el) {
+            if (!el) return;
+            el.classList.add('physical-active');
+            clearTimeout(el._phyTimer);
+            el._phyTimer = setTimeout(() => el.classList.remove('physical-active'), 100);
+        }
+
+        // Login form
+        DOM.loginForm.addEventListener('submit', handleLogin);
+
+        // Logout app click
+        DOM.logoutApp.addEventListener('click', function(e) {
+            e.stopPropagation();
+            logout();
+        });
+
+        // ─── CALENDAR CONTROLS ───
+        DOM.prevMonthBtn.addEventListener('click', function() { changeMonth(-1); });
+        DOM.nextMonthBtn.addEventListener('click', function() { changeMonth(1); });
+        DOM.closeCalendarBtn.addEventListener('click', closeCalendarAndGoToDashboard);
+
+        // Add a Today button (in header actions)
+        const todayBtn = document.createElement('button');
+        todayBtn.className = 'add-event-btn';
+        todayBtn.innerHTML = '<i class="fas fa-calendar-day"></i> Today';
+        todayBtn.addEventListener('click', goToToday);
+        const headerActions = document.querySelector('.header-actions');
+        headerActions.insertBefore(todayBtn, headerActions.firstChild);
+
+        // Add event
+        DOM.addEventBtn.addEventListener('click', function() {
+            if (!STATE.selectedDate) {
+                showNotification('⚠ Select a date first.', false);
+                return;
+            }
+            showAddEventForm();
+        });
+        DOM.cancelEventBtn.addEventListener('click', hideAddEventForm);
+        DOM.saveEventBtn.addEventListener('click', saveNewEvent);
+
+        // History
+        DOM.historyBtn.addEventListener('click', showHistory);
+        DOM.closeHistoryBtn.addEventListener('click', hideHistory);
+
+        // Keyboard shortcuts for form
+        DOM.eventTitleInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); DOM.eventTimeInput.focus(); }
+        });
+        DOM.eventTimeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); DOM.eventLocationInput.focus(); }
+        });
+        DOM.eventLocationInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); saveNewEvent(); }
+        });
+
+        // Camera app
+        DOM.cameraApp.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openCamera();
+        });
+        DOM.closeCameraBtn.addEventListener('click', closeCamera);
+        DOM.dock.addEventListener('click', function() {
+            if (DOM.cameraOverlay.classList.contains('active')) closeCamera();
+            else if (DOM.historyOverlay.classList.contains('active')) hideHistory();
+            else if (DOM.calendarOverlay.classList.contains('active')) closeCalendarAndGoToDashboard();
+        });
+
+        // Shutter button (minimal)
+        DOM.shutterBtn.addEventListener('click', function() {
+            showNotification('📸 Photo captured (demo)', true);
+            DOM.captureFlash.classList.add('active');
+            setTimeout(() => DOM.captureFlash.classList.remove('active'), 150);
+        });
+        DOM.flipBtn.addEventListener('click', function() {
+            showNotification('🔄 Switched camera (demo)', true);
+        });
+        DOM.galleryBtn.addEventListener('click', function() {
+            showNotification('🖼 Gallery opened (demo)', true);
+        });
+        DOM.switchModeBtn.addEventListener('click', function() {
+            showNotification('📹 Switched to Video mode (demo)', true);
+        });
+        DOM.flashBtn.addEventListener('click', function() {
+            const labels = ['Auto','On','Off'];
+            let idx = labels.indexOf(DOM.flashLabel.textContent);
+            idx = (idx + 1) % 3;
+            DOM.flashLabel.textContent = labels[idx];
+            showNotification('Flash: ' + labels[idx], true);
+        });
+
+        // Go to Dashboard from home screen
+        DOM.goDashboardBtn.addEventListener('click', function() {
+            window.location.href = CONFIG.DASHBOARD_URL;
+        });
+
+        // Network status
+        window.addEventListener('online', function() {
+            showNotification('📶 Back online.', true);
+        });
+        window.addEventListener('offline', function() {
+            showNotification('📡 Disconnected.', false);
+        });
+
+        // ─── SET INITIAL STATE ───
+        STATE.selectedDate = new Date();
+        STATE.currentYear = STATE.selectedDate.getFullYear();
+        STATE.currentMonth = STATE.selectedDate.getMonth();
+        const dateKey = formatDateKey(STATE.selectedDate);
+        await loadEventsForDate(dateKey);
+        renderCalendar();
+        renderEvents();
+
+        // Ensure calendar is visible and home hidden
+        DOM.homeScreen.classList.add('hidden');
+        DOM.calendarOverlay.style.display = 'flex';
+
+        showNotification('📅 Calendar ready', true);
+        console.log('[Virtual Phone] Calendar with backend API loaded.');
+        console.log('[API] Using endpoint:', API_BASE);
+    }
+
+    // ─── CHANGE MONTH ───
+    async function changeMonth(delta) {
+        STATE.currentMonth += delta;
+        if (STATE.currentMonth < 0) { STATE.currentMonth = 11; STATE.currentYear--; }
+        else if (STATE.currentMonth > 11) { STATE.currentMonth = 0; STATE.currentYear++; }
+        renderCalendar();
+        if (STATE.selectedDate) {
+            const dateKey = formatDateKey(STATE.selectedDate);
+            await loadEventsForDate(dateKey);
+            renderEvents();
+        }
+    }
+
+    async function goToToday() {
+        const now = new Date();
+        STATE.currentYear = now.getFullYear();
+        STATE.currentMonth = now.getMonth();
+        STATE.selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const dateKey = formatDateKey(STATE.selectedDate);
+        await loadEventsForDate(dateKey);
+        renderCalendar();
+        renderEvents();
+        showNotification('📅 Jumped to today', true);
+    }
+
+    // ─── START ───
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
+</script>
+</body>
+</html>

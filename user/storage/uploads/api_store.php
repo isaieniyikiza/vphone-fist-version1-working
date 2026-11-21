@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Virtual Phone — Camera</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+    <style>
+        /* ── Reset & Base ── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+        }
+
+        /* Phone Shell */
+        .phone {
+            width: 320px;
+            height: 520px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 14px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .phone::before {
+            content: "";
+            position: absolute;
+            left: -5px;
+            top: 130px;
+            width: 5px;
+            height: 50px;
+            background: #2c2c2c;
+            border-radius: 5px 0 0 5px;
+            box-shadow: inset -1px 0 2px rgba(255,255,255,0.2);
+        }
+        .phone-power-btn {
+            position: absolute;
+            right: -5px;
+            top: 170px;
+            width: 5px;
+            height: 75px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 1px 0 2px rgba(255, 255, 255, 0.2);
+            z-index: 200;
+        }
+
+        /* ── Screen ── */
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        /* ── Dynamic Island ── */
+        .dynamic-island {
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 25px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 0 12px;
+        }
+        .dynamic-island.notify-error {
+            width: 220px;
+            height: 38px;
+            background: #ff3b30;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+        }
+        .dynamic-island.notify-success {
+            width: 220px;
+            height: 38px;
+            background: #34c759;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+        }
+
+        /* ── Status Bar ── */
+        .status {
+            position: absolute;
+            top: 14px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 90;
+            pointer-events: none;
+        }
+        .status .icons i {
+            margin-left: 5px;
+            font-size: 10px;
+        }
+
+        /* ── Wallpaper ── */
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #3b82f6, #1d4ed8, #0f172a);
+            background-size: cover;
+            background-position: center;
+            animation: bgMove 12s infinite alternate ease-in-out;
+            z-index: 1;
+            transition: background 1s ease, transform 1s ease;
+        }
+        @keyframes bgMove {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.15) rotate(2deg); }
+        }
+
+        /* ── Clock ── */
+        .clock {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            z-index: 5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .clock h1 {
+            font-size: 42px;
+            font-weight: 600;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .clock p {
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* ── Scroll Indicator ── */
+        .scroll-indicator {
+            position: absolute;
+            top: 155px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 10px;
+            font-weight: 500;
+            text-align: center;
+            animation: bounce 2s infinite;
+            z-index: 5;
+            cursor: pointer;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        }
+        .scroll-indicator i {
+            display: block;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        @keyframes bounce {
+            0%,20%,50%,80%,100% { transform: translate(-50%, 0); }
+            40% { transform: translate(-50%, 6px); }
+            60% { transform: translate(-50%, 3px); }
+        }
+
+        /* ── Apps Grid ── */
+        .apps {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+            z-index: 5;
+        }
+        .app {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .app:active {
+            transform: scale(0.9);
+        }
+        .icon {
+            width: 44px;
+            height: 44px;
+            margin: auto;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+        }
+        .instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+        .whatsapp { background: #25D366; }
+        .facebook { background: #1877F2; }
+        .camera { background: linear-gradient(45deg, #434343 0%, #000000 100%); }
+        .gallery { background: #ff9800; }
+        .settings { background: #555; }
+        .browser { background: #00BCD4; }
+        .phoneicon { background: #4CAF50; }
+        .logout-icon { background: #ff3b30; }
+        .app span {
+            display: block;
+            margin-top: 5px;
+            font-size: 9px;
+            font-weight: 500;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* ── Dock ── */
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        /* ── App Overlay ── */
+        .app-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .app-overlay.show {
+            display: flex;
+        }
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: linear-gradient(90deg, #fdf2f8, #f5f3ff);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+            z-index: 2;
+        }
+        .app-header .app-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+        }
+        .app-header button {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            color: #111;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .app-header button:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+        .app-body {
+            flex: 1;
+            position: relative;
+            background: #0a0a0a;
+            overflow: hidden;
+        }
+
+        /* ── Login Panel ── */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -430px;
+            height: 420px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 45px rgba(0, 0, 0, .35);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            transition: bottom 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            padding: 18px 18px 22px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show {
+            bottom: 0;
+        }
+        .login-panel .handle {
+            width: 40px;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            cursor: pointer;
+        }
+        .login-panel h2 {
+            text-align: center;
+            margin-bottom: 2px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #111;
+        }
+        .login-panel p {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+        .login-panel input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.03);
+            color: #111;
+            transition: all 0.25s ease;
+        }
+        .login-panel input:focus {
+            border-color: #007AFF;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        }
+        .login-panel button {
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            background: #007AFF;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-panel button:active {
+            opacity: 0.9;
+            transform: scale(0.98);
+        }
+        .login-panel button.signup {
+            background: #34C759;
+        }
+        .login-panel button:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .login-panel.keyboard-open {
+            height: 460px;
+        }
+
+        /* ── Virtual Keyboard ── */
+        .keyboard {
+            position: absolute;
+            bottom: -240px;
+            left: 0;
+            right: 0;
+            height: 210px;
+            background: rgba(220, 224, 230, 0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 18px 18px 0 0;
+            padding: 8px 5px 24px;
+            box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.2);
+            transition: bottom 0.35s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .keyboard.active {
+            bottom: 0;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .key {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            height: 38px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: background 0.1s, transform 0.05s;
+            user-select: none;
+        }
+        .key:active,
+        .key.physical-active {
+            background: #abb4be !important;
+            transform: scale(0.92);
+        }
+        .key.special {
+            background: #acb5be;
+            flex: 1.35;
+            font-size: 13px;
+        }
+        .key.space {
+            flex: 5.2;
+        }
+
+        /* ── Logout App hidden by default ── */
+        #logoutApp {
+            display: none;
+        }
+        #logoutApp.show {
+            display: block;
+        }
+
+        /* ════════════════════════════════════════════════════════
+                   CAMERA APP STYLES (inside app-body)
+                   ════════════════════════════════════════════════════════ */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .camera-viewfinder {
+            flex: 1;
+            position: relative;
+            background: #111;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+        .camera-viewfinder video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #0a0a0a;
+            transform: scaleX(-1);
+        }
+        .camera-viewfinder video:not(.mirrored) {
+            transform: scaleX(1);
+        }
+        .camera-viewfinder .camera-placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #0a0a0a;
+        }
+        .camera-viewfinder .camera-placeholder i {
+            font-size: 48px;
+            opacity: 0.4;
+        }
+
+        .camera-top-controls {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .camera-top-controls button {
+            pointer-events: auto;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-top-controls button:active {
+            transform: scale(0.88);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .camera-top-controls .left-group {
+            display: flex;
+            gap: 10px;
+        }
+        .camera-top-controls .right-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .flash-indicator {
+            position: absolute;
+            top: 58px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            color: #fff;
+            z-index: 6;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .flash-indicator.show {
+            opacity: 1;
+        }
+
+        .camera-bottom-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 12px 20px 18px;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.3) 100%);
+            flex-shrink: 0;
+            z-index: 5;
+            gap: 12px;
+        }
+        .camera-bottom-controls .shutter-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-bottom-controls .shutter-btn {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: transparent;
+            border: 3px solid rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            position: relative;
+        }
+        .camera-bottom-controls .shutter-btn::after {
+            content: '';
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #fff;
+            transition: background 0.2s, transform 0.15s;
+            position: absolute;
+        }
+        .camera-bottom-controls .shutter-btn:active {
+            transform: scale(0.88);
+        }
+        .camera-bottom-controls .shutter-btn:active::after {
+            background: #e0e0e0;
+        }
+        .camera-bottom-controls .shutter-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .camera-bottom-controls .shutter-btn:disabled::after {
+            background: #888;
+        }
+
+        .camera-bottom-controls .side-btn {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-bottom-controls .side-btn:active {
+            transform: scale(0.88);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .camera-bottom-controls .side-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .camera-gallery-thumb {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+        }
+        .camera-gallery-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .camera-gallery-thumb:active {
+            transform: scale(0.88);
+        }
+        .camera-gallery-thumb.has-image {
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .camera-flash-overlay {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.05s;
+        }
+        .camera-flash-overlay.active {
+            opacity: 0.7;
+            transition: opacity 0s;
+        }
+
+        .camera-toast {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .camera-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── Responsive tweaks ── */
+        @media (max-width: 400px) {
+            .phone {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .phone::before,
+            .phone-power-btn {
+                display: none;
+            }
+            .screen {
+                border-radius: 0;
+            }
+            .app-overlay {
+                padding: 0;
+            }
+            .app-shell {
+                border-radius: 0;
+            }
+        }
+        @media (min-width: 401px) and (max-height: 700px) {
+            .phone {
+                transform: scale(0.85);
+            }
+        }
+        @media (min-width: 401px) and (max-height: 600px) {
+            .phone {
+                transform: scale(0.72);
+            }
+        }
+
+        /* ── Scrollbar hide ── */
+        .app-body::-webkit-scrollbar {
+            display: none;
+        }
+        .app-body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* ── Utility ── */
+        .hidden {
+            display: none !important;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="phone">
+        <div class="phone-power-btn"></div>
+        <div class="screen">
+
+            <!-- Wallpaper -->
+            <div class="wallpaper" id="wallpaper"></div>
+
+            <!-- Dynamic Island -->
+            <div class="dynamic-island" id="dynamicIsland"></div>
+
+            <!-- Status Bar -->
+            <div class="status">
+                <div class="time" id="time">12:00</div>
+                <div class="icons">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <!-- Clock -->
+            <div class="clock">
+                <h1 id="clock">12:00</h1>
+                <p id="date">Tuesday, July 14</p>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator" id="scrollIndicator">
+                Swipe up or Scroll for Login
+                <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <!-- Apps -->
+            <div class="apps">
+                <div class="app"><div class="icon instagram"><i class="fab fa-instagram"></i></div><span>Instagram</span></div>
+                <div class="app"><div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div><span>WhatsApp</span></div>
+                <div class="app"><div class="icon facebook"><i class="fab fa-facebook-f"></i></div><span>Facebook</span></div>
+                <div class="app"><div class="icon browser"><i class="fas fa-globe"></i></div><span>Browser</span></div>
+                <div class="app"><div class="icon gallery"><i class="fas fa-image"></i></div><span>Gallery</span></div>
+                <!-- Camera App -->
+                <div class="app" id="cameraApp">
+                    <div class="icon camera"><i class="fas fa-camera"></i></div>
+                    <span>Camera</span>
+                </div>
+                <div class="app"><div class="icon settings"><i class="fas fa-cog"></i></div><span>Settings</span></div>
+                <div class="app" id="profileApp"><div class="icon phoneicon"><i class="fas fa-phone"></i></div><span>Phone</span></div>
+                <!-- Logout App (power off) -->
+                <div class="app" id="logoutApp"><div class="icon logout-icon"><i class="fas fa-power-off"></i></div><span>Logout</span></div>
+            </div>
+
+            <!-- Dock -->
+            <div class="dock"></div>
+
+            <!-- ─── App Overlay ─── -->
+            <div class="app-overlay" id="appOverlay">
+                <div class="app-shell">
+                    <div class="app-header">
+                        <button id="appCloseBtn" title="Close app"><i class="fas fa-times"></i></button>
+                        <div class="app-title" id="appTitle">App</div>
+                        <div style="width:28px;"></div>
+                    </div>
+                    <div class="app-body" id="appBody">
+                        <!-- Dynamic content goes here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Login Panel ─── -->
+            <div id="loginPanel" class="login-panel">
+                <div class="handle"></div>
+                <h2>Welcome</h2>
+                <p>Sign in to your Virtual Phone</p>
+                <form id="loginForm" onsubmit="return false;">
+                    <input type="text" id="usernameInput" name="username" placeholder="Username" inputmode="none" autocomplete="off" required />
+                    <input type="password" id="passwordInput" name="password" placeholder="Password" inputmode="none" required />
+                    <button type="submit" id="loginBtn">
+                        <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                        <span id="btnText">Login</span>
+                    </button>
+                    <button type="button" class="signup">Create Account</button>
+                </form>
+            </div>
+
+            <!-- ─── Virtual Keyboard ─── -->
+            <div id="keyboard" class="keyboard">
+                <div class="keyboard-row" id="row-1">
+                    <button class="key" data-key="q">q</button>
+                    <button class="key" data-key="w">w</button>
+                    <button class="key" data-key="e">e</button>
+                    <button class="key" data-key="r">r</button>
+                    <button class="key" data-key="t">t</button>
+                    <button class="key" data-key="y">y</button>
+                    <button class="key" data-key="u">u</button>
+                    <button class="key" data-key="i">i</button>
+                    <button class="key" data-key="o">o</button>
+                    <button class="key" data-key="p">p</button>
+                </div>
+                <div class="keyboard-row" id="row-2">
+                    <button class="key" data-key="a">a</button>
+                    <button class="key" data-key="s">s</button>
+                    <button class="key" data-key="d">d</button>
+                    <button class="key" data-key="f">f</button>
+                    <button class="key" data-key="g">g</button>
+                    <button class="key" data-key="h">h</button>
+                    <button class="key" data-key="j">j</button>
+                    <button class="key" data-key="k">k</button>
+                    <button class="key" data-key="l">l</button>
+                </div>
+                <div class="keyboard-row" id="row-3">
+                    <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                    <button class="key" data-key="z">z</button>
+                    <button class="key" data-key="x">x</button>
+                    <button class="key" data-key="c">c</button>
+                    <button class="key" data-key="v">v</button>
+                    <button class="key" data-key="b">b</button>
+                    <button class="key" data-key="n">n</button>
+                    <button class="key" data-key="m">m</button>
+                    <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key special" id="mode-btn" data-key="mode">123</button>
+                    <button class="key space" id="space-btn" data-key=" ">space</button>
+                    <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+                </div>
+            </div>
+
+        </div><!-- /screen -->
+    </div><!-- /phone -->
+
+    <script>
+        /**
+         * ────────────────────────────────────────────────────────────────
+         * Virtual Phone — Full Application with Camera & Upload
+         * ────────────────────────────────────────────────────────────────
+         */
+        (function() {
+            'use strict';
+
+            // ─── DOM References ───────────────────────────────────────
+            const DOM = {
+                clock: document.getElementById('clock'),
+                time: document.getElementById('time'),
+                date: document.getElementById('date'),
+                wallpaper: document.getElementById('wallpaper'),
+                loginPanel: document.getElementById('loginPanel'),
+                scrollIndicator: document.getElementById('scrollIndicator'),
+                keyboard: document.getElementById('keyboard'),
+                usernameInput: document.getElementById('usernameInput'),
+                passwordInput: document.getElementById('passwordInput'),
+                loginForm: document.getElementById('loginForm'),
+                loginBtn: document.getElementById('loginBtn'),
+                btnText: document.getElementById('btnText'),
+                loginSpinner: document.getElementById('loginSpinner'),
+                dynamicIsland: document.getElementById('dynamicIsland'),
+                profileApp: document.querySelector('#profileApp'),
+                profileIcon: document.querySelector('#profileApp .icon'),
+                profileName: document.querySelector('#profileApp span'),
+                logoutApp: document.getElementById('logoutApp'),
+                appOverlay: document.getElementById('appOverlay'),
+                appBody: document.getElementById('appBody'),
+                appTitle: document.getElementById('appTitle'),
+                appCloseBtn: document.getElementById('appCloseBtn'),
+                allKeys: document.querySelectorAll('.key'),
+                row1: document.getElementById('row-1'),
+                row2: document.getElementById('row-2'),
+                row3: document.getElementById('row-3'),
+                shiftBtn: document.getElementById('shift-btn'),
+                backspaceBtn: document.getElementById('backspace-btn'),
+                spaceBtn: document.getElementById('space-btn'),
+                modeBtn: document.getElementById('mode-btn'),
+                cameraApp: document.getElementById('cameraApp'),
+            };
+
+            // ─── State ──────────────────────────────────────────────
+            const STATE = {
+                isShifted: false,
+                isNumMode: false,
+                activeInput: null,
+                isLoggedIn: false,
+                isLoginPending: false,
+                isLoggingOut: false,
+                wallpaperIndex: 0,
+                sessionUser: null,
+                // Camera state
+                cameraStream: null,
+                isCameraActive: false,
+                facingMode: 'environment',
+                flashMode: 'off',
+                lastPhoto: null,
+                isUploading: false,
+            };
+
+            // ─── Constants ──────────────────────────────────────────
+            const CONFIG = {
+                WALLPAPER_INTERVAL: 9000,
+                CLOCK_INTERVAL: 1000,
+                NOTIFICATION_DURATION: 3000,
+                LOGIN_TIMEOUT: 15000,
+                SWIPE_THRESHOLD: 50,
+                SCROLL_THRESHOLD: 15,
+                API_ENDPOINT: '/virtual-phone/user/api/login_api.php',
+                LOGOUT_API_ENDPOINT: '/api/logout_api.php',
+                UPLOAD_API_ENDPOINT: '/virtual-phone/user/upload_api.php',
+                STORAGE_KEY: 'vphone_user',
+            };
+
+            const WALLPAPERS = [
+                "linear-gradient(135deg, rgba(3,37,65,0.9), rgba(10,78,120,0.9)), url('https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(35,23,68,0.9), rgba(98,0,234,0.8)), url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(7,46,74,0.9), rgba(6,101,166,0.85)), url('https://images.unsplash.com/photo-1499696017737-6d9c6015f3ea?auto=format&fit=crop&w=900&q=80')"
+            ];
+
+            const KEYS_ALPHABET = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m'];
+            const KEYS_NUMBERS = ['1','2','3','4','5','6','7','8','9','0','-','/',':',';','(','7','&','@','"','.',',','?','!',"'",'_'];
+
+            // ─── Utilities ──────────────────────────────────────────
+            function safeParseJSON(text) {
+                try { return JSON.parse(text); } catch (_) { return null; }
+            }
+            function isOnline() { return navigator.onLine !== false; }
+            function getUserId() {
+                return STATE.sessionUser ? STATE.sessionUser.id : null;
+            }
+            function getUserName() {
+                return STATE.sessionUser ? STATE.sessionUser.username : null;
+            }
+
+            // ─── Notification (Dynamic Island) ──────────────────────
+            function showNotification(message, isSuccess) {
+                const island = DOM.dynamicIsland;
+                if (!island) return;
+                island.textContent = message;
+                island.className = 'dynamic-island ' + (isSuccess ? 'notify-success' : 'notify-error');
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => {
+                    island.className = 'dynamic-island';
+                    island.textContent = '';
+                }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            // ─── App Overlay Helpers ────────────────────────────────
+            function openApp(title, content) {
+                if (!DOM.appOverlay || !DOM.appBody) return;
+                DOM.appTitle.textContent = title;
+                DOM.appBody.innerHTML = content;
+                DOM.appOverlay.classList.add('show');
+            }
+
+            function closeApp() {
+                stopCamera();
+                DOM.appOverlay.classList.remove('show');
+                DOM.appBody.innerHTML = '';
+            }
+
+            // ─── Clock & Date ──────────────────────────────────────
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const timeStr = h + ':' + m;
+                if (DOM.clock) DOM.clock.textContent = timeStr;
+                if (DOM.time) DOM.time.textContent = timeStr;
+                if (DOM.date) {
+                    DOM.date.textContent = now.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+
+            // ─── Wallpaper ──────────────────────────────────────────
+            function rotateWallpaper() {
+                const el = DOM.wallpaper;
+                if (!el) return;
+                el.style.background = WALLPAPERS[STATE.wallpaperIndex];
+                el.style.transform = 'scale(1)';
+                requestAnimationFrame(() => { el.style.transform = 'scale(1.02)'; });
+                STATE.wallpaperIndex = (STATE.wallpaperIndex + 1) % WALLPAPERS.length;
+            }
+
+            // ─── Login Drawer ──────────────────────────────────────
+            function showLoginPanel() {
+                if (STATE.isLoggedIn) return;
+                DOM.loginPanel.classList.add('show');
+                if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'none';
+            }
+            function hideLoginPanel() {
+                DOM.loginPanel.classList.remove('show');
+                hideKeyboard();
+                if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'block';
+            }
+
+            let touchStartY = 0;
+            function onTouchStart(e) { touchStartY = e.touches[0].clientY; }
+            function onTouchMove(e) {
+                const currentY = e.touches[0].clientY;
+                if (touchStartY - currentY > CONFIG.SWIPE_THRESHOLD) showLoginPanel();
+            }
+            function onWheel(e) {
+                if (e.deltaY > CONFIG.SCROLL_THRESHOLD) showLoginPanel();
+            }
+            function onDocumentClick(e) {
+                const panel = DOM.loginPanel;
+                const indicator = DOM.scrollIndicator;
+                if (panel && !panel.contains(e.target) && indicator !== e.target) {
+                    hideLoginPanel();
+                }
+            }
+
+            // ─── Virtual Keyboard ──────────────────────────────────
+            function showKeyboard(inputTarget) {
+                if (!inputTarget) return;
+                STATE.activeInput = inputTarget;
+                DOM.keyboard.classList.add('active');
+                DOM.loginPanel.classList.add('keyboard-open');
+                inputTarget.focus();
+            }
+            function hideKeyboard() {
+                DOM.keyboard.classList.remove('active');
+                DOM.loginPanel.classList.remove('keyboard-open');
+                if (STATE.activeInput) {
+                    STATE.activeInput.blur();
+                    STATE.activeInput = null;
+                }
+            }
+
+            function handleKeyInput(char) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                switch (char) {
+                    case 'space': input.value += ' '; break;
+                    case '⌫': case 'backspace': input.value = input.value.slice(0, -1); break;
+                    case '⇧': toggleShift(); break;
+                    case '123': case 'ABC': toggleMode(); break;
+                    case '▼': hideKeyboard(); break;
+                    default: input.value += char; if (STATE.isShifted) toggleShift(); break;
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            function toggleShift() {
+                STATE.isShifted = !STATE.isShifted;
+                if (DOM.shiftBtn) {
+                    DOM.shiftBtn.style.background = STATE.isShifted ? '#ffffff' : '#acb5be';
+                }
+                DOM.allKeys.forEach(key => {
+                    const val = key.getAttribute('data-key');
+                    if (val && val.length === 1 && /^[a-zA-Z]$/.test(val)) {
+                        key.textContent = STATE.isShifted ? val.toUpperCase() : val.toLowerCase();
+                    }
+                });
+            }
+
+            function toggleMode() {
+                STATE.isNumMode = !STATE.isNumMode;
+                if (DOM.modeBtn) DOM.modeBtn.textContent = STATE.isNumMode ? 'ABC' : '123';
+                if (DOM.shiftBtn) DOM.shiftBtn.textContent = STATE.isNumMode ? '#+=' : '⇧';
+                const currentSet = STATE.isNumMode ? KEYS_NUMBERS : KEYS_ALPHABET;
+                const rows = [DOM.row1, DOM.row2, DOM.row3];
+                let idx = 0;
+                rows.forEach(row => {
+                    if (!row) return;
+                    const keys = row.querySelectorAll('.key');
+                    keys.forEach(key => {
+                        if (key.id === 'shift-btn' || key.id === 'backspace-btn' || key.id === 'mode-btn') return;
+                        if (idx < currentSet.length) {
+                            key.textContent = currentSet[idx];
+                            key.setAttribute('data-key', currentSet[idx]);
+                            idx++;
+                        }
+                    });
+                });
+            }
+
+            function onKeyClick(e) {
+                const key = e.currentTarget;
+                if (!key || !STATE.activeInput) return;
+                const text = key.textContent.trim();
+                let char = text;
+                if (key.id === 'shift-btn') char = '⇧';
+                else if (key.id === 'backspace-btn') char = '⌫';
+                else if (key.id === 'mode-btn') char = STATE.isNumMode ? 'ABC' : '123';
+                else if (key.id === 'space-btn') char = 'space';
+                handleKeyInput(char);
+            }
+
+            function onPhysicalKeyDown(e) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                const key = e.key;
+                if (key === 'Backspace') { handleKeyInput('⌫'); e.preventDefault(); highlightPhysicalKey(DOM.backspaceBtn); return; }
+                if (key === ' ') { handleKeyInput('space'); e.preventDefault(); highlightPhysicalKey(DOM.spaceBtn); return; }
+                if (key === 'Shift') { toggleShift(); e.preventDefault(); highlightPhysicalKey(DOM.shiftBtn); return; }
+                if (key === 'Enter') {
+                    if (input === DOM.usernameInput) { DOM.passwordInput.focus(); showKeyboard(DOM.passwordInput); }
+                    else { hideKeyboard(); DOM.loginForm.dispatchEvent(new Event('submit', { bubbles: true })); }
+                    e.preventDefault(); return;
+                }
+                if (key.length === 1) {
+                    const targetKey = Array.from(DOM.allKeys).find(k => k.getAttribute('data-key') === key.toLowerCase());
+                    if (targetKey) {
+                        const char = STATE.isShifted ? key.toUpperCase() : key.toLowerCase();
+                        handleKeyInput(char);
+                        e.preventDefault();
+                        highlightPhysicalKey(targetKey);
+                    }
+                }
+            }
+
+            function highlightPhysicalKey(el) {
+                if (!el) return;
+                el.classList.add('physical-active');
+                clearTimeout(el._phyTimer);
+                el._phyTimer = setTimeout(() => el.classList.remove('physical-active'), 100);
+            }
+
+            // ─── API Helpers ────────────────────────────────────────
+            async function apiRequest(endpoint, options) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.LOGIN_TIMEOUT);
+                try {
+                    const response = await fetch(endpoint, {
+                        ...options,
+                        signal: controller.signal,
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json', ...(options.headers || {}) }
+                    });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error('HTTP_ERROR_' + response.status);
+                    const text = await response.text();
+                    const data = safeParseJSON(text);
+                    if (data === null) throw new Error('INVALID_JSON');
+                    return data;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') throw new Error('TIMEOUT');
+                    if (error.message === 'INVALID_JSON') throw new Error('INVALID_JSON');
+                    if (error.message.startsWith('HTTP_ERROR_')) throw new Error('HTTP_ERROR');
+                    if (!isOnline()) throw new Error('OFFLINE');
+                    throw new Error('CONNECTION_ERROR');
+                }
+            }
+
+            // ─── Login Logic ──────────────────────────────────────
+            async function handleLogin(e) {
+                e.preventDefault();
+                if (STATE.isLoginPending) return;
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                if (!username || !password) {
+                    showNotification('⚠ Username and password are required.', false);
+                    return;
+                }
+                if (!isOnline()) {
+                    showNotification('⚠ No internet connection. Please try again.', false);
+                    return;
+                }
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Signing in...';
+                DOM.loginSpinner.style.display = 'inline-block';
+                try {
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    formData.append('password', password);
+                    const data = await apiRequest(CONFIG.API_ENDPOINT, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (data.success && data.user) {
+                        STATE.isLoggedIn = true;
+                        STATE.sessionUser = data.user;
+                        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data.user));
+                        showNotification('✓ Welcome, ' + data.user.username + '!', true);
+                        updateProfileUI(data.user);
+                        hideLoginPanel();
+                        toggleLogoutButton(true);
+                        setTimeout(() => {
+                            window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+                        }, 800);
+                    } else {
+                        showNotification('⚠ ' + (data.message || 'Login failed. Please try again.'), false);
+                    }
+                } catch (error) {
+                    let message = '⚠ Connection error. Please try again.';
+                    if (error.message === 'OFFLINE') message = '⚠ No internet connection. Please check your network.';
+                    else if (error.message === 'TIMEOUT') message = '⚠ Request timed out. Please try again.';
+                    else if (error.message === 'HTTP_ERROR') message = '⚠ Server error. Please try again later.';
+                    else if (error.message === 'INVALID_JSON') message = '⚠ Server response error. Please contact support.';
+                    showNotification(message, false);
+                    console.error('[Login Error]', error);
+                } finally {
+                    STATE.isLoginPending = false;
+                    DOM.loginBtn.disabled = false;
+                    DOM.btnText.textContent = 'Login';
+                    DOM.loginSpinner.style.display = 'none';
+                }
+            }
+
+            // ─── Session Management ──────────────────────────────
+            function loadCurrentUser() {
+                try {
+                    const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                    if (!stored) return null;
+                    const user = JSON.parse(stored);
+                    if (user && user.id) {
+                        STATE.sessionUser = user;
+                        STATE.isLoggedIn = true;
+                        return user;
+                    }
+                    return null;
+                } catch (_) { return null; }
+            }
+
+            function updateProfileUI(user) {
+                if (!user) return;
+                if (DOM.profileIcon) {
+                    if (user.profile_image) {
+                        DOM.profileIcon.style.backgroundImage = 'url(' + user.profile_image + ')';
+                        DOM.profileIcon.style.backgroundSize = 'cover';
+                        DOM.profileIcon.style.backgroundPosition = 'center';
+                        DOM.profileIcon.textContent = '';
+                    } else {
+                        DOM.profileIcon.style.backgroundImage = '';
+                        DOM.profileIcon.textContent = user.username.charAt(0).toUpperCase();
+                    }
+                }
+                if (DOM.profileName) DOM.profileName.textContent = user.username;
+            }
+
+            function toggleLogoutButton(show) {
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.classList.toggle('show', show);
+                }
+            }
+
+            function checkSession() {
+                const user = loadCurrentUser();
+                if (user) {
+                    updateProfileUI(user);
+                    hideLoginPanel();
+                    toggleLogoutButton(true);
+                    return true;
+                } else {
+                    toggleLogoutButton(false);
+                    return false;
+                }
+            }
+
+            function resetUIAfterLogout() {
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+                STATE.isLoggedIn = false;
+                STATE.sessionUser = null;
+                if (DOM.profileIcon) {
+                    DOM.profileIcon.style.backgroundImage = '';
+                    DOM.profileIcon.textContent = '👤';
+                }
+                if (DOM.profileName) DOM.profileName.textContent = 'Profile';
+                DOM.usernameInput.value = '';
+                DOM.passwordInput.value = '';
+                toggleLogoutButton(false);
+                closeApp();
+            }
+
+            async function logout() {
+                if (STATE.isLoggingOut) return;
+                STATE.isLoggingOut = true;
+                showNotification('⏳ Logging out...', false);
+                try {
+                    const data = await apiRequest(CONFIG.LOGOUT_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    if (data && data.success === true) {
+                        showNotification('✓ Logged out successfully.', true);
+                    } else {
+                        showNotification('⚠ ' + (data.message || 'Logout response error.'), false);
+                    }
+                } catch (error) {
+                    let message = '⚠ Logout failed. You have been logged out locally.';
+                    if (error.message === 'OFFLINE') message = '⚠ You are offline. Logged out locally.';
+                    else if (error.message === 'HTTP_ERROR') message = '⚠ Server error during logout. Logged out locally.';
+                    else if (error.message === 'TIMEOUT') message = '⚠ Logout request timed out. Logged out locally.';
+                    showNotification(message, false);
+                    console.error('[Logout API Error]', error);
+                } finally {
+                    resetUIAfterLogout();
+                    STATE.isLoggingOut = false;
+                    showLoginPanel();
+                }
+            }
+
+            // ─── Network Status ────────────────────────────────────
+            function onOnlineStatus() {
+                if (isOnline()) showNotification('📶 Back online.', true);
+                else showNotification('📡 You are offline. Some features may be unavailable.', false);
+            }
+
+            // ════════════════════════════════════════════════════════════
+            //  CAMERA APP — Full Implementation
+            // ════════════════════════════════════════════════════════════
+
+            let cameraVideo = null;
+            let cameraCanvas = null;
+            let cameraFlashOverlay = null;
+            let cameraToast = null;
+            let cameraGalleryThumb = null;
+            let shutterBtn = null;
+            let flashBtn = null;
+            let flipBtn = null;
+            let flashIndicator = null;
+            let isCameraStarting = false;
+
+            function getCameraHTML() {
+                return `
+                    <div class="camera-container" id="cameraContainer">
+                        <div class="camera-viewfinder" id="cameraViewfinder">
+                            <video id="cameraVideo" autoplay playsinline></video>
+                            <div class="camera-placeholder" id="cameraPlaceholder">
+                                <i class="fas fa-camera"></i>
+                                <span>Camera unavailable</span>
+                                <span style="font-size:11px;opacity:0.5;">Allow camera access when prompted</span>
+                            </div>
+                            <div class="camera-flash-overlay" id="cameraFlashOverlay"></div>
+                        </div>
+                        <div class="flash-indicator" id="flashIndicator">⚡ Auto</div>
+                        <div class="camera-top-controls">
+                            <div class="left-group">
+                                <button id="cameraFlashBtn" title="Flash">
+                                    <i class="fas fa-bolt"></i>
+                                </button>
+                            </div>
+                            <div class="right-group">
+                                <button id="cameraFlipBtn" title="Switch camera">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="camera-bottom-controls">
+                            <button class="side-btn" id="cameraGalleryBtn" title="Gallery">
+                                <i class="fas fa-images"></i>
+                            </button>
+                            <div class="shutter-wrap">
+                                <button class="shutter-btn" id="cameraShutterBtn" title="Take photo"></button>
+                            </div>
+                            <button class="side-btn" id="cameraCloseBtn" title="Close camera">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="camera-toast" id="cameraToast"></div>
+                    </div>
+                `;
+            }
+
+            function initCameraApp() {
+                if (!STATE.isLoggedIn) {
+                    showNotification('🔒 Please login to use the camera.', false);
+                    return;
+                }
+                openApp('📷 Camera', getCameraHTML());
+
+                cameraVideo = document.getElementById('cameraVideo');
+                cameraCanvas = document.createElement('canvas');
+                cameraFlashOverlay = document.getElementById('cameraFlashOverlay');
+                cameraToast = document.getElementById('cameraToast');
+                cameraGalleryThumb = document.getElementById('cameraGalleryBtn');
+                shutterBtn = document.getElementById('cameraShutterBtn');
+                flashBtn = document.getElementById('cameraFlashBtn');
+                flipBtn = document.getElementById('cameraFlipBtn');
+                flashIndicator = document.getElementById('flashIndicator');
+                const closeBtn = document.getElementById('cameraCloseBtn');
+                const placeholder = document.getElementById('cameraPlaceholder');
+
+                if (shutterBtn) shutterBtn.addEventListener('click', capturePhoto);
+                if (flashBtn) flashBtn.addEventListener('click', toggleFlash);
+                if (flipBtn) flipBtn.addEventListener('click', flipCamera);
+                if (closeBtn) closeBtn.addEventListener('click', function() { closeApp(); });
+                if (cameraGalleryThumb) {
+                    cameraGalleryThumb.addEventListener('click', function() {
+                        if (STATE.lastPhoto) showCameraToast('📸 Photo saved!');
+                        else showCameraToast('No photos yet. Take one!');
+                    });
+                }
+
+                startCamera();
+                updateFlashIndicator();
+
+                // Override header close to call closeApp
+                const headerClose = DOM.appCloseBtn;
+                if (headerClose) {
+                    headerClose.onclick = function() { closeApp(); };
+                }
+                // Override closeApp to stop camera
+                const originalClose = closeApp;
+                window._closeApp = closeApp;
+                closeApp = function() {
+                    stopCamera();
+                    originalClose();
+                };
+            }
+
+            // ─── Camera Control Functions ──────────────────────────
+
+            async function startCamera() {
+                if (isCameraStarting) return;
+                isCameraStarting = true;
+                const placeholder = document.getElementById('cameraPlaceholder');
+                if (placeholder) placeholder.style.display = 'flex';
+
+                try {
+                    stopCamera();
+                    const constraints = {
+                        video: {
+                            facingMode: STATE.facingMode,
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                        },
+                        audio: false,
+                    };
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    STATE.cameraStream = stream;
+                    if (cameraVideo) {
+                        cameraVideo.srcObject = stream;
+                        cameraVideo.onloadedmetadata = function() {
+                            cameraVideo.play().catch(() => {});
+                            if (placeholder) placeholder.style.display = 'none';
+                            STATE.isCameraActive = true;
+                            isCameraStarting = false;
+                        };
+                        cameraVideo.play().catch(() => {});
+                    }
+                    if (cameraVideo && cameraVideo.readyState >= 2) {
+                        if (placeholder) placeholder.style.display = 'none';
+                        STATE.isCameraActive = true;
+                        isCameraStarting = false;
+                    }
+                } catch (error) {
+                    console.error('[Camera] Error starting:', error);
+                    if (placeholder) {
+                        placeholder.innerHTML = `
+                            <i class="fas fa-exclamation-triangle" style="color:#ff6b6b;"></i>
+                            <span>Camera access denied</span>
+                            <span style="font-size:11px;opacity:0.6;">${error.message || 'Please allow camera access'}</span>
+                        `;
+                        placeholder.style.display = 'flex';
+                    }
+                    STATE.isCameraActive = false;
+                    isCameraStarting = false;
+                    showCameraToast('⚠️ Camera unavailable: ' + (error.message || 'Permission denied'));
+                }
+            }
+
+            function stopCamera() {
+                if (STATE.cameraStream) {
+                    STATE.cameraStream.getTracks().forEach(track => track.stop());
+                    STATE.cameraStream = null;
+                }
+                if (cameraVideo) cameraVideo.srcObject = null;
+                STATE.isCameraActive = false;
+                isCameraStarting = false;
+            }
+
+            async function flipCamera() {
+                if (isCameraStarting) return;
+                STATE.facingMode = (STATE.facingMode === 'environment') ? 'user' : 'environment';
+                await startCamera();
+                showCameraToast('🔄 Switched camera');
+            }
+
+            function toggleFlash() {
+                const modes = ['off', 'on', 'auto'];
+                const labels = { off: 'Off', on: 'On', auto: 'Auto' };
+                const icons = { off: 'fa-bolt', on: 'fa-bolt', auto: 'fa-bolt' };
+                const colors = { off: '#fff', on: '#ffd93d', auto: '#a8d8ea' };
+                const currentIdx = modes.indexOf(STATE.flashMode);
+                const nextIdx = (currentIdx + 1) % modes.length;
+                STATE.flashMode = modes[nextIdx];
+                if (flashBtn) {
+                    const icon = flashBtn.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas ' + icons[STATE.flashMode];
+                        flashBtn.style.color = colors[STATE.flashMode];
+                    }
+                }
+                updateFlashIndicator();
+                showCameraToast('⚡ Flash: ' + labels[STATE.flashMode]);
+            }
+
+            function updateFlashIndicator() {
+                if (!flashIndicator) return;
+                const labels = { off: '⚡ Off', on: '⚡ On', auto: '⚡ Auto' };
+                flashIndicator.textContent = labels[STATE.flashMode] || '⚡ Auto';
+                flashIndicator.classList.add('show');
+                clearTimeout(flashIndicator._hideTimer);
+                flashIndicator._hideTimer = setTimeout(() => {
+                    flashIndicator.classList.remove('show');
+                }, 1500);
+            }
+
+            // ─── Capture & Upload ──────────────────────────────────
+
+            async function capturePhoto() {
+                if (!STATE.isCameraActive || !cameraVideo || isCameraStarting) {
+                    showCameraToast('⏳ Camera not ready');
+                    return;
+                }
+                if (STATE.isUploading) {
+                    showCameraToast('⏳ Upload in progress...');
+                    return;
+                }
+                if (cameraFlashOverlay) {
+                    cameraFlashOverlay.classList.add('active');
+                    setTimeout(() => cameraFlashOverlay.classList.remove('active'), 150);
+                }
+                if (shutterBtn) {
+                    shutterBtn.disabled = true;
+                    setTimeout(() => { shutterBtn.disabled = false; }, 500);
+                }
+                try {
+                    const video = cameraVideo;
+                    const canvas = cameraCanvas || document.createElement('canvas');
+                    cameraCanvas = canvas;
+                    const vw = video.videoWidth || 1280;
+                    const vh = video.videoHeight || 720;
+                    canvas.width = vw;
+                    canvas.height = vh;
+                    const ctx = canvas.getContext('2d');
+                    if (STATE.facingMode === 'user') {
+                        ctx.translate(vw, 0);
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(video, 0, 0, vw, vh);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                    STATE.lastPhoto = dataUrl;
+                    updateGalleryThumb(dataUrl);
+                    await uploadPhoto(dataUrl);
+                } catch (error) {
+                    console.error('[Camera] Capture error:', error);
+                    showCameraToast('❌ Failed to capture: ' + (error.message || 'unknown error'));
+                }
+            }
+
+            function updateGalleryThumb(dataUrl) {
+                const btn = cameraGalleryThumb;
+                if (!btn) return;
+                const oldImg = btn.querySelector('img');
+                if (oldImg) oldImg.remove();
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.alt = 'Last photo';
+                btn.appendChild(img);
+                btn.classList.add('has-image');
+                const icon = btn.querySelector('i');
+                if (icon) icon.style.display = 'none';
+            }
+
+            // ─── Upload API ─────────────────────────────────────────
+
+            async function uploadPhoto(dataUrl) {
+                if (STATE.isUploading) return;
+                STATE.isUploading = true;
+                if (shutterBtn) {
+                    shutterBtn.disabled = true;
+                    shutterBtn.style.opacity = '0.6';
+                }
+                showCameraToast('📤 Uploading...');
+
+                try {
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+                    const formData = new FormData();
+                    formData.append('photo', blob, 'photo_' + Date.now() + '.jpg');
+                    formData.append('user_id', getUserId() || '');
+                    formData.append('username', getUserName() || '');
+
+                    const uploadResponse = await fetch(CONFIG.UPLOAD_API_ENDPOINT, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                    });
+                    const text = await uploadResponse.text();
+                    let result;
+                    try { result = JSON.parse(text); } catch (_) { result = { success: false, message: 'Invalid server response' }; }
+
+                    if (result.success) {
+                        showCameraToast('✅ Photo uploaded!');
+                        showNotification('📸 Photo saved successfully!', true);
+                        console.log('[Upload] Success:', result);
+                    } else {
+                        showCameraToast('❌ Upload failed: ' + (result.message || 'unknown error'));
+                        showNotification('⚠️ Upload failed: ' + (result.message || 'unknown error'), false);
+                        console.error('[Upload] Error:', result);
+                    }
+                } catch (error) {
+                    console.error('[Upload] Error:', error);
+                    let msg = 'Upload failed. Please try again.';
+                    if (error.message === 'OFFLINE') msg = '📡 No internet. Photo saved locally.';
+                    else if (error.message === 'TIMEOUT') msg = '⏱️ Upload timed out. Try again.';
+                    showCameraToast('❌ ' + msg);
+                    showNotification('⚠️ ' + msg, false);
+                } finally {
+                    STATE.isUploading = false;
+                    if (shutterBtn) {
+                        shutterBtn.disabled = false;
+                        shutterBtn.style.opacity = '1';
+                    }
+                }
+            }
+
+            // ─── Camera Toast ──────────────────────────────────────
+
+            let toastTimer = null;
+            function showCameraToast(message) {
+                if (!cameraToast) return;
+                cameraToast.textContent = message;
+                cameraToast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    cameraToast.classList.remove('show');
+                }, 2500);
+            }
+
+            // ─── Override closeApp to clean up ────────────────────
+            const originalCloseApp = closeApp;
+            closeApp = function() {
+                stopCamera();
+                STATE.isCameraActive = false;
+                cameraVideo = null;
+                cameraCanvas = null;
+                cameraFlashOverlay = null;
+                cameraToast = null;
+                cameraGalleryThumb = null;
+                shutterBtn = null;
+                flashBtn = null;
+                flipBtn = null;
+                flashIndicator = null;
+                isCameraStarting = false;
+                originalCloseApp();
+            };
+
+            // ─── Open Instagram (demo) ──────────────────────────────
+            function openInstagramApp() {
+                const content = `
+                    <div style="padding:16px;background:#fafafa;height:100%;overflow-y:auto;font-size:13px;color:#444;">
+                        <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:12px;">
+                            <div style="text-align:center;min-width:48px;">
+                                <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(45deg,#f9a8d4,#818cf8);margin:0 auto 4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">Y</div>
+                                <span style="font-size:9px;">you</span>
+                            </div>
+                            <div style="text-align:center;min-width:48px;">
+                                <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(45deg,#fb7185,#818cf8);margin:0 auto 4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">A</div>
+                                <span style="font-size:9px;">alex</span>
+                            </div>
+                            <div style="text-align:center;min-width:48px;">
+                                <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(45deg,#34d399,#818cf8);margin:0 auto 4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">M</div>
+                                <span style="font-size:9px;">maria</span>
+                            </div>
+                        </div>
+                        <div style="border:1px solid rgba(0,0,0,0.06);border-radius:16px;background:#fff;padding:10px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;">
+                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(45deg,#fb7185,#818cf8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">A</div>
+                                <div>alex.dev</div>
+                            </div>
+                            <div style="background:linear-gradient(135deg,#fff1f2,#f5f3ff);border-radius:12px;padding:10px;color:#444;font-size:12px;line-height:1.5;">
+                                Working on a smart phone UI today. The app is now opening inside the phone screen instead of a browser tab.
+                            </div>
+                        </div>
+                        <div style="border:1px solid rgba(0,0,0,0.06);border-radius:16px;background:#fff;padding:10px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;">
+                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(45deg,#34d399,#818cf8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">M</div>
+                                <div>maria.art</div>
+                            </div>
+                            <div style="background:linear-gradient(135deg,#ecfdf5,#f5f3ff);border-radius:12px;padding:10px;color:#444;font-size:12px;line-height:1.5;">
+                                A clean app experience inside your virtual phone makes the interface feel more realistic and easier to use.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                openApp('Instagram', content);
+            }
+
+            // ─── Initialisation ────────────────────────────────────
+
+            function init() {
+                updateClock();
+                setInterval(updateClock, CONFIG.CLOCK_INTERVAL);
+                rotateWallpaper();
+                setInterval(rotateWallpaper, CONFIG.WALLPAPER_INTERVAL);
+                checkSession();
+
+                document.addEventListener('touchstart', onTouchStart, { passive: true });
+                document.addEventListener('touchmove', onTouchMove, { passive: true });
+                document.addEventListener('wheel', onWheel, { passive: true });
+                document.addEventListener('click', onDocumentClick);
+
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showLoginPanel();
+                    });
+                }
+                if (DOM.loginPanel) {
+                    DOM.loginPanel.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                }
+
+                DOM.usernameInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showKeyboard(this);
+                });
+                DOM.passwordInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showKeyboard(this);
+                });
+
+                DOM.allKeys.forEach(key => {
+                    key.addEventListener('click', onKeyClick);
+                });
+                DOM.keyboard.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                document.addEventListener('keydown', onPhysicalKeyDown);
+
+                DOM.loginForm.addEventListener('submit', handleLogin);
+
+                window.addEventListener('online', onOnlineStatus);
+                window.addEventListener('offline', onOnlineStatus);
+
+                const logoutElements = document.querySelectorAll('#logoutBtn, .logout-btn, [data-action="logout"]');
+                logoutElements.forEach(el => {
+                    el.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        logout();
+                    });
+                });
+
+                const instaApp = document.querySelector('.app .instagram')?.closest('.app');
+                if (instaApp) {
+                    instaApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        openInstagramApp();
+                    });
+                }
+
+                // ─── CAMERA APP: attach click handler ──────────────
+                if (DOM.cameraApp) {
+                    DOM.cameraApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (!STATE.isLoggedIn) {
+                            showNotification('🔒 Please login to use the camera.', false);
+                            showLoginPanel();
+                            return;
+                        }
+                        initCameraApp();
+                    });
+                }
+
+                if (DOM.appCloseBtn) {
+                    DOM.appCloseBtn.addEventListener('click', closeApp);
+                }
+                if (DOM.appOverlay) {
+                    DOM.appOverlay.addEventListener('click', function(e) {
+                        if (e.target === DOM.appOverlay) closeApp();
+                    });
+                }
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') closeApp();
+                });
+
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        logout();
+                    });
+                }
+
+                window.vphone = window.vphone || {};
+                window.vphone.logout = logout;
+                window.vphone.showNotification = showNotification;
+                window.vphone.getUser = function() { return STATE.sessionUser; };
+                window.vphone.isLoggedIn = function() { return STATE.isLoggedIn; };
+                window.vphone.openCamera = function() {
+                    if (!STATE.isLoggedIn) {
+                        showNotification('🔒 Please login first.', false);
+                        showLoginPanel();
+                        return;
+                    }
+                    initCameraApp();
+                };
+
+                console.log('[Virtual Phone] Initialized with Camera & Upload.');
+            }
+
+            // ─── Start ─────────────────────────────────────────────
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

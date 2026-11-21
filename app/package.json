@@ -1,0 +1,44 @@
+{
+  "name": "virtual-phone-desktop",
+  "version": "1.0.0",
+  "description": "Windows desktop application for the Virtual Phone web app",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ../main.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.virtualphone.desktop",
+    "productName": "Virtual Phone",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "offline.html",
+      "appicon/logo.png",
+      "appicon/logo.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "appicon/logo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "allowScripts": {
+    "electron": true
+  }
+}

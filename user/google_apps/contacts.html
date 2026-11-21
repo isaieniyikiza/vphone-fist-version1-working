@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f8fc">
+    <title>Google Contacts | Virtual Phone</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css">
+    <link rel="stylesheet" href="/virtual-phone/user/google_apps/google_apps.css">
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <script defer src="/virtual-phone/user/google_apps/google_apps.js"></script>
+</head>
+<body data-google-app="contacts">
+    <div class="google-app">
+        <header class="app-header">
+            <div class="brand-mark contacts-mark"><i class="fa-solid fa-address-book"></i></div>
+            <div class="brand-copy"><strong>Google Contacts</strong><span>People you care about</span></div>
+            <button class="close-app" type="button" aria-label="Close app" title="Back to phone"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <section class="account-card">
+            <div class="account-status-icon"><i class="fa-brands fa-google"></i></div>
+            <div class="account-copy"><strong id="accountTitle">Connect Google</strong><span id="accountEmail">Your contacts, synced with care</span></div>
+            <button id="accountButton" class="button button-primary" type="button">Connect</button>
+        </section>
+        <main class="app-main">
+            <div id="notice" class="notice" role="status" hidden></div>
+            <section id="appContent" hidden>
+                <div class="welcome-card contacts-welcome">
+                    <span class="eyebrow">YOUR ADDRESS BOOK</span>
+                    <h1>Stay in touch.</h1>
+                    <p>Import Google contacts to your phone, or sync selected phone contacts back to Google.</p>
+                </div>
+                <label class="search-box contacts-search"><i class="fa-solid fa-magnifying-glass"></i><input id="contactSearch" type="search" placeholder="Find a contact" autocomplete="off"></label>
+                <div class="contact-actions">
+                    <button id="refreshContacts" class="button button-light" type="button"><i class="fa-solid fa-rotate"></i> Refresh Google</button>
+                    <button id="importContacts" class="button button-primary" type="button"><i class="fa-solid fa-arrow-down"></i> Import selected</button>
+                </div>
+                <div class="section-heading"><div><h2>Google contacts</h2><p id="contactCount">Connect to load your address book</p></div><button id="selectAllContacts" class="text-button" type="button" hidden>Select all</button></div>
+                <div id="contactList" class="contact-list"></div>
+                <div class="local-sync-card">
+                    <div><h2>Sync phone contacts to Google</h2><p id="localContactCount">Choose contacts saved on this phone to send to Google.</p></div>
+                    <button id="loadLocalContacts" class="button button-light" type="button">Choose contacts</button>
+                    <div id="localContactList" class="local-contact-list" hidden></div>
+                    <button id="exportContacts" class="button button-primary" type="button" hidden><i class="fa-solid fa-arrow-up"></i> Sync selected</button>
+                </div>
+            </section>
+            <section id="connectPrompt" class="empty-card">
+                <div class="empty-art contacts-art"><i class="fa-solid fa-address-book"></i></div>
+                <h2>A familiar address book</h2>
+                <p>Connect your Google account to import or sync contacts. You choose which contacts to share.</p>
+                <button class="button button-primary connect-cta" type="button">Connect Google Contacts</button>
+            </section>
+            <p class="privacy-note"><i class="fa-solid fa-lock"></i> Your contact sync belongs to this Virtual Phone account.</p>
+        </main>
+    </div>
+</body>
+</html>

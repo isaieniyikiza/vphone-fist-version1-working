@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Groups</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js">
+    </script>
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow: 0 28px 70px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+            touch-action: pan-y;
+        }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 900;
+        }
+
+        .status-bar .icons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85px;
+            height: 22px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .dynamic-island.notify-error {
+            width: 220px;
+            height: 38px;
+            background: #ff3b30;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+        .dynamic-island.notify-success {
+            width: 220px;
+            height: 38px;
+            background: #34c759;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+        .dynamic-island.notify-info {
+            width: 220px;
+            height: 38px;
+            background: #007aff;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+
+        .conn-badge {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: #f59e0b;
+            z-index: 1002;
+            pointer-events: none;
+        }
+
+        .dock {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        /* ===== SPLASH ===== */
+        .splash-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 36px;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .splash-screen.hidden {
+            opacity: 0;
+        }
+        .splash-screen img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: #fff;
+            padding: 8px;
+            margin-bottom: 16px;
+        }
+        .splash-screen p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* ===== APP ===== */
+        .app-container {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            background: #f8f9fa;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+        .app-container.active {
+            display: flex;
+        }
+
+        /* ===== GROUPS ===== */
+        .groups-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 44px 16px 12px;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .groups-header h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1c1c1e;
+        }
+
+        .groups-header .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .groups-header .header-actions button {
+            background: none;
+            border: none;
+            color: #1c1c1e;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 6px;
+            position: relative;
+        }
+
+        .groups-header .create-btn {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ===== GROUPS CONTAINER ===== */
+        .groups-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0 8px;
+            background: #f8f9fa;
+        }
+        .groups-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+        .groups-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+        }
+
+        /* ===== GROUP CARD ===== */
+        .group-card {
+            background: #fff;
+            border-radius: 12px;
+            margin: 8px 10px;
+            padding: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .group-card:active {
+            transform: scale(0.99);
+        }
+        .group-card:hover {
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .group-card .g-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .group-card .g-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .group-card .g-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1c1c1e;
+        }
+
+        .group-card .g-members {
+            font-size: 11px;
+            color: #8e8e93;
+        }
+
+        .group-card .g-status {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .group-card .g-status.pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .group-card .g-status.active {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .group-card .g-status.declined {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .group-card .g-arrow {
+            color: #8e8e93;
+            flex-shrink: 0;
+        }
+
+        .group-card .g-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .group-card .g-actions button {
+            border: none;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .group-card .g-actions button:active {
+            opacity: 0.7;
+        }
+
+        .group-card .g-actions .g-accept {
+            background: #22c55e;
+            color: #fff;
+        }
+
+        .group-card .g-actions .g-decline {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: rgba(0, 0, 0, 0.35);
+            text-align: center;
+            height: 200px;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+            color: #1c1c1e;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            color: #1c1c1e;
+            opacity: 0.5;
+        }
+
+        /* ===== CREATE GROUP MODAL ===== */
+        .create-group-modal {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 250;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 36px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .create-group-modal.active {
+            display: flex;
+        }
+
+        .create-group-modal .cg-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 280px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .create-group-modal .cg-content h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+            color: #1c1c1e;
+        }
+
+        .create-group-modal .cg-content .cg-avatar-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: #d1d5db;
+            margin: 0 auto 10px;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #8e8e93;
+            border: 2px dashed #d1d5db;
+            transition: border-color 0.2s;
+        }
+        .create-group-modal .cg-content .cg-avatar-preview:hover {
+            border-color: #6366f1;
+        }
+
+        .create-group-modal .cg-content input[type="text"] {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+            outline: none;
+            margin-bottom: 10px;
+            background: #fafafa;
+            transition: border-color 0.15s;
+            color: #1c1c1e;
+        }
+        .create-group-modal .cg-content input[type="text"]:focus {
+            border-color: #4f46e5;
+        }
+
+        .create-group-modal .cg-content .cg-user-select {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+
+        .create-group-modal .cg-content .cg-user-select .cg-user-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #1c1c1e;
+            transition: background 0.15s;
+        }
+        .create-group-modal .cg-content .cg-user-select .cg-user-item:hover {
+            background: #f1f3f5;
+        }
+        .create-group-modal .cg-content .cg-user-select .cg-user-item input {
+            width: auto;
+            margin: 0;
+        }
+
+        .create-group-modal .cg-content .cg-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .create-group-modal .cg-content .cg-actions button {
+            flex: 1;
+            padding: 6px 0;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 11px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .create-group-modal .cg-content .cg-actions button:active {
+            opacity: 0.7;
+        }
+
+        .create-group-modal .cg-content .cg-actions .cg-submit {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+        }
+
+        .create-group-modal .cg-content .cg-actions .cg-cancel {
+            background: #e5e7eb;
+            color: #1c1c1e;
+        }
+
+        /* ===== GROUP DETAIL VIEW (placeholder) ===== */
+        .group-detail-view {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            background: #f8f9fa;
+            flex-direction: column;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+        .group-detail-view.active {
+            display: flex;
+        }
+
+        .group-detail-view .gd-header {
+            display: flex;
+            align-items: center;
+            padding: 44px 12px 12px;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            gap: 10px;
+        }
+        .group-detail-view .gd-header .back-btn {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            color: #1c1c1e;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .group-detail-view .gd-header .gd-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .group-detail-view .gd-header .gd-info {
+            flex: 1;
+        }
+        .group-detail-view .gd-header .gd-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+        .group-detail-view .gd-header .gd-members-count {
+            font-size: 11px;
+            color: #8e8e93;
+        }
+        .group-detail-view .gd-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 10px;
+        }
+        .group-detail-view .gd-body .member-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .group-detail-view .gd-body .member-item .m-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #d1d5db;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1c1c1e;
+            flex-shrink: 0;
+        }
+        .group-detail-view .gd-body .member-item .m-info {
+            flex: 1;
+        }
+        .group-detail-view .gd-body .member-item .m-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #1c1c1e;
+        }
+        .group-detail-view .gd-body .member-item .m-status {
+            font-size: 10px;
+            color: #8e8e93;
+        }
+        .group-detail-view .gd-body .member-item .m-status.pending {
+            color: #d97706;
+        }
+        .group-detail-view .gd-body .member-item .m-status.active {
+            color: #059669;
+        }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            display: flex;
+            background: #fff;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 4px 0 8px;
+            flex-shrink: 0;
+            z-index: 50;
+            position: relative;
+        }
+
+        .bottom-nav .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px 0;
+            color: #8e8e93;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            border: none;
+            background: none;
+            position: relative;
+        }
+
+        .bottom-nav .nav-item i {
+            font-size: 20px;
+        }
+
+        .bottom-nav .nav-item.active {
+            color: #4f46e5;
+        }
+
+        .bottom-nav .nav-item .badge {
+            position: absolute;
+            top: 0;
+            right: 50%;
+            transform: translateX(18px);
+            background: #ef4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 50%;
+            min-width: 16px;
+            height: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        .bottom-nav .nav-item .badge.show {
+            display: flex;
+        }
+
+        /* ===== NOTIFICATION PANEL (reused) ===== */
+        .notif-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+            opacity: 0;
+            box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+        .notif-panel.open {
+            max-height: 70%;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .notif-panel .panel-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin: 8px auto 4px;
+            flex-shrink: 0;
+            cursor: grab;
+        }
+
+        .notif-panel .panel-header {
+            padding: 8px 16px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1c1c1e;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+
+        .notif-panel .panel-header .clear-btn {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 10px;
+            cursor: pointer;
+            color: #1c1c1e;
+            font-weight: 500;
+        }
+
+        .notif-panel .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+            background: #f8f9fa;
+        }
+
+        .notif-panel .panel-body .notif-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            background: #fff;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .notif-panel .panel-body .notif-item:hover {
+            background: #f1f3f5;
+        }
+
+        .notif-panel .panel-body .notif-item .notif-sender {
+            font-weight: 600;
+            font-size: 12px;
+            color: #1c1c1e;
+        }
+
+        .notif-panel .panel-body .notif-item .notif-msg {
+            font-size: 11px;
+            color: #374151;
+            margin-top: 2px;
+            word-break: break-word;
+        }
+
+        .notif-panel .panel-body .notif-item .notif-time {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .notif-panel .panel-body .empty-notif {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 120px;
+            color: #9ca3af;
+            font-size: 13px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .notif-panel .panel-body .empty-notif i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.4;
+        }
+
+        .notif-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 55;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            border-radius: 36px;
+        }
+        .notif-overlay.show {
+            display: block;
+        }
+
+        /* ===== DRAGGABLE BELL ===== */
+        #draggableBell {
+            position: absolute;
+            z-index: 99999;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #1c1c1e;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: grab;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            transition: box-shadow 0.2s, transform 0.15s;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: auto;
+        }
+        #draggableBell:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+            transform: scale(1.05);
+        }
+        #draggableBell:active {
+            cursor: grabbing;
+            transform: scale(0.92);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        }
+        #draggableBell .bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid #1c1c1e;
+            line-height: 1;
+        }
+        #draggableBell .bell-badge.show {
+            display: flex;
+        }
+
+        /* ===== CONFIRM MODAL ===== */
+        .confirm-modal {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 400;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 36px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-modal.active {
+            display: flex;
+        }
+
+        .confirm-modal .confirm-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            max-width: 260px;
+            text-align: center;
+        }
+
+        .confirm-modal .confirm-box h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #111827;
+        }
+
+        .confirm-modal .confirm-box p {
+            font-size: 13px;
+            color: #4b5563;
+            margin-bottom: 16px;
+        }
+
+        .confirm-modal .confirm-box .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .confirm-modal .confirm-box .buttons button {
+            padding: 6px 20px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 12px;
+            transition: opacity 0.15s;
+        }
+        .confirm-modal .confirm-box .buttons button:active {
+            opacity: 0.7;
+        }
+
+        .confirm-modal .confirm-box .buttons .confirm-yes {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .confirm-modal .confirm-box .buttons .confirm-no {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        /* ===== THEME DARK ===== */
+        .app-container.theme-dark .groups-header {
+            background: rgba(24, 24, 27, 0.95);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .groups-header h1 {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .groups-header .header-actions button {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .groups-scroll {
+            background: #121214;
+        }
+        .app-container.theme-dark .group-card {
+            background: #1c1c1f;
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .app-container.theme-dark .group-card .g-name {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .group-card .g-members {
+            color: #8e8e93;
+        }
+        .app-container.theme-dark .group-card .g-status.pending {
+            background: #713f12;
+            color: #fcd34d;
+        }
+        .app-container.theme-dark .group-card .g-status.active {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        .app-container.theme-dark .empty-state {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .app-container.theme-dark .empty-state i {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .app-container.theme-dark .empty-state p {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .app-container.theme-dark .bottom-nav {
+            background: #18181b;
+            border-top-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .bottom-nav .nav-item {
+            color: #6b6b70;
+        }
+        .app-container.theme-dark .bottom-nav .nav-item.active {
+            color: #818cf8;
+        }
+        .app-container.theme-dark .create-group-modal .cg-content {
+            background: #18181b;
+        }
+        .app-container.theme-dark .create-group-modal .cg-content h3 {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .create-group-modal .cg-content input[type="text"] {
+            background: #1c1c1f;
+            border-color: rgba(255, 255, 255, 0.08);
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .create-group-modal .cg-content .cg-user-select {
+            background: #1c1c1f;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .create-group-modal .cg-content .cg-user-select .cg-user-item {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .create-group-modal .cg-content .cg-user-select .cg-user-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .app-container.theme-dark .create-group-modal .cg-content .cg-actions .cg-cancel {
+            background: #3f3f46;
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .notif-panel {
+            background: #18181b;
+        }
+        .app-container.theme-dark .notif-panel .panel-header {
+            color: #f4f4f5;
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .notif-panel .panel-body {
+            background: #121214;
+        }
+        .app-container.theme-dark .notif-panel .panel-body .notif-item {
+            background: #1c1c1f;
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        .app-container.theme-dark .notif-panel .panel-body .notif-item .notif-sender {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .notif-panel .panel-body .notif-item .notif-msg {
+            color: #c8c8cc;
+        }
+        .app-container.theme-dark .notif-panel .panel-body .empty-notif {
+            color: #6b6b70;
+        }
+        .app-container.theme-dark .notif-panel .panel-handle {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box {
+            background: #1c1c1f;
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box h3 {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box p {
+            color: #c8c8cc;
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box .buttons .confirm-no {
+            background: #3f3f46;
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .group-detail-view .gd-header {
+            background: #18181b;
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .group-detail-view .gd-header .gd-name {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .group-detail-view .gd-body .member-item {
+            background: #1c1c1f;
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .app-container.theme-dark .group-detail-view .gd-body .member-item .m-name {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .group-detail-view .gd-body .member-item .m-status {
+            color: #8e8e93;
+        }
+        .app-container.theme-dark .group-detail-view .gd-body .member-item .m-status.pending {
+            color: #fcd34d;
+        }
+        .app-container.theme-dark .group-detail-view .gd-body .member-item .m-status.active {
+            color: #6ee7b7;
+        }
+        .app-container.theme-dark #draggableBell {
+            background: #2c2c2e;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .app-container.theme-dark #draggableBell .bell-badge {
+            border-color: #2c2c2e;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 400px) {
+            .phone {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            .screen {
+                border-radius: 0;
+            }
+            .app-container {
+                border-radius: 0;
+            }
+            .splash-screen,
+            .notif-overlay,
+            .confirm-modal,
+            .create-group-modal,
+            .group-detail-view {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== PHONE ===== -->
+    <div class="phone" id="phone">
+        <div class="screen" id="screen">
+            <!-- Status -->
+            <div class="status-bar">
+                <div class="time" id="statusTime">12:00</div>
+                <div class="icons">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <div class="dynamic-island" id="dynamicIsland"></div>
+            <div class="conn-badge" id="connBadge"></div>
+
+            <!-- Draggable Bell -->
+            <div id="draggableBell">
+                <i class="fas fa-bell"></i>
+                <span class="bell-badge" id="bellBadgeDrag">0</span>
+            </div>
+
+            <!-- Splash -->
+            <div class="splash-screen" id="splashScreen">
+                <img src="/virtual-phone/uploads/icon/chat.png" alt="Groups" />
+                <p>Loading Groups …</p>
+            </div>
+
+            <!-- Notification Overlay & Panel -->
+            <div class="notif-overlay" id="notifOverlay"></div>
+            <div class="notif-panel" id="notifPanel">
+                <div class="panel-handle" id="panelHandle"></div>
+                <div class="panel-header">
+                    <span><i class="fas fa-bell" style="margin-right:8px;"></i>Notifications</span>
+                    <button class="clear-btn" id="clearNotifBtn"><i class="fas fa-trash-alt"></i> Clear</button>
+                </div>
+                <div class="panel-body" id="notifPanelBody">
+                    <div class="empty-notif">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Modal -->
+            <div class="confirm-modal" id="confirmModal">
+                <div class="confirm-box">
+                    <h3 id="confirmTitle">Confirm</h3>
+                    <p id="confirmMessage">Are you sure?</p>
+                    <div class="buttons">
+                        <button class="confirm-no" id="confirmNo">Cancel</button>
+                        <button class="confirm-yes" id="confirmYes">Yes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Group Modal -->
+            <div class="create-group-modal" id="createGroupModal">
+                <div class="cg-content">
+                    <h3>Create Group</h3>
+                    <div class="cg-avatar-preview" id="groupAvatarPreview">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <input type="file" id="groupAvatarInput" accept="image/*" style="display:none;" />
+                    <input type="text" id="groupNameInput" placeholder="Group name" />
+                    <div class="cg-user-select" id="groupUserSelect">
+                        <!-- populated by JS -->
+                    </div>
+                    <div class="cg-actions">
+                        <button class="cg-submit" id="groupSubmitBtn">Create</button>
+                        <button class="cg-cancel" id="groupCancelBtn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Detail View -->
+            <div class="group-detail-view" id="groupDetailView">
+                <div class="gd-header">
+                    <button class="back-btn" id="gdBackBtn"><i class="fas fa-chevron-left"></i></button>
+                    <div class="gd-avatar" id="gdAvatar">G</div>
+                    <div class="gd-info">
+                        <div class="gd-name" id="gdName">Group</div>
+                        <div class="gd-members-count" id="gdMembersCount">0 members</div>
+                    </div>
+                </div>
+                <div class="gd-body" id="gdBody">
+                    <!-- populated by JS -->
+                </div>
+            </div>
+
+            <!-- ===== MAIN APP ===== -->
+            <div class="app-container" id="appContainer">
+                <!-- Groups Content -->
+                <div class="groups-scroll" id="groupsScroll">
+                    <!-- Groups Header -->
+                    <div class="groups-header">
+                        <h1><i class="fas fa-users" style="font-size:18px;margin-right:6px;color:#4f46e5;"></i>Groups</h1>
+                        <div class="header-actions">
+                            <button id="themeBtn" title="Theme"><i class="fas fa-moon"></i></button>
+                            <button class="create-btn" id="createGroupBtn"><i class="fas fa-plus"></i> New</button>
+                        </div>
+                    </div>
+
+                    <!-- Groups rendered here -->
+                    <div id="groupsContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No groups yet. Create one!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM NAV -->
+                <div class="bottom-nav" id="bottomNav">
+                    <button class="nav-item" data-tab="chat"><i class="fas fa-comment-dots"></i><span>Chat</span></button>
+                    <button class="nav-item" data-tab="feed"><i class="fas fa-newspaper"></i><span>Feed</span></button>
+                    <button class="nav-item active" data-tab="groups"><i class="fas fa-users"></i><span>Groups</span></button>
+                    <button class="nav-item" data-tab="profile"><i class="fas fa-user"></i><span>Profile</span></button>
+                    <button class="nav-item" data-tab="home"><i class="fas fa-home"></i><span>Home</span></button>
+                </div>
+            </div>
+
+            <div class="dock"></div>
+        </div>
+    </div>
+
+    <!-- ===== NOTIFICATION SNIPPET CONTAINER ===== -->
+    <div id="notifSnippetContainer" style="position:fixed;top:0;left:0;right:0;z-index:99998;pointer-events:none;display:flex;flex-direction:column;align-items:center;padding-top:8px;"></div>
+
+    <audio id="notifySound" preload="auto" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAgICAgICAgIA=" style="display:none;"></audio>
+
+    <!-- ===== MAIN SCRIPT ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== CONFIG =====
+            const CONFIG = {
+                STORAGE_KEY: 'vphone_user',
+                SERVER_URL: 'http://localhost:3001',
+                SPLASH_DURATION: 800,
+                NOTIFICATION_DURATION: 3000,
+                NOTIF_API: 'http://localhost:3001/api/notifications',
+                GROUPS_API: 'http://localhost:3001/api/groups',
+                USERS_API: 'http://localhost:3001/api/users',
+            };
+
+            const $ = (id) => document.getElementById(id);
+            const DOM = {
+                dynamicIsland: $('dynamicIsland'),
+                connBadge: $('connBadge'),
+                statusTime: $('statusTime'),
+                appContainer: $('appContainer'),
+                splashScreen: $('splashScreen'),
+                screen: $('screen'),
+                draggableBell: $('draggableBell'),
+                bellBadgeDrag: $('bellBadgeDrag'),
+                notifOverlay: $('notifOverlay'),
+                notifPanel: $('notifPanel'),
+                notifPanelBody: $('notifPanelBody'),
+                clearNotifBtn: $('clearNotifBtn'),
+                panelHandle: $('panelHandle'),
+                themeBtn: $('themeBtn'),
+                bottomNav: $('bottomNav'),
+                notifySound: $('notifySound'),
+                confirmModal: $('confirmModal'),
+                confirmTitle: $('confirmTitle'),
+                confirmMessage: $('confirmMessage'),
+                confirmYes: $('confirmYes'),
+                confirmNo: $('confirmNo'),
+                groupsContainer: $('groupsContainer'),
+                createGroupBtn: $('createGroupBtn'),
+                createGroupModal: $('createGroupModal'),
+                groupNameInput: $('groupNameInput'),
+                groupUserSelect: $('groupUserSelect'),
+                groupSubmitBtn: $('groupSubmitBtn'),
+                groupCancelBtn: $('groupCancelBtn'),
+                groupAvatarPreview: $('groupAvatarPreview'),
+                groupAvatarInput: $('groupAvatarInput'),
+                groupDetailView: $('groupDetailView'),
+                gdBackBtn: $('gdBackBtn'),
+                gdName: $('gdName'),
+                gdMembersCount: $('gdMembersCount'),
+                gdBody: $('gdBody'),
+                gdAvatar: $('gdAvatar'),
+            };
+
+            // ===== STATE =====
+            const STATE = {
+                isLoggedIn: false,
+                sessionUser: null,
+                users: [],
+                groups: [],
+                darkMode: localStorage.getItem('vphone_theme') === 'dark',
+                socket: null,
+                notifications: [],
+                notifCount: 0,
+                isNotifPanelOpen: false,
+                soundEnabled: localStorage.getItem('vphone_sound') !== 'false',
+                muted: new Set(JSON.parse(localStorage.getItem('vphone_muted') || '[]')),
+                bellVisible: false,
+                friendRequestCount: 0,
+                groupAvatarFile: null,
+                currentGroup: null,
+            };
+
+            // ===== HELPERS =====
+            function showNotification(message, kind = 'error') {
+                const island = DOM.dynamicIsland;
+                island.textContent = message;
+                const cls = kind === 'success' ? 'notify-success' : kind === 'info' ? 'notify-info' : 'notify-error';
+                island.className = 'dynamic-island ' + cls;
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => { island.className = 'dynamic-island';
+                    island.textContent = ''; }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            function getInitials(name) { return (name || '?').charAt(0).toUpperCase(); }
+
+            function getAvatarUrl(user) {
+                if (user && user.profile_image) {
+                    if (user.profile_image.startsWith('http') || user.profile_image.startsWith('/')) {
+                        return user.profile_image;
+                    }
+                    return '/virtual-phone/uploads/profile/' + user.profile_image;
+                }
+                return null;
+            }
+
+            function timeAgo(date) {
+                const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+                if (diff < 60) return 'just now';
+                if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+                if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+                return new Date(date).toLocaleString();
+            }
+
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                DOM.statusTime.textContent = h + ':' + m;
+            }
+
+            function updateBadge() {
+                const count = STATE.notifCount + STATE.friendRequestCount;
+                const badge = DOM.bellBadgeDrag;
+                if (badge) {
+                    if (count > 0) { badge.textContent = count > 99 ? '99+' : count;
+                        badge.classList.add('show'); } else { badge.classList.remove('show'); }
+                }
+            }
+
+            function applyTheme() {
+                DOM.appContainer.classList.toggle('theme-dark', STATE.darkMode);
+                DOM.themeBtn.innerHTML = STATE.darkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                if (STATE.darkMode) {
+                    DOM.draggableBell.style.borderColor = 'rgba(255,255,255,0.2)';
+                } else {
+                    DOM.draggableBell.style.borderColor = 'rgba(255,255,255,0.15)';
+                }
+            }
+
+            function customConfirm(title, message) {
+                return new Promise((resolve) => {
+                    DOM.confirmTitle.textContent = title;
+                    DOM.confirmMessage.textContent = message;
+                    DOM.confirmModal.classList.add('active');
+                    const yesHandler = () => { DOM.confirmModal.classList.remove('active');
+                        DOM.confirmYes.removeEventListener('click', yesHandler);
+                        DOM.confirmNo.removeEventListener('click', noHandler);
+                        resolve(true); };
+                    const noHandler = () => { DOM.confirmModal.classList.remove('active');
+                        DOM.confirmYes.removeEventListener('click', yesHandler);
+                        DOM.confirmNo.removeEventListener('click', noHandler);
+                        resolve(false); };
+                    DOM.confirmYes.addEventListener('click', yesHandler);
+                    DOM.confirmNo.addEventListener('click', noHandler);
+                });
+            }
+
+            // ===== NOTIFICATIONS =====
+            function getNotifStorageKey() { return 'vphone_notifications'; }
+
+            function saveNotifsToStorage() { try { localStorage.setItem(getNotifStorageKey(), JSON.stringify(STATE
+                        .notifications)); } catch (e) {} }
+
+            function loadNotifsFromStorage() {
+                try {
+                    const data = localStorage.getItem(getNotifStorageKey());
+                    if (data) { STATE.notifications = JSON.parse(data);
+                        STATE.notifCount = STATE.notifications.length;
+                        renderNotificationPanel();
+                        updateBadge(); return true; }
+                } catch (e) {}
+                return false;
+            }
+
+            async function loadNotificationsFromAPI() {
+                try {
+                    const res = await fetch(CONFIG.NOTIF_API);
+                    const data = await res.json();
+                    STATE.notifications = data.notifications || [];
+                    STATE.notifCount = STATE.notifications.length;
+                    saveNotifsToStorage();
+                    renderNotificationPanel();
+                    updateBadge();
+                } catch (e) { console.warn('Notif load error:', e); }
+            }
+
+            async function clearNotificationsAPI() {
+                try { await fetch(CONFIG.NOTIF_API, { method: 'DELETE' }); } catch (e) {}
+                STATE.notifications = [];
+                STATE.notifCount = 0;
+                saveNotifsToStorage();
+                renderNotificationPanel();
+                updateBadge();
+                showNotification('Cleared', 'success');
+            }
+
+            function addLocalNotification(senderId, messageText) {
+                const entry = { sender_id: senderId, message: messageText || 'Sent a message', time: new Date()
+                        .toISOString() };
+                STATE.notifications.push(entry);
+                STATE.notifCount = STATE.notifications.length;
+                saveNotifsToStorage();
+                renderNotificationPanel();
+                updateBadge();
+                showSnippetBanner(senderId, messageText);
+                if (STATE.soundEnabled && !STATE.muted.has(STATE.sessionUser?.id)) {
+                    DOM.notifySound.currentTime = 0;
+                    DOM.notifySound.play().catch(() => {});
+                }
+            }
+
+            function showSnippetBanner(senderId, message) {
+                const container = document.getElementById('notifSnippetContainer');
+                const sender = STATE.users.find(u => u.id === senderId);
+                const name = sender ? (sender.username || 'User') : 'Someone';
+                const banner = document.createElement('div');
+                banner.className = 'notif-banner';
+                banner.innerHTML = `
+                    <div style="width:32px;height:32px;border-radius:50%;background:#5865F2;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:#fff;font-weight:600;">${getInitials(name)}</div>
+                    <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:#f4f4f5;">${name}</div><div style="font-size:11px;color:#b0b0b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${message || 'Sent a message'}</div></div>
+                    <button style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:14px;padding:4px;flex-shrink:0;" class="notif-close"><i class="fas fa-times"></i></button>
+                `;
+                banner.addEventListener('click', (e) => {
+                    if (e.target.closest('.notif-close')) return;
+                    const user = STATE.users.find(u => u.id === senderId);
+                    if (user) window.location.href = 'vphone_chat.html?user=' + user.id;
+                });
+                banner.querySelector('.notif-close').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    banner.classList.add('hiding');
+                    setTimeout(() => { if (banner.parentNode) banner.remove(); }, 300);
+                });
+                container.appendChild(banner);
+                setTimeout(() => {
+                    if (banner.parentNode) {
+                        banner.classList.add('hiding');
+                        setTimeout(() => { if (banner.parentNode) banner.remove(); }, 300);
+                    }
+                }, 6000);
+            }
+
+            function renderNotificationPanel() {
+                const body = DOM.notifPanelBody;
+                body.innerHTML = '';
+                const notifs = STATE.notifications || [];
+                if (notifs.length === 0) {
+                    body.innerHTML =
+                        `<div class="empty-notif"><i class="fas fa-bell-slash"></i><p>No notifications yet</p></div>`;
+                    return;
+                }
+                const sorted = [...notifs].reverse();
+                sorted.forEach((n) => {
+                    const div = document.createElement('div');
+                    div.className = 'notif-item';
+                    const sender = STATE.users.find(u => u.id === n.sender_id);
+                    const senderName = sender ? (sender.username || 'User') : 'User ' + n.sender_id;
+                    div.innerHTML =
+                        `<div class="notif-sender">${senderName}</div><div class="notif-msg">${n.message || 'Sent a message'}</div><span class="notif-time">${n.time ? new Date(n.time).toLocaleString() : ''}</span>`;
+                    div.addEventListener('click', () => {
+                        if (sender) window.location.href = 'vphone_chat.html?user=' + sender.id;
+                        if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                    });
+                    body.appendChild(div);
+                });
+            }
+
+            function toggleNotifPanel(forceOpen) {
+                const panel = DOM.notifPanel;
+                const overlay = DOM.notifOverlay;
+                const isOpen = panel.classList.contains('open');
+                if (forceOpen === true || (forceOpen !== false && !isOpen)) {
+                    panel.classList.add('open');
+                    overlay.classList.add('show');
+                    STATE.isNotifPanelOpen = true;
+                    loadNotificationsFromAPI();
+                } else {
+                    panel.classList.remove('open');
+                    overlay.classList.remove('show');
+                    STATE.isNotifPanelOpen = false;
+                }
+            }
+
+            // ===== GROUPS =====
+            async function fetchUsers() {
+                if (!STATE.sessionUser) return;
+                try {
+                    const res = await fetch(CONFIG.USERS_API);
+                    const data = await res.json();
+                    STATE.users = data.users || [];
+                    try { localStorage.setItem('vphone_users', JSON.stringify(STATE.users)); } catch (e) {}
+                } catch (error) { console.error('Fetch users error:', error); }
+            }
+
+            async function fetchGroups() {
+                if (!STATE.sessionUser) return;
+                try {
+                    const res = await fetch(CONFIG.GROUPS_API + '?user_id=' + STATE.sessionUser.id);
+                    const data = await res.json();
+                    STATE.groups = data.groups || [];
+                    renderGroups();
+                } catch (e) { console.error('Fetch groups error:', e);
+                    showNotification('Could not load groups', 'error'); }
+            }
+
+            async function createGroup(name, memberIds, avatarFile) {
+                try {
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('creator_id', STATE.sessionUser.id);
+                    formData.append('members', JSON.stringify(memberIds));
+                    if (avatarFile) formData.append('avatar', avatarFile);
+                    const res = await fetch(CONFIG.GROUPS_API, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        showNotification('Group created! Invitations sent.', 'success');
+                        if (STATE.socket) {
+                            const groupData = { id: data.group_id, name: name, created_by: STATE.sessionUser.id,
+                                created_at: new Date().toISOString() };
+                            STATE.socket.emit('group_created', groupData);
+                            memberIds.forEach(uid => {
+                                if (uid !== STATE.sessionUser.id) {
+                                    STATE.socket.emit('group_invite', {
+                                        user_id: uid,
+                                        group_id: data.group_id,
+                                        group_name: name,
+                                        created_by: STATE.sessionUser.id,
+                                        created_by_username: STATE.sessionUser.username
+                                    });
+                                }
+                            });
+                        }
+                        await fetchGroups();
+                        DOM.createGroupModal.classList.remove('active');
+                        DOM.groupNameInput.value = '';
+                        DOM.groupAvatarPreview.style.backgroundImage = '';
+                        DOM.groupAvatarPreview.innerHTML = '<i class="fas fa-camera"></i>';
+                        STATE.groupAvatarFile = null;
+                        document.querySelectorAll('#groupUserSelect input:checked').forEach(cb => cb.checked = false);
+                    } else {
+                        showNotification(data.message || 'Failed to create group', 'error');
+                    }
+                } catch (e) { console.error(e);
+                    showNotification('Error creating group', 'error'); }
+            }
+
+            async function respondToGroupInvite(groupId, status) {
+                try {
+                    const res = await fetch(CONFIG.GROUPS_API + '/' + groupId + '/respond', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: STATE.sessionUser.id, status })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (STATE.socket) {
+                            STATE.socket.emit('group_invite_responded', {
+                                group_id: groupId,
+                                user_id: STATE.sessionUser.id,
+                                status: status
+                            });
+                        }
+                        await fetchGroups();
+                        if (status === 'active') showNotification('You joined the group!', 'success');
+                        else showNotification('Invitation declined', 'info');
+                    } else {
+                        showNotification(data.message || 'Could not respond to invite', 'error');
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            async function fetchGroupDetails(groupId) {
+                try {
+                    const res = await fetch(CONFIG.GROUPS_API + '/' + groupId);
+                    const data = await res.json();
+                    return data.group;
+                } catch (e) { console.error('Fetch group details error:', e); return null; }
+            }
+
+            // ===== RENDER GROUPS =====
+            function renderGroups() {
+                const container = DOM.groupsContainer;
+                if (!STATE.groups.length) {
+                    container.innerHTML =
+                        `<div class="empty-state"><i class="fas fa-users"></i><p>No groups yet. Create one!</p></div>`;
+                    return;
+                }
+                container.innerHTML = '';
+                STATE.groups.forEach(g => {
+                    const isPending = g.status === 'pending';
+                    const card = document.createElement('div');
+                    card.className = 'group-card';
+                    const memberCount = g.members ? g.members.length : 0;
+                    const nameInitial = (g.name || 'G').charAt(0).toUpperCase();
+                    const statusClass = isPending ? 'pending' : 'active';
+                    const statusLabel = isPending ? 'Pending' : 'Active';
+                    const avatarStyle = g.avatar ? `background-image:url('${g.avatar}');` : '';
+                    card.innerHTML = `
+                        <div class="g-avatar" style="${avatarStyle}">${avatarStyle ? '' : nameInitial}</div>
+                        <div class="g-info">
+                            <div class="g-name">${g.name || 'Group'}</div>
+                            <div class="g-members">${memberCount} members${isPending ? ' · Invitation' : ''}</div>
+                        </div>
+                        <span class="g-status ${statusClass}">${statusLabel}</span>
+                        ${isPending ? `
+                            <div class="g-actions">
+                                <button class="g-accept" data-groupid="${g.id}">Accept</button>
+                                <button class="g-decline" data-groupid="${g.id}">Decline</button>
+                            </div>
+                        ` : `
+                            <i class="fas fa-chevron-right g-arrow"></i>
+                        `}
+                    `;
+                    container.appendChild(card);
+
+                    if (isPending) {
+                        card.querySelector('.g-accept').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            respondToGroupInvite(g.id, 'active');
+                        });
+                        card.querySelector('.g-decline').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            respondToGroupInvite(g.id, 'declined');
+                        });
+                    } else {
+                        card.addEventListener('click', () => {
+                            openGroupDetail(g.id);
+                        });
+                    }
+                });
+            }
+
+            // ===== GROUP DETAIL =====
+            async function openGroupDetail(groupId) {
+                const group = await fetchGroupDetails(groupId);
+                if (!group) { showNotification('Could not load group details', 'error'); return; }
+                STATE.currentGroup = group;
+                DOM.gdName.textContent = group.name || 'Group';
+                const avatarStyle = group.avatar ? `background-image:url('${group.avatar}');` : '';
+                DOM.gdAvatar.style.backgroundImage = avatarStyle ? `url('${group.avatar}')` : '';
+                DOM.gdAvatar.textContent = avatarStyle ? '' : (group.name || 'G').charAt(0).toUpperCase();
+                const members = group.members_details || [];
+                DOM.gdMembersCount.textContent = members.length + ' members';
+                const body = DOM.gdBody;
+                body.innerHTML = '';
+                members.forEach(m => {
+                    const item = document.createElement('div');
+                    item.className = 'member-item';
+                    const avatarUrl = getAvatarUrl(m);
+                    const isPending = m.status === 'pending';
+                    const isCreator = m.user_id === group.created_by;
+                    const isSelf = m.user_id === STATE.sessionUser.id;
+                    item.innerHTML = `
+                        <div class="m-avatar" style="${avatarUrl ? `background-image:url('${avatarUrl}');` : ''}">${avatarUrl ? '' : getInitials(m.username)}</div>
+                        <div class="m-info">
+                            <div class="m-name">${m.username} ${isCreator ? '👑' : ''}</div>
+                            <div class="m-status ${isPending ? 'pending' : 'active'}">${isPending ? 'Pending invite' : 'Active'}</div>
+                        </div>
+                    `;
+                    body.appendChild(item);
+                });
+                DOM.groupDetailView.classList.add('active');
+            }
+
+            DOM.gdBackBtn.addEventListener('click', () => {
+                DOM.groupDetailView.classList.remove('active');
+                STATE.currentGroup = null;
+            });
+
+            // ===== SOCKET =====
+            function connectSocket() {
+                STATE.socket = io(CONFIG.SERVER_URL, { transports: ['websocket', 'polling'] });
+                STATE.socket.on('connect', () => { DOM.connBadge.textContent = '';
+                    STATE.socket.emit('identify', STATE.sessionUser.id); });
+                STATE.socket.on('disconnect', () => { DOM.connBadge.textContent = 'Reconnecting…'; });
+                STATE.socket.on('connect_error', () => { DOM.connBadge.textContent = 'Connection issue'; });
+
+                STATE.socket.on('group_created', (group) => {
+                    // Refresh groups list
+                    fetchGroups();
+                    showNotification(`👥 New group created: ${group.name}`, 'info');
+                });
+
+                STATE.socket.on('group_invite', (data) => {
+                    if (data.user_id === STATE.sessionUser.id) {
+                        showNotification(`📩 You've been invited to join "${data.group_name}"`, 'info');
+                        if (STATE.soundEnabled && !STATE.muted.has(STATE.sessionUser.id)) {
+                            DOM.notifySound.currentTime = 0;
+                            DOM.notifySound.play().catch(() => {});
+                        }
+                        fetchGroups();
+                        addLocalNotification(data.created_by, `Invited you to join "${data.group_name}"`);
+                    }
+                });
+
+                STATE.socket.on('group_invite_responded', (data) => {
+                    if (data.group_id) {
+                        fetchGroups();
+                    }
+                });
+
+                // Friend request events for badge
+                STATE.socket.on('friend_request', (data) => {
+                    if (data.to === STATE.sessionUser.id) {
+                        STATE.friendRequestCount += 1;
+                        updateBadge();
+                        showNotification(`📨 ${data.from_username || 'Someone'} sent you a friend request!`,
+                            'info');
+                        if (STATE.soundEnabled && !STATE.muted.has(STATE.sessionUser.id)) {
+                            DOM.notifySound.currentTime = 0;
+                            DOM.notifySound.play().catch(() => {});
+                        }
+                    }
+                });
+
+                STATE.socket.on('friend_request_responded', () => {
+                    STATE.friendRequestCount = 0;
+                    updateBadge();
+                });
+            }
+
+            // ===== NAVIGATION =====
+            function switchTab(tabId) {
+                if (tabId === 'home') {
+                    window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+                    return;
+                }
+                if (tabId === 'chat') {
+                    window.location.href = 'vphone_chat.html';
+                    return;
+                }
+                if (tabId === 'feed') {
+                    window.location.href = 'feed.html';
+                    return;
+                }
+                if (tabId === 'profile') {
+                    window.location.href = 'profile.html';
+                    return;
+                }
+                // Groups is current
+                DOM.bottomNav.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.tab === tabId);
+                });
+            }
+
+            // ===== DRAGGABLE BELL =====
+            function initDraggableBell() {
+                const bell = DOM.draggableBell;
+                if (!bell) return;
+                const bellSize = 38;
+
+                function constrainPosition(x, y) {
+                    const screenWidth = DOM.screen.clientWidth;
+                    const screenHeight = DOM.screen.clientHeight;
+                    const margin = 4;
+                    return { x: Math.max(margin, Math.min(x, screenWidth - bellSize - margin)), y: Math.max(margin, Math
+                            .min(y, screenHeight - bellSize - margin)) };
+                }
+
+                function setBellPosition(x, y) {
+                    const pos = constrainPosition(x, y);
+                    bell.style.left = pos.x + 'px';
+                    bell.style.top = pos.y + 'px';
+                }
+
+                function showBell() {
+                    bell.style.display = 'flex';
+                    STATE.bellVisible = true;
+                    const screenWidth = DOM.screen.clientWidth;
+                    let x = screenWidth - bellSize - 12,
+                        y = 52;
+                    const header = document.querySelector('.groups-header');
+                    if (header) {
+                        const rect = header.getBoundingClientRect();
+                        const screenRect = DOM.screen.getBoundingClientRect();
+                        x = rect.right - screenRect.left - bellSize - 8;
+                        y = rect.top - screenRect.top + 4;
+                    }
+                    setBellPosition(x, y);
+                }
+
+                let isDragging = false,
+                    dragStartX = 0,
+                    dragStartY = 0;
+
+                bell.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    const rect = bell.getBoundingClientRect();
+                    dragStartX = e.clientX - rect.left;
+                    dragStartY = e.clientY - rect.top;
+                    isDragging = true;
+                    bell.style.cursor = 'grabbing';
+                    bell.style.transform = 'scale(0.92)';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const screenRect = DOM.screen.getBoundingClientRect();
+                    const relX = e.clientX - screenRect.left - dragStartX;
+                    const relY = e.clientY - screenRect.top - dragStartY;
+                    setBellPosition(relX, relY);
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        bell.style.cursor = 'grab';
+                        bell.style.transform = '';
+                    }
+                });
+
+                bell.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const rect = bell.getBoundingClientRect();
+                    dragStartX = touch.clientX - rect.left;
+                    dragStartY = touch.clientY - rect.top;
+                    isDragging = true;
+                    bell.style.transform = 'scale(0.92)';
+                }, { passive: true });
+
+                document.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const screenRect = DOM.screen.getBoundingClientRect();
+                    const relX = touch.clientX - screenRect.left - dragStartX;
+                    const relY = touch.clientY - screenRect.top - dragStartY;
+                    setBellPosition(relX, relY);
+                }, { passive: true });
+
+                document.addEventListener('touchend', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        bell.style.transform = '';
+                    }
+                }, { passive: true });
+
+                bell.addEventListener('click', (e) => {
+                    if (!isDragging) {
+                        e.stopPropagation();
+                        toggleNotifPanel();
+                    }
+                });
+
+                const splashObserver = new MutationObserver(() => {
+                    if (DOM.splashScreen.classList.contains('hidden')) { showBell();
+                        splashObserver.disconnect(); }
+                });
+                splashObserver.observe(DOM.splashScreen, { attributes: true, attributeFilter: ['class'] });
+                if (DOM.splashScreen.classList.contains('hidden')) { showBell(); }
+            }
+
+            // ===== INIT =====
+            function init() {
+                const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const user = JSON.parse(stored);
+                        if (user && user.id) {
+                            DOM.splashScreen.classList.remove('hidden');
+                            setTimeout(() => {
+                                STATE.sessionUser = user;
+                                STATE.isLoggedIn = true;
+                                DOM.splashScreen.classList.add('hidden');
+                                DOM.appContainer.classList.add('active');
+                                applyTheme();
+                                fetchUsers().then(() => {
+                                    fetchGroups();
+                                    loadNotifsFromStorage();
+                                    loadNotificationsFromAPI();
+                                    connectSocket();
+                                    updateClock();
+                                    setInterval(updateClock, 1000);
+                                    initDraggableBell();
+                                    renderNotificationPanel();
+                                    updateBadge();
+                                    showNotification('Welcome to Groups! 👥', 'success');
+                                });
+                            }, CONFIG.SPLASH_DURATION);
+                            return;
+                        }
+                    } catch (error) { console.error(error); }
+                }
+                window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+            }
+
+            // ===== EVENT BINDINGS =====
+            document.addEventListener('DOMContentLoaded', () => {
+                init();
+
+                // Bottom nav
+                DOM.bottomNav.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => { switchTab(item.dataset.tab); });
+                });
+
+                // Theme
+                DOM.themeBtn.addEventListener('click', () => {
+                    STATE.darkMode = !STATE.darkMode;
+                    localStorage.setItem('vphone_theme', STATE.darkMode ? 'dark' : 'light');
+                    applyTheme();
+                });
+
+                // Create group
+                DOM.createGroupBtn.addEventListener('click', () => {
+                    // Populate user list for selection
+                    const select = DOM.groupUserSelect;
+                    select.innerHTML = '';
+                    STATE.users.filter(u => u.id !== STATE.sessionUser.id).forEach(u => {
+                        const div = document.createElement('div');
+                        div.className = 'cg-user-item';
+                        div.innerHTML = `<input type="checkbox" value="${u.id}" /><span>${u.username}</span>`;
+                        select.appendChild(div);
+                    });
+                    DOM.createGroupModal.classList.add('active');
+                });
+
+                DOM.groupAvatarPreview.addEventListener('click', () => DOM.groupAvatarInput.click());
+
+                DOM.groupAvatarInput.addEventListener('change', (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (file) {
+                        STATE.groupAvatarFile = file;
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            DOM.groupAvatarPreview.style.backgroundImage = `url('${ev.target.result}')`;
+                            DOM.groupAvatarPreview.innerHTML = '';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                DOM.groupCancelBtn.addEventListener('click', () => {
+                    DOM.createGroupModal.classList.remove('active');
+                    DOM.groupNameInput.value = '';
+                    DOM.groupAvatarPreview.style.backgroundImage = '';
+                    DOM.groupAvatarPreview.innerHTML = '<i class="fas fa-camera"></i>';
+                    STATE.groupAvatarFile = null;
+                });
+
+                DOM.groupSubmitBtn.addEventListener('click', () => {
+                    const name = DOM.groupNameInput.value.trim();
+                    if (!name) { showNotification('Enter a group name', 'error'); return; }
+                    const checked = document.querySelectorAll('#groupUserSelect input:checked');
+                    const members = Array.from(checked).map(cb => parseInt(cb.value));
+                    createGroup(name, members, STATE.groupAvatarFile);
+                });
+
+                // Notification panel
+                DOM.clearNotifBtn.addEventListener('click', async () => {
+                    const ok = await customConfirm('Clear notifications', 'Remove all notifications?');
+                    if (ok) { await clearNotificationsAPI();
+                        loadNotificationsFromAPI(); }
+                });
+
+                DOM.panelHandle.addEventListener('mousedown', (e) => {
+                    let startY = e.clientY;
+                    const onMove = (ev) => {
+                        const diff = ev.clientY - startY;
+                        if (diff > 40) { toggleNotifPanel(false);
+                            document.removeEventListener('mousemove', onMove);
+                            document.removeEventListener('mouseup', onUp); }
+                    };
+                    const onUp = () => { document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp); };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+
+                DOM.notifOverlay.addEventListener('click', () => { if (STATE.isNotifPanelOpen) toggleNotifPanel(false); });
+
+                // ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                        if (DOM.createGroupModal.classList.contains('active')) DOM.createGroupModal.classList.remove(
+                            'active');
+                        if (DOM.groupDetailView.classList.contains('active')) DOM.groupDetailView.classList.remove(
+                            'active');
+                    }
+                });
+
+                // Click outside modal to close
+                DOM.createGroupModal.addEventListener('click', (e) => {
+                    if (e.target === DOM.createGroupModal) {
+                        DOM.createGroupModal.classList.remove('active');
+                        DOM.groupNameInput.value = '';
+                        DOM.groupAvatarPreview.style.backgroundImage = '';
+                        DOM.groupAvatarPreview.innerHTML = '<i class="fas fa-camera"></i>';
+                        STATE.groupAvatarFile = null;
+                    }
+                });
+            });
+        })();
+    </script>
+
+</body>
+</html>

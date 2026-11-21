@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Publishing | Virtual Phone Admin</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        :root { color-scheme: light; font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif; color: #172033; background: #dce8e7; }
+        body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 8% 0%, #c7e9ec, transparent 30%), linear-gradient(130deg, #eaf3f0, #e0e9f4); }
+        .glass { border: 1px solid #fff9; background: #ffffffdc; box-shadow: 0 18px 48px #13223818; backdrop-filter: blur(18px); }
+        .status { min-height: 22px; color: #607087; font-size: 13px; }
+        .app-icon { width: 52px; height: 52px; object-fit: cover; border-radius: 15px; background: #e8edf5; }
+        @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr !important; } .span-two { grid-column: auto !important; } }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800">
+    <section id="authPanel" class="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4 backdrop-blur-md">
+        <form id="authForm" class="glass w-full max-w-md rounded-3xl p-7">
+            <img src="/virtual-phone/vphone.png" alt="Virtual Phone" class="mb-4 h-12 w-12 rounded-2xl object-cover">
+            <h1 id="authTitle" class="text-xl font-bold">Admin sign in</h1>
+            <p id="authDescription" class="mb-5 mt-1 text-sm text-slate-500">Sign in to manage Play Store apps.</p>
+            <label class="mb-1 block text-sm font-semibold" for="adminUsername">Username</label>
+            <input id="adminUsername" autocomplete="username" required class="mb-4 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="mb-1 block text-sm font-semibold" for="adminPassword">Password</label>
+            <input id="adminPassword" type="password" minlength="8" autocomplete="current-password" required class="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <p id="authMessage" class="status mb-3 text-red-600" role="status"></p>
+            <button id="authSubmit" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white hover:bg-blue-700" type="submit">Sign in</button>
+        </form>
+    </section>
+
+    <main id="adminPage" class="mx-auto hidden min-h-screen max-w-7xl p-4 md:p-8">
+        <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3"><img src="/virtual-phone/vphone.png" alt="" class="h-12 w-12 rounded-2xl object-cover"><div><h1 class="text-2xl font-bold">App publishing</h1><p class="text-sm text-slate-600">Manage the apps visible in users’ Play Store.</p></div></div>
+            <nav class="flex flex-wrap gap-2">
+                <a class="rounded-xl bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm" href="/virtual-phone/admin/admin_interface.html"><i class="fa-solid fa-chart-line mr-2"></i>Live dashboard</a>
+                <a class="rounded-xl bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm" href="/virtual-phone/admin/storage_interface.html"><i class="fa-solid fa-hard-drive mr-2"></i>Storage audit</a>
+                <button id="signOut" type="button" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>Sign out</button>
+            </nav>
+        </header>
+
+        <section class="glass mb-6 rounded-3xl p-5 md:p-7">
+            <div class="mb-5 flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold">Publish an application</h2><p class="mt-1 text-sm text-slate-500">Upload a project folder with an index file at its root.</p></div><i class="fa-solid fa-cloud-arrow-up text-2xl text-blue-700"></i></div>
+            <form id="uploadForm" class="form-grid grid grid-cols-2 gap-4" enctype="multipart/form-data">
+                <div><label for="appName" class="mb-1 block text-sm font-semibold">Application name</label><input id="appName" maxlength="100" required placeholder="Notes" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label for="folderName" class="mb-1 block text-sm font-semibold">Folder / store ID</label><input id="folderName" maxlength="80" required placeholder="notes-app" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div class="span-two col-span-2"><label for="description" class="mb-1 block text-sm font-semibold">Description</label><textarea id="description" maxlength="500" rows="2" placeholder="Describe the app for users" class="w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></textarea></div>
+                <div><label for="iconFile" class="mb-1 block text-sm font-semibold">App icon</label><input id="iconFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" required class="w-full rounded-xl border border-slate-300 bg-white p-2 text-sm"><p class="mt-1 text-xs text-slate-500">PNG, JPG, GIF, or WebP, up to 2 MB.</p></div>
+                <div><label for="projectFiles" class="mb-1 block text-sm font-semibold">App project folder</label><input id="projectFiles" type="file" webkitdirectory directory multiple required class="w-full rounded-xl border border-slate-300 bg-white p-2 text-sm"><p id="folderStatus" class="mt-1 text-xs text-slate-500">Must include index.html, index.htm, or index.php in the folder root.</p></div>
+                <div class="span-two col-span-2"><p id="uploadMessage" class="status mb-2" role="status"></p><button id="publishButton" type="submit" class="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800"><i class="fa-solid fa-upload mr-2"></i>Publish to Play Store</button></div>
+            </form>
+        </section>
+
+        <section class="glass rounded-3xl p-5 md:p-7">
+            <div class="mb-4 flex items-center justify-between"><div><h2 class="text-lg font-bold">App catalog</h2><p class="mt-1 text-sm text-slate-500">Unpublish apps to remove them from the Store without deleting user installs.</p></div><button id="refreshApps" type="button" title="Refresh app catalog" class="h-10 w-10 rounded-xl bg-white text-slate-700 shadow-sm"><i class="fa-solid fa-rotate"></i></button></div>
+            <p id="catalogStatus" class="status" role="status"></p>
+            <div id="appList" class="grid gap-3 md:grid-cols-2"></div>
+        </section>
+    </main>
+<script>
+(() => {
+    const API = '/virtual-phone/admin/api/';
+    const authPanel = document.getElementById('authPanel');
+    const adminPage = document.getElementById('adminPage');
+    const authMessage = document.getElementById('authMessage');
+    const authSubmit = document.getElementById('authSubmit');
+    let setupRequired = false;
+    let uploadLimit = 20;
+
+    async function request(url, options = {}) {
+        const response = await fetch(url, { credentials: 'same-origin', ...options });
+        const data = await response.json().catch(() => ({ success: false, message: 'Invalid server response.' }));
+        if (!response.ok || !data.success) throw new Error(data.message || `Request failed (${response.status}).`);
+        return data;
+    }
+
+    function setMessage(id, text, isError = false) {
+        const element = document.getElementById(id);
+        element.textContent = text || '';
+        element.classList.toggle('text-red-600', isError);
+        element.classList.toggle('text-emerald-700', Boolean(text) && !isError);
+    }
+
+    function enterAdmin() {
+        authPanel.classList.add('hidden');
+        adminPage.classList.remove('hidden');
+        loadApps();
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    }
+
+    async function loadApps() {
+        const list = document.getElementById('appList');
+        const status = document.getElementById('catalogStatus');
+        status.textContent = 'Loading app catalog…';
+        try {
+            const data = await request(API + 'apps.php');
+            const apps = data.apps || [];
+            uploadLimit = data.limits?.max_files || 20;
+            status.textContent = `${apps.length} apps · ${apps.filter(app => Number(app.is_published) === 1).length} published`;
+            list.replaceChildren();
+            if (!apps.length) {
+                list.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">No apps published yet.</div>';
+                return;
+            }
+            for (const app of apps) {
+                const card = document.createElement('article');
+                card.className = 'flex items-center gap-3 rounded-2xl border border-white bg-white/80 p-3 shadow-sm';
+                card.innerHTML = `<img class="app-icon" src="${escapeHtml(app.icon_path)}" alt=""><div class="min-w-0 flex-1"><strong class="block truncate text-sm">${escapeHtml(app.name)}</strong><small class="text-xs text-slate-500">${escapeHtml(app.slug)} · ${Number(app.installs || 0)} installs · ${Number(app.is_published) === 1 ? 'Published' : 'Unpublished'}</small></div>`;
+                const button = document.createElement('button');
+                const published = Number(app.is_published) === 1;
+                button.type = 'button';
+                button.className = `rounded-lg px-3 py-2 text-xs font-bold ${published ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`;
+                button.textContent = published ? 'Unpublish' : 'Publish';
+                button.addEventListener('click', async () => {
+                    button.disabled = true;
+                    try {
+                        await request(API + 'apps.php', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: app.id, is_published: !published }) });
+                        await loadApps();
+                    } catch (error) {
+                        alert(error.message);
+                        button.disabled = false;
+                    }
+                });
+                card.append(button);
+                list.append(card);
+            }
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    }
+
+    async function init() {
+        try {
+            const data = await request(API + 'session.php');
+            setupRequired = Boolean(data.setup_required);
+            if (data.admin) enterAdmin();
+            else {
+                document.getElementById('authTitle').textContent = setupRequired ? 'Create admin account' : 'Admin sign in';
+                document.getElementById('authDescription').textContent = setupRequired ? 'Create the first administrator account.' : 'Sign in to manage Play Store apps.';
+                authSubmit.textContent = setupRequired ? 'Create admin account' : 'Sign in';
+                document.getElementById('adminPassword').autocomplete = setupRequired ? 'new-password' : 'current-password';
+            }
+        } catch (error) {
+            authMessage.textContent = error.message;
+        }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        authSubmit.disabled = true;
+        try {
+            await request(API + 'session.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: setupRequired ? 'setup' : 'login', username: document.getElementById('adminUsername').value.trim(), password: document.getElementById('adminPassword').value }) });
+            enterAdmin();
+        } catch (error) {
+            authMessage.textContent = error.message;
+        } finally {
+            authSubmit.disabled = false;
+        }
+    });
+
+    document.getElementById('projectFiles').addEventListener('change', event => {
+        const files = Array.from(event.target.files || []);
+        const firstPath = files[0]?.webkitRelativePath || '';
+        if (firstPath.includes('/')) document.getElementById('folderName').value = firstPath.split('/')[0];
+        document.getElementById('folderStatus').textContent = files.length ? `${files.length} files selected · server limit ${uploadLimit} files per request.` : 'Must include index.html, index.htm, or index.php in the folder root.';
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const files = Array.from(document.getElementById('projectFiles').files || []);
+        if (!files.length) {
+            setMessage('uploadMessage', 'Choose the application folder.', true);
+            return;
+        }
+        const formData = new FormData();
+        formData.append('name', document.getElementById('appName').value.trim());
+        formData.append('folder_name', document.getElementById('folderName').value.trim());
+        formData.append('description', document.getElementById('description').value.trim());
+        formData.append('icon', document.getElementById('iconFile').files[0]);
+        formData.append('expected_file_count', String(files.length));
+        files.forEach(file => formData.append('project_files[]', file, file.webkitRelativePath || file.name));
+        const button = document.getElementById('publishButton');
+        button.disabled = true;
+        setMessage('uploadMessage', `Uploading ${files.length} files…`);
+        try {
+            const data = await request(API + 'apps.php', { method: 'POST', body: formData });
+            setMessage('uploadMessage', data.message);
+            event.target.reset();
+            await loadApps();
+        } catch (error) {
+            setMessage('uploadMessage', error.message, true);
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    document.getElementById('refreshApps').addEventListener('click', loadApps);
+    document.getElementById('signOut').addEventListener('click', async () => {
+        await request(API + 'session.php', { method: 'DELETE' });
+        window.location.reload();
+    });
+    init();
+})();
+</script>
+</body>
+</html>

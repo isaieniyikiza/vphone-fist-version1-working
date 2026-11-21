@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Phone Admin</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
+
+        /* Background Image Container */
+        .bg-custom {
+            background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #dce8e7;
+        }
+
+        /* Dark Theme Background Overlay Option */
+        .dark .bg-custom-overlay {
+            background: rgba(15, 23, 42, 0.45);
+        }
+
+        /* Custom Glassmorphism styles */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.62);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 10px 0 rgba(255, 255, 255, 0.5) inset;
+        }
+
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 0 10px 0 rgba(255, 255, 255, 0.05) inset;
+        }
+
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .dark .glass-pill {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease;
+        }
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.85);
+            transform: translateY(-1px);
+        }
+
+        .dark .glass-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .dark .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(150, 150, 150, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(150, 150, 150, 0.5);
+        }
+
+        /* Smooth subtle hover transitions */
+        .hover-lift {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+        .phone-preview {
+            width: 154px;
+            min-height: 250px;
+            border: 5px solid #172033;
+            border-radius: 27px;
+            background: #101827;
+            padding: 7px;
+            box-shadow: 0 16px 34px rgba(15, 23, 42, .24);
+        }
+        .phone-preview-screen {
+            min-height: 226px;
+            border-radius: 19px;
+            background: linear-gradient(155deg, #d9e8ff, #f8fbff 62%, #d7eee3);
+            color: #172033;
+            padding: 10px 8px;
+            overflow: hidden;
+        }
+        .running-app-tile { position: relative; min-width: 0; }
+        .running-app-count { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.9); border-radius: 50%; background: #fff; color: #172033; font-size: 10px; font-weight: 800; box-shadow: 0 2px 6px #0f172a30; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px #22c55e25; }
+        html:not(.dark) #adminDashboard .glass-panel { background-color: rgba(255, 255, 255, .9); color: #172033; }
+        html.dark #adminDashboard .glass-panel { background-color: rgba(30, 41, 59, .94); color: #f1f5f9; }
+        html:not(.dark) #adminDashboard [class~="dark:text-white"] { color: #0f172a !important; }
+        html:not(.dark) #adminDashboard [class~="dark:text-slate-100"] { color: #1e293b !important; }
+        html:not(.dark) #adminDashboard [class~="dark:text-slate-200"] { color: #334155 !important; }
+        html:not(.dark) #adminDashboard [class~="dark:text-slate-300"] { color: #475569 !important; }
+        html:not(.dark) #adminDashboard [class~="dark:text-slate-400"] { color: #64748b !important; }
+        html:not(.dark) #adminDashboard [class~="dark:text-slate-500"] { color: #64748b !important; }
+        html:not(.dark) #adminDashboard .text-slate-100 { color: #1e293b !important; }
+        @media (max-width: 640px) { .phone-preview { width: 140px; } }
+        @media (min-width: 1100px) and (min-height: 740px) {
+            #adminDashboard { height: 100vh; min-height: 0; overflow: hidden; padding: 14px 18px; gap: 12px; }
+            #adminDashboard > header { min-height: 44px; flex: none; }
+            #adminDashboard > div:nth-child(2) { min-height: 0; flex: 1; overflow: hidden; gap: 12px; }
+            #adminDashboard > div:nth-child(2) > main { min-height: 0; gap: 12px; overflow: hidden; }
+            #adminDashboard > div:nth-child(2) > main > div:first-child { flex: none; gap: 12px; }
+            #digitalClock { font-size: 48px; line-height: 1; }
+            #searchForm { margin-top: 12px; }
+            #adminDashboard > div:nth-child(2) > main > div:nth-child(2) { min-height: 0; flex: 1; gap: 12px; }
+            #activePhonesList { max-height: 210px; }
+            #adminDashboard > div:nth-child(2) > main > div:nth-child(3) { min-height: 130px; flex: 0 0 140px; gap: 12px; }
+            #adminDashboard > div:nth-child(2) > main > div:nth-child(3) > div { min-height: 0; padding: 14px; }
+            #adminDashboard > div:nth-child(2) > main > div:nth-child(3) img { max-height: 140px; }
+            #adminDashboard footer { display: none; }
+        }
+    </style>
+</head>
+<body class="bg-custom min-h-screen text-slate-800 dark:text-slate-100 flex flex-col justify-between overflow-x-hidden relative transition-colors duration-300">
+
+    <!-- Optional Dark Overlay for Background contrast -->
+    <div class="bg-custom-overlay absolute inset-0 pointer-events-none z-0 transition-opacity"></div>
+
+    <section id="adminAuth" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
+        <form id="adminAuthForm" class="glass-panel w-full max-w-md rounded-3xl p-7 text-slate-800 shadow-2xl dark:text-white">
+            <div class="mb-5 flex items-center gap-3">
+                <img src="/virtual-phone/vphone.png" alt="Virtual Phone" class="h-12 w-12 rounded-2xl object-cover">
+                <div><h1 class="text-xl font-bold">Virtual Phone Admin</h1><p class="text-xs opacity-70">Secure system monitoring</p></div>
+            </div>
+            <h2 id="adminAuthTitle" class="mb-1 text-lg font-bold">Admin sign in</h2>
+            <p id="adminAuthDescription" class="mb-5 text-sm opacity-70">Sign in to view live phone and app activity.</p>
+            <label for="adminUsername" class="mb-2 block text-sm font-semibold">Username</label>
+            <input id="adminUsername" name="username" autocomplete="username" required class="mb-4 w-full rounded-xl border border-slate-300 bg-white/80 px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+            <label for="adminPassword" class="mb-2 block text-sm font-semibold">Password</label>
+            <input id="adminPassword" name="password" type="password" minlength="8" autocomplete="current-password" required class="mb-4 w-full rounded-xl border border-slate-300 bg-white/80 px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+            <p id="adminAuthMessage" role="status" class="mb-3 min-h-5 text-sm text-red-600"></p>
+            <button id="adminAuthSubmit" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white transition hover:bg-blue-700" type="submit">Sign in</button>
+        </form>
+    </section>
+
+    <!-- Main Container -->
+    <div id="adminDashboard" class="relative z-10 flex flex-col min-h-screen p-4 md:p-6 lg:p-8 gap-6 max-w-[1600px] mx-auto w-full" style="display:none">
+        
+        <!-- TOP NAVIGATION BAR / HEADER AREA -->
+        <header class="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
+            <!-- Top Left Greeting Pill -->
+            <div class="glass-pill px-5 py-2.5 rounded-full flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium text-sm shadow-sm hover-lift">
+                <span id="greetingText">Virtual Phone Admin</span>
+                <span class="animate-bounce">👋</span>
+            </div>
+
+            <!-- Top Right Action Icons -->
+            <div class="flex items-center gap-3 self-end md:self-auto">
+                <button onclick="openModal('editModal')" title="Customize Dashboard" class="glass-pill w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+                <button id="themeToggle" title="Toggle Light/Dark Theme" class="glass-pill w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">
+                    <i class="fa-regular fa-sun text-sm" id="themeIcon"></i>
+                </button>
+                <button id="adminSignOut" title="Sign out" class="glass-pill w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN DASHBOARD CONTENT AREA -->
+        <div class="flex flex-col lg:flex-row gap-6 w-full items-start">
+            
+            <!-- LEFT FLOATING NAVIGATION BAR -->
+            <aside class="glass-panel rounded-3xl p-3 flex lg:flex-col items-center justify-between lg:justify-start gap-4 w-full lg:w-auto self-stretch lg:self-auto shadow-lg z-20">
+                <!-- Active / Home Item -->
+                <button class="w-12 h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl flex items-center justify-center shadow-md hover:scale-105 transition">
+                    <i class="fa-solid fa-house text-lg"></i>
+                </button>
+                
+                <div class="flex lg:flex-col items-center gap-3">
+                    <a href="/virtual-phone/admin/apps_interface.html" aria-label="Publish and manage apps" title="Publish and manage apps" class="w-11 h-11 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-2xl flex items-center justify-center transition">
+                        <i class="fa-regular fa-star text-lg"></i>
+                    </a>
+                    <button class="w-11 h-11 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-2xl flex items-center justify-center transition">
+                        <i class="fa-regular fa-clock text-lg"></i>
+                    </button>
+                    <a href="/virtual-phone/admin/storage_interface.html" aria-label="Manage user accounts and storage" title="Manage user accounts and storage" class="w-11 h-11 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-2xl flex items-center justify-center transition">
+                        <i class="fa-solid fa-users-gear text-lg"></i>
+                    </a>
+                    <button class="w-11 h-11 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-2xl flex items-center justify-center transition">
+                        <i class="fa-solid fa-arrow-down-to-line text-lg"></i>
+                    </button>
+                    <button class="w-11 h-11 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-2xl flex items-center justify-center transition">
+                        <i class="fa-regular fa-file-lines text-lg"></i>
+                    </button>
+                </div>
+
+                <button onclick="openModal('addBookmarkModal')" class="w-11 h-11 lg:mt-auto text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-2xl flex items-center justify-center transition border border-transparent hover:border-white/50">
+                    <i class="fa-solid fa-plus text-lg"></i>
+                </button>
+            </aside>
+
+            <!-- CENTER & RIGHT DASHBOARD CONTENT -->
+            <main class="flex-1 flex flex-col gap-6 w-full">
+                
+                <!-- TOP HERO SECTION (CLOCK, SEARCH, WEATHER) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    
+                    <!-- Digital Clock & Date Center Display -->
+                    <div class="lg:col-span-8 flex flex-col items-center text-center justify-center my-2">
+                        <div id="digitalClock" class="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tight text-slate-900 dark:text-white drop-shadow-sm font-sans">
+                            09:18 <span class="text-2xl sm:text-3xl font-medium text-slate-500 dark:text-slate-400">PM</span>
+                        </div>
+                        <div id="digitalDate" class="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 tracking-wide mt-1">
+                            Thursday, 7 August
+                        </div>
+
+                        <!-- Central Google Search Bar -->
+                        <form id="searchForm" class="w-full max-w-xl mt-6 relative">
+                            <div class="glass-pill rounded-full flex items-center px-4 py-3 shadow-md focus-within:ring-2 focus-within:ring-slate-400/50 transition">
+                                <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm ml-1"></i>
+                                <input type="text" id="searchInput" placeholder="Search Google or type a URL" class="w-full bg-transparent border-none outline-none px-3 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 font-medium">
+                                <div class="hidden sm:flex items-center gap-1 text-[11px] font-semibold text-slate-400 bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 rounded-md border border-white/40">
+                                    <span>⌘</span><span>K</span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Total User Metric -->
+                    <div class="lg:col-span-4 glass-panel rounded-3xl p-5 flex items-center justify-between gap-4 shadow-sm hover-lift">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-700 dark:text-emerald-300 text-2xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <div id="totalUsersValue" class="text-3xl font-bold text-slate-900 dark:text-white leading-none">—</div>
+                                <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-1">Virtual Phone users</div>
+                                <div class="text-xs text-slate-400 font-medium">Registered accounts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIVE USER AND APP MONITORING -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Bookmarks Card (3 Cols) -->
+                    <div class="lg:col-span-3 glass-panel rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Active phones <span id="activePhonesValue" class="ml-1 rounded-full bg-emerald-500 px-2 py-0.5 text-white">0</span></h3>
+                            <button id="expandActivePhones" type="button" class="text-xs font-semibold text-slate-600 dark:text-slate-200 bg-white/50 dark:bg-slate-800/50 px-2.5 py-1 rounded-full transition">Expand</button>
+                        </div>
+                        <div id="activePhonesList" class="space-y-2.5 text-xs max-h-80 overflow-y-auto">
+                            <a href="https://youtube.com" target="_blank" class="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition group">
+                                <div class="flex items-center gap-3 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center text-xs"><i class="fa-brands fa-youtube"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">YouTube</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400">youtube.com</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400 group-hover:translate-x-0.5 transition"></i>
+                                </div>
+                            </a>
+                            <a href="https://reddit.com" target="_blank" class="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition group">
+                                <div class="flex items-center gap-3 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center text-xs"><i class="fa-brands fa-reddit-alien"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">Reddit</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400">reddit.com</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400 group-hover:translate-x-0.5 transition"></i>
+                                </div>
+                            </a>
+                            <a href="https://github.com" target="_blank" class="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition group">
+                                <div class="flex items-center gap-3 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-slate-900/10 dark:bg-white/10 text-slate-800 dark:text-white flex items-center justify-center text-xs"><i class="fa-brands fa-github"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">GitHub</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400">github.com</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400 group-hover:translate-x-0.5 transition"></i>
+                                </div>
+                            </a>
+                            <a href="https://news.ycombinator.com" target="_blank" class="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition group">
+                                <div class="flex items-center gap-3 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-orange-600/10 text-orange-600 flex items-center justify-center text-xs font-bold">Y</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">Hacker News</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400">news.ycombinator.com</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400 group-hover:translate-x-0.5 transition"></i>
+                                </div>
+                            </a>
+                            <a href="https://x.com" target="_blank" class="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition group">
+                                <div class="flex items-center gap-3 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-slate-900/10 dark:bg-white/10 text-slate-800 dark:text-white flex items-center justify-center text-xs"><i class="fa-brands fa-x-twitter"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">Twitter</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400">x.com</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400 group-hover:translate-x-0.5 transition"></i>
+                                </div>
+                            </a>
+                            <a href="https://netflix.com" target="_blank" class="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition group">
+                                <div class="flex items-center gap-3 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-red-600/10 text-red-600 flex items-center justify-center text-xs font-bold">N</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">Netflix</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400">netflix.com</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400 group-hover:translate-x-0.5 transition"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Access Card Grid (4 Cols) -->
+                    <div class="lg:col-span-4 glass-panel rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Applications running</h3>
+                            <span id="runningAppsValue" class="text-xs text-slate-500 dark:text-slate-300">0 users</span>
+                        </div>
+                        <div id="runningAppsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-auto">
+                            <!-- YouTube Launcher -->
+                            <a href="https://youtube.com" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-red-500 text-2xl mb-1 border border-white/60 dark:border-slate-700">
+                                    <i class="fa-brands fa-youtube"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">YouTube</span>
+                            </a>
+                            <!-- GitHub Launcher -->
+                            <a href="https://github.com" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-900 dark:text-white text-2xl mb-1 border border-white/60 dark:border-slate-700">
+                                    <i class="fa-brands fa-github"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">GitHub</span>
+                            </a>
+                            <!-- Gmail Launcher -->
+                            <a href="https://mail.google.com" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-red-600 text-2xl mb-1 border border-white/60 dark:border-slate-700">
+                                    <i class="fa-solid fa-envelope"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">Gmail</span>
+                            </a>
+                            <!-- Drive Launcher -->
+                            <a href="https://drive.google.com" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-amber-500 text-2xl mb-1 border border-white/60 dark:border-slate-700">
+                                    <i class="fa-brands fa-google-drive"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">Drive</span>
+                            </a>
+                            <!-- Notion Launcher -->
+                            <a href="https://notion.so" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-900 dark:text-white text-xl font-bold mb-1 border border-white/60 dark:border-slate-700">
+                                    N
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">Notion</span>
+                            </a>
+                            <!-- ChatGPT Launcher -->
+                            <a href="https://chatgpt.com" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-emerald-600 text-2xl mb-1 border border-white/60 dark:border-slate-700">
+                                    <i class="fa-solid fa-robot"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">ChatGPT</span>
+                            </a>
+                            <!-- Twitter Launcher -->
+                            <a href="https://x.com" target="_blank" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-900 dark:text-white text-xl mb-1 border border-white/60 dark:border-slate-700">
+                                    <i class="fa-brands fa-x-twitter"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">Twitter</span>
+                            </a>
+                            <!-- Add Launcher -->
+                            <button onclick="openModal('quickAccessModal')" class="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60 transition hover-lift text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-white/40 dark:bg-slate-800/40 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-400 text-lg mb-1">
+                                    <i class="fa-solid fa-plus"></i>
+                                </div>
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Interactive To-Do List Card (3 Cols) -->
+                    <div class="lg:col-span-3 glass-panel rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Recent phone activity</h3>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-300">Live</span>
+                            </div>
+                            <!-- To Do Items List -->
+                            <div id="recentActivityList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                <!-- Loaded dynamically via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Todo Progress Bar -->
+                        <div class="mt-4 pt-2">
+                            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                                <span id="activityRefreshText">Updating every few seconds</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-200/80 dark:bg-slate-700/80 rounded-full overflow-hidden">
+                                <div id="activityStatusBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Focus Lo-Fi Music Player (2 Cols, Vertical Image Background) -->
+                    <div class="lg:col-span-2 relative rounded-3xl overflow-hidden shadow-sm flex flex-col justify-end p-4 min-h-[260px] group border border-white/40 dark:border-slate-700">
+                        <!-- Image Background -->
+                        <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop" alt="Mountain Landscape" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <!-- Gradient Overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent"></div>
+                        
+                        <!-- Music Player Content -->
+                        <div class="relative z-10 text-white flex flex-col items-center text-center">
+                            <h4 id="connectionState" class="font-bold text-base tracking-wide">Connecting</h4>
+                            <p class="text-xs text-slate-300 font-medium mb-4">Live system monitor</p>
+                            
+                            <!-- Player Controls -->
+                            <div class="flex items-center justify-center gap-4 w-full">
+                                <span class="text-xs text-white/80">AJAX refresh · 6 sec</span>
+                                <button id="manualRefresh" type="button" title="Refresh dashboard now" class="w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center hover:scale-105 transition shadow-lg">
+                                    <i class="fa-solid fa-rotate text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BOTTOM GRID (NOTES, QUOTE, RECENTLY CLOSED) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-6 items-stretch">
+                    
+                    <!-- Notes Card (4 Cols) -->
+                    <div class="lg:col-span-4 glass-panel rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-hard-drive text-slate-500 text-xs"></i>
+                                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Storage used</h3>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-300">All uploads</span>
+                            </div>
+                            <div id="storageUsedValue" class="text-3xl font-bold text-slate-900 dark:text-white">— MB</div>
+                            <p class="mt-2 text-xs text-slate-500 dark:text-slate-300">Measured from stored profile and user files.</p>
+                        </div>
+                        <div id="storageRefreshText" class="text-[10px] text-slate-400 font-medium mt-2">Waiting for API</div>
+                    </div>
+
+                    <!-- Motivational Quote Card (4 Cols) -->
+                    <div class="lg:col-span-4 glass-panel rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-300"><i class="fa-solid fa-user-slash"></i><h3 class="text-sm font-bold">Blocked accounts</h3></div>
+                        <div id="blockedUsersValue" class="text-4xl font-bold text-slate-900 dark:text-white">—</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-300">Users currently restricted from sign-in</div>
+                    </div>
+
+                    <!-- Recently Closed Tabs Card (4 Cols) -->
+                    <div class="lg:col-span-4 glass-panel rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Recent running apps</h3>
+                            <span class="text-xs text-slate-500 dark:text-slate-300">Live</span>
+                        </div>
+                        <div id="recentRunningUsers" class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/40 dark:hover:bg-slate-800/40 transition">
+                                <div class="flex items-center gap-2.5 truncate">
+                                    <span class="w-5 h-5 rounded-full bg-pink-500/20 text-pink-500 flex items-center justify-center text-[10px]"><i class="fa-dribbble fa-brands"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200 truncate">Design Inspiration – Dribbble</span>
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span class="text-[10px] text-slate-400">dribbble.com</span>
+                                    <span class="text-[10px] text-slate-400">2m ago</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/40 dark:hover:bg-slate-800/40 transition">
+                                <div class="flex items-center gap-2.5 truncate">
+                                    <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-[10px]"><i class="fa-solid fa-cube"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200 truncate">Build beautiful products faster</span>
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span class="text-[10px] text-slate-400">linear.app</span>
+                                    <span class="text-[10px] text-slate-400">15m ago</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/40 dark:hover:bg-slate-800/40 transition">
+                                <div class="flex items-center gap-2.5 truncate">
+                                    <span class="w-5 h-5 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center text-[10px]"><i class="fa-solid fa-layer-group"></i></span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200 truncate">Dashboard – Red Library</span>
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span class="text-[10px] text-slate-400">localhost:5173</span>
+                                    <span class="text-[10px] text-slate-400">1h ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </main>
+        </div>
+
+        <!-- FOOTER MOTIVATIONAL PILL -->
+        <footer class="flex justify-center mt-auto pt-4">
+            <div class="glass-pill px-6 py-2 rounded-full flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-sm hover-lift">
+                <span class="text-amber-500">✨</span>
+                <span>Stay curious, keep learning.</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <section id="activePhonesModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="activePhonesTitle">
+        <div class="glass-panel max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-3xl p-5 text-slate-800 shadow-2xl dark:text-white sm:p-7">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <div><h2 id="activePhonesTitle" class="text-xl font-bold">Active Virtual Phones</h2><p class="text-sm opacity-70">Live phone status and the app each user has open.</p></div>
+                <button id="closeActivePhones" type="button" class="glass-btn h-10 w-10 rounded-full" aria-label="Close active phones"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="activePhonesGrid" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"></div>
+        </div>
+    </section>
+
+    <!-- AUDIO ELEMENT FOR FOCUS LO-FI PLAYER -->
+    <audio id="lofiAudio" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3"></audio>
+
+    <!-- MODAL POPUP FOR EDIT / SETTINGS / ADD BOOKMARK -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl border border-white/60 dark:border-slate-700 transform scale-95 transition-transform duration-300" id="modalBox">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="modalTitle" class="font-bold text-slate-800 dark:text-white text-base">Dashboard Settings</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="modalBody" class="space-y-4 text-xs text-slate-600 dark:text-slate-300">
+                <p>Customize your personal dashboard appearance and settings here.</p>
+                <div>
+                    <label class="block font-semibold mb-1">Your Name</label>
+                    <input type="text" id="nameInput" value="Reza" class="w-full bg-white/60 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 outline-none">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-200/60 dark:bg-slate-800 font-semibold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button onclick="saveModalSettings()" class="px-4 py-2 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs shadow-md">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. STATE & INITIALIZATION ---
+        const todos = [
+            { id: 1, text: "Finish project proposal", completed: false },
+            { id: 2, text: "Review pull request", completed: true },
+            { id: 3, text: "Buy groceries", completed: false },
+            { id: 4, text: "Read \"Atomic Habits\"", completed: false }
+        ];
+
+        let isPlaying = false;
+        const audio = document.getElementById('lofiAudio');
+        let adminDisplayName = 'Admin';
+
+        // --- 2. LIVE CLOCK & DATE ---
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // hour 0 is 12
+            const formattedHours = String(hours).padStart(2, '0');
+
+            const clockEl = document.getElementById('digitalClock');
+            if (clockEl) {
+                clockEl.innerHTML = `${formattedHours}:${minutes} <span class="text-2xl sm:text-3xl font-medium text-slate-500 dark:text-slate-400">${ampm}</span>`;
+            }
+
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateStr = now.toLocaleDateString('en-US', options);
+            const dateEl = document.getElementById('digitalDate');
+            if (dateEl) {
+                dateEl.textContent = dateStr;
+            }
+
+            // Dynamic Greeting based on hour
+            const curHour = now.getHours();
+            let greeting = "Good evening";
+            if (curHour < 12) greeting = "Good morning";
+            else if (curHour < 18) greeting = "Good afternoon";
+            
+            const greetingEl = document.getElementById('greetingText');
+            if (greetingEl) {
+                greetingEl.textContent = `${greeting}, ${adminDisplayName}`;
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 3. TO-DO LIST FUNCTIONALITY ---
+        function renderTodos() {
+            const container = document.getElementById('todoContainer');
+            container.innerHTML = '';
+
+            todos.forEach(todo => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 rounded-xl hover:bg-white/40 dark:hover:bg-slate-800/40 transition cursor-pointer group';
+                item.onclick = () => toggleTodo(todo.id);
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 truncate">
+                        <div class="w-4 h-4 rounded-full border ${todo.completed ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-400 dark:border-slate-500'} flex items-center justify-center text-[9px] transition">
+                            ${todo.completed ? '<i class="fa-solid fa-check"></i>' : ''}
+                        </div>
+                        <span class="text-xs font-medium ${todo.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'} truncate">${todo.text}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteTodo(${todo.id})" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition text-[10px]">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+
+            // Update progress
+            const completedCount = todos.filter(t => t.completed).length;
+            const totalCount = todos.length;
+            const percentage = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+
+            document.getElementById('todoProgressText').textContent = `Completed ${completedCount} / ${totalCount}`;
+            document.getElementById('todoProgressBar').style.width = `${percentage}%`;
+        }
+
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                renderTodos();
+            }
+        }
+
+        function deleteTodo(id) {
+            const index = todos.findIndex(t => t.id === id);
+            if (index !== -1) {
+                todos.splice(index, 1);
+                renderTodos();
+            }
+        }
+
+        function addTodoPrompt() {
+            const taskText = prompt("Enter a new task:");
+            if (taskText && taskText.trim() !== '') {
+                todos.push({
+                    id: Date.now(),
+                    text: taskText.trim(),
+                    completed: false
+                });
+                renderTodos();
+            }
+        }
+        // --- 4. FOCUS MUSIC AUDIO PLAYER ---
+        function toggleAudio() {
+            const playIcon = document.getElementById('playIcon');
+            if (isPlaying) {
+                audio.pause();
+                playIcon.className = "fa-solid fa-play text-xs ml-0.5";
+            } else {
+                audio.play().catch(e => console.log("Audio play blocked by browser policy"));
+                playIcon.className = "fa-solid fa-pause text-xs";
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function toggleMusicPrev() {
+            audio.currentTime = 0;
+        }
+
+        function toggleMusicNext() {
+            audio.currentTime = 0;
+        }
+
+        // --- 5. SEARCH FORM FUNCTIONALITY ---
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                if (query.startsWith('http://') || query.startsWith('https://')) {
+                    window.open(query, '_blank');
+                } else if (query.includes('.') && !query.includes(' ')) {
+                    window.open(`https://${query}`, '_blank');
+                } else {
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            }
+        });
+
+        // Search shortcut (Cmd+K or Ctrl+K)
+        window.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+
+        // --- 6. DARK / LIGHT THEME TOGGLE ---
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            themeIcon.className = isDark ? "fa-regular fa-moon text-sm" : "fa-regular fa-sun text-sm";
+            localStorage.setItem('dashboard_theme', isDark ? 'dark' : 'light');
+        });
+
+        // Load saved theme preference
+        if (localStorage.getItem('dashboard_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            themeIcon.className = "fa-regular fa-moon text-sm";
+        }
+
+        // --- 7. RECENTLY CLOSED & NOTES ---
+        function clearRecentlyClosed() {
+            document.getElementById('recentlyClosedContainer').innerHTML = `
+                <div class="text-xs text-slate-400 text-center py-4">No recently closed tabs</div>
+            `;
+        }
+
+        function clearNotes() {
+            document.getElementById('noteInput').value = '';
+            document.getElementById('noteInput').focus();
+        }
+
+        // --- 8. MODAL SYSTEM ---
+        function openModal(type) {
+            const modal = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const savedName = localStorage.getItem('dashboard_user_name') || 'Reza';
+
+            if (type === 'editModal' || type === 'settingsModal') {
+                title.textContent = "Dashboard Settings";
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block font-semibold mb-1">Your Name</label>
+                            <input type="text" id="nameInput" value="${savedName}" class="w-full bg-white/60 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Location for Weather</label>
+                            <input type="text" value="Berlin, Germany" class="w-full bg-white/60 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 outline-none">
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'addBookmarkModal' || type === 'quickAccessModal') {
+                title.textContent = "Add Quick Shortcut";
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block font-semibold mb-1">Shortcut Name</label>
+                            <input type="text" placeholder="e.g. Figma" class="w-full bg-white/60 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">URL</label>
+                            <input type="text" placeholder="https://figma.com" class="w-full bg-white/60 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 outline-none">
+                        </div>
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalBox').classList.remove('scale-95');
+                document.getElementById('modalBox').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modalOverlay');
+            modal.classList.add('opacity-0');
+            document.getElementById('modalBox').classList.remove('scale-100');
+            document.getElementById('modalBox').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function saveModalSettings() {
+            const nameInput = document.getElementById('nameInput');
+            if (nameInput) {
+                localStorage.setItem('dashboard_user_name', nameInput.value.trim());
+                updateClock();
+            }
+            closeModal();
+        }
+
+        const ADMIN_API = '/virtual-phone/admin/api/';
+        const FALLBACK_ICON = '/virtual-phone/vphone.png';
+        const REFRESH_MS = 6000;
+        let setupRequired = false;
+        let refreshTimer = null;
+        let refreshPending = false;
+        let lastOverview = null;
+        let lastStorageRefresh = 0;
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+        }
+
+        function profileImage(user) {
+            return user.profile_url || FALLBACK_ICON;
+        }
+
+        function appIcon(app) {
+            return app.app_icon || app.icon || FALLBACK_ICON;
+        }
+
+        async function adminRequest(url, options = {}) {
+            const response = await fetch(url, { credentials: 'same-origin', ...options });
+            const data = await response.json().catch(() => ({ success: false, message: 'The server returned an invalid response.' }));
+            if (!response.ok || !data.success) throw new Error(data.message || `Request failed (${response.status}).`);
+            return data;
+        }
+
+        function showAdminError(message) {
+            const status = document.getElementById('adminAuthMessage');
+            status.textContent = message || '';
+        }
+
+        function showDashboard(admin) {
+            adminDisplayName = admin.username || 'Admin';
+            document.getElementById('adminAuth').classList.add('hidden');
+            document.getElementById('adminDashboard').style.display = 'flex';
+            updateClock();
+            if (!refreshTimer) {
+                refreshOverview();
+                refreshTimer = setInterval(refreshOverview, REFRESH_MS);
+            }
+        }
+
+        function phonePreview(user) {
+            const appName = user.current_app_name || user.app_name || 'Phone Home';
+            const icon = user.current_app_icon || user.app_icon || '';
+            const started = user.current_app_started_at || user.started_at || user.last_ping || '';
+            const startedText = started ? new Date(started.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently';
+            const username = escapeHtml(user.username || 'User');
+            return `<article class="flex flex-col items-center gap-3" data-user-id="${Number(user.id || 0)}">
+                <div class="phone-preview">
+                    <div class="phone-preview-screen">
+                        <div class="mb-3 flex items-center justify-between text-[8px] font-bold"><span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><img src="${FALLBACK_ICON}" alt="Virtual Phone" class="h-4 w-4 rounded object-cover"></div>
+                        <div class="mb-4 text-center"><img src="${escapeHtml(profileImage(user))}" onerror="this.onerror=null;this.src='${FALLBACK_ICON}'" alt="${username}" class="mx-auto h-12 w-12 rounded-full border-2 border-white object-cover shadow"><strong class="mt-1 block max-w-full truncate text-[10px]"><img src="${FALLBACK_ICON}" alt="" class="mr-1 inline h-3 w-3 rounded-sm object-cover">${username}</strong></div>
+                        <div class="rounded-xl bg-white/80 p-2 shadow-sm"><div class="mb-2 flex items-center gap-1 text-[8px] font-bold text-emerald-700"><span class="live-dot"></span> LIVE PHONE</div><div class="flex items-center gap-2"><img src="${escapeHtml(icon || FALLBACK_ICON)}" onerror="this.onerror=null;this.src='${FALLBACK_ICON}'" alt="" class="h-8 w-8 rounded-lg object-cover"><div class="min-w-0"><strong class="block truncate text-[9px]">${escapeHtml(appName)}</strong><span class="text-[8px] text-slate-500">Since ${escapeHtml(startedText)}</span></div></div></div>
+                        <div class="mt-3 grid grid-cols-3 gap-1 opacity-70"><span class="h-5 rounded-md bg-blue-400/40"></span><span class="h-5 rounded-md bg-emerald-400/40"></span><span class="h-5 rounded-md bg-amber-400/50"></span></div>
+                    </div>
+                </div>
+                <div class="max-w-[170px] text-center"><div class="flex items-center justify-center gap-1 text-xs font-bold"><img src="${FALLBACK_ICON}" alt="" class="h-4 w-4 rounded object-cover">${username}</div><div class="mt-1 text-[10px] opacity-70">${escapeHtml(appName)}</div></div>
+            </article>`;
+        }
+
+        function renderActivePhones(users) {
+            const list = document.getElementById('activePhonesList');
+            const grid = document.getElementById('activePhonesGrid');
+            const activeUsers = users.filter(user => user.phone_active);
+            document.getElementById('activePhonesValue').textContent = String(activeUsers.length);
+            if (!activeUsers.length) {
+                list.innerHTML = '<div class="rounded-xl bg-white/40 p-4 text-center text-xs text-slate-500 dark:text-slate-300">No phone heartbeat received in the last 75 seconds.</div>';
+                grid.innerHTML = '<p class="col-span-full py-10 text-center text-sm opacity-70">No phones are currently active.</p>';
+                return;
+            }
+            list.innerHTML = activeUsers.slice(0, 7).map(user => `<button type="button" class="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-white/50 dark:hover:bg-slate-800/50" data-show-user="${Number(user.id)}"><img src="${escapeHtml(profileImage(user))}" onerror="this.onerror=null;this.src='${FALLBACK_ICON}'" alt="" class="h-9 w-9 rounded-full object-cover"><span class="min-w-0 flex-1"><strong class="flex items-center gap-1 truncate text-xs"><img src="${FALLBACK_ICON}" alt="" class="h-3 w-3 rounded-sm object-cover">${escapeHtml(user.username)}</strong><small class="block truncate text-[10px] opacity-70">${escapeHtml(user.current_app_name || 'Phone Home')}</small></span><i class="live-dot"></i></button>`).join('');
+            grid.innerHTML = activeUsers.map(phonePreview).join('');
+            list.querySelectorAll('[data-show-user]').forEach(button => button.addEventListener('click', () => {
+                const user = activeUsers.find(item => Number(item.id) === Number(button.dataset.showUser));
+                if (user) showPhoneModal([user], `${user.username}'s phone`);
+            }));
+        }
+
+        function showPhoneModal(users, title = 'Active Virtual Phones') {
+            document.getElementById('activePhonesTitle').textContent = title;
+            document.getElementById('activePhonesGrid').innerHTML = users.length
+                ? users.map(phonePreview).join('')
+                : '<p class="col-span-full py-10 text-center text-sm opacity-70">No active users are running this app.</p>';
+            document.getElementById('activePhonesModal').classList.remove('hidden');
+            document.getElementById('activePhonesModal').classList.add('flex');
+        }
+
+        function renderRunningApps(apps) {
+            const grid = document.getElementById('runningAppsGrid');
+            const activeCount = apps.reduce((sum, app) => sum + Number(app.active_count || 0), 0);
+            document.getElementById('runningAppsValue').textContent = `${activeCount} active ${activeCount === 1 ? 'user' : 'users'}`;
+            if (!apps.length) {
+                grid.innerHTML = '<p class="col-span-full py-8 text-center text-xs text-slate-500 dark:text-slate-300">No app is currently open.</p>';
+                return;
+            }
+            grid.innerHTML = apps.map((app, index) => `<button type="button" class="running-app-tile flex flex-col items-center justify-center rounded-2xl p-3 text-center transition hover:bg-white/60 dark:hover:bg-slate-800/60" data-running-app="${index}"><span class="running-app-count">${Number(app.active_count || 0)}</span><img src="${escapeHtml(appIcon(app))}" onerror="this.onerror=null;this.src='${FALLBACK_ICON}'" alt="" class="mb-2 h-12 w-12 rounded-2xl border border-white/60 object-cover shadow-sm"><span class="max-w-full truncate text-[11px] font-semibold">${escapeHtml(app.name)}</span><span class="mt-1 text-[9px] opacity-65">${Number(app.active_count || 0)} running</span></button>`).join('');
+            grid.querySelectorAll('[data-running-app]').forEach(button => button.addEventListener('click', () => {
+                const app = apps[Number(button.dataset.runningApp)];
+                showPhoneModal(app.users || [], `Users running ${app.name}`);
+            }));
+        }
+
+        function renderRecentActivity(users) {
+            const list = document.getElementById('recentActivityList');
+            const recent = users.filter(user => user.last_seen || user.current_app_name).slice(0, 6);
+            if (!recent.length) {
+                list.innerHTML = '<p class="py-5 text-center text-xs opacity-70">No user activity recorded yet.</p>';
+                return;
+            }
+            list.innerHTML = recent.map(user => `<div class="flex items-center gap-2 rounded-xl p-2"><img src="${escapeHtml(profileImage(user))}" onerror="this.onerror=null;this.src='${FALLBACK_ICON}'" alt="" class="h-8 w-8 rounded-full object-cover"><div class="min-w-0 flex-1"><strong class="flex items-center gap-1 truncate text-[11px]"><img src="${FALLBACK_ICON}" alt="" class="h-3 w-3 rounded-sm object-cover">${escapeHtml(user.username)}</strong><small class="block truncate text-[10px] opacity-70">${escapeHtml(user.current_app_name || 'Phone Home')} · ${escapeHtml(user.status || 'offline')}</small></div></div>`).join('');
+        }
+
+        function renderRecentRunningUsers(users) {
+            const list = document.getElementById('recentRunningUsers');
+            if (!users.length) {
+                list.innerHTML = '<p class="py-5 text-center text-xs opacity-70">No apps are currently running.</p>';
+                return;
+            }
+            list.innerHTML = users.slice(0, 5).map(user => `<button type="button" class="flex w-full items-center gap-2 rounded-xl p-2 text-left transition hover:bg-white/40 dark:hover:bg-slate-800/40"><img src="${escapeHtml(user.profile_url || FALLBACK_ICON)}" onerror="this.onerror=null;this.src='${FALLBACK_ICON}'" alt="" class="h-7 w-7 rounded-full object-cover"><span class="min-w-0 flex-1"><strong class="flex items-center gap-1 truncate text-[11px]"><img src="${FALLBACK_ICON}" alt="" class="h-3 w-3 rounded-sm">${escapeHtml(user.username)}</strong><small class="block truncate text-[10px] opacity-70">${escapeHtml(user.app_name)}</small></span><span class="live-dot"></span></button>`).join('');
+        }
+
+        async function refreshOverview() {
+            if (refreshPending) return;
+            refreshPending = true;
+            try {
+                const includeStorage = Date.now() - lastStorageRefresh >= 60000;
+                const data = await adminRequest(`${ADMIN_API}overview.php?limit=500&storage=${includeStorage ? '1' : '0'}`);
+                lastOverview = data;
+                document.getElementById('totalUsersValue').textContent = String(data.stats?.total_users ?? 0);
+                if (includeStorage && data.stats?.storage_used_mb !== null) {
+                    document.getElementById('storageUsedValue').textContent = `${Number(data.stats.storage_used_mb || 0)} MB`;
+                    document.getElementById('storageRefreshText').textContent = `Updated ${new Date(data.generated_at || Date.now()).toLocaleTimeString()}`;
+                    lastStorageRefresh = Date.now();
+                }
+                document.getElementById('blockedUsersValue').textContent = String(data.stats?.blocked_users ?? 0);
+                document.getElementById('connectionState').textContent = 'Connected';
+                renderActivePhones(data.active_phone_users || []);
+                renderRunningApps(data.running_apps || []);
+                renderRecentActivity(data.users || []);
+                renderRecentRunningUsers(data.running_users || []);
+                document.getElementById('activityRefreshText').textContent = `Updated ${new Date(data.generated_at || Date.now()).toLocaleTimeString()}`;
+            } catch (error) {
+                document.getElementById('connectionState').textContent = 'Connection issue';
+                document.getElementById('activityRefreshText').textContent = error.message;
+                if (error.message.toLowerCase().includes('sign in')) {
+                    if (refreshTimer) clearInterval(refreshTimer);
+                    refreshTimer = null;
+                    document.getElementById('adminDashboard').style.display = 'none';
+                    document.getElementById('adminAuth').classList.remove('hidden');
+                    showAdminError(error.message);
+                }
+            } finally {
+                refreshPending = false;
+            }
+        }
+
+        async function initAdminInterface() {
+            const auth = document.getElementById('adminAuth');
+            const form = document.getElementById('adminAuthForm');
+            const submit = document.getElementById('adminAuthSubmit');
+            document.getElementById('activePhonesList').innerHTML = '<p class="py-5 text-center text-xs opacity-70">Loading live phones…</p>';
+            document.getElementById('runningAppsGrid').innerHTML = '<p class="col-span-full py-5 text-center text-xs opacity-70">Loading running apps…</p>';
+            document.getElementById('recentActivityList').innerHTML = '<p class="py-5 text-center text-xs opacity-70">Loading activity…</p>';
+            document.getElementById('recentRunningUsers').innerHTML = '<p class="py-5 text-center text-xs opacity-70">Loading running apps…</p>';
+            try {
+                const session = await adminRequest(`${ADMIN_API}session.php`);
+                setupRequired = Boolean(session.setup_required);
+                if (session.admin) {
+                    showDashboard(session.admin);
+                } else {
+                    document.getElementById('adminAuthTitle').textContent = setupRequired ? 'Create admin account' : 'Admin sign in';
+                    document.getElementById('adminAuthDescription').textContent = setupRequired
+                        ? 'Create the first administrator account to open the monitoring dashboard.'
+                        : 'Sign in to view live phone and app activity.';
+                    submit.textContent = setupRequired ? 'Create admin account' : 'Sign in';
+                    document.getElementById('adminPassword').autocomplete = setupRequired ? 'new-password' : 'current-password';
+                }
+            } catch (error) {
+                showAdminError(error.message);
+            }
+
+            form.addEventListener('submit', async event => {
+                event.preventDefault();
+                submit.disabled = true;
+                showAdminError('');
+                try {
+                    const result = await adminRequest(`${ADMIN_API}session.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: setupRequired ? 'setup' : 'login',
+                            username: document.getElementById('adminUsername').value.trim(),
+                            password: document.getElementById('adminPassword').value,
+                        }),
+                    });
+                    auth.classList.add('hidden');
+                    showDashboard(result.admin);
+                } catch (error) {
+                    showAdminError(error.message);
+                } finally {
+                    submit.disabled = false;
+                }
+            });
+
+            document.getElementById('adminSignOut').addEventListener('click', async () => {
+                await adminRequest(`${ADMIN_API}session.php`, { method: 'DELETE' });
+                if (refreshTimer) clearInterval(refreshTimer);
+                window.location.reload();
+            });
+            document.getElementById('expandActivePhones').addEventListener('click', () => {
+                const active = lastOverview?.active_phone_users || [];
+                showPhoneModal(active);
+            });
+            document.getElementById('manualRefresh').addEventListener('click', refreshOverview);
+            document.getElementById('closeActivePhones').addEventListener('click', () => {
+                document.getElementById('activePhonesModal').classList.add('hidden');
+                document.getElementById('activePhonesModal').classList.remove('flex');
+            });
+            document.getElementById('activePhonesModal').addEventListener('click', event => {
+                if (event.target.id === 'activePhonesModal') document.getElementById('closeActivePhones').click();
+            });
+        }
+
+        initAdminInterface();
+    </script>
+</body>
+</html>

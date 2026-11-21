@@ -1,0 +1,2788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Virtual Phone</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+    <style>
+        /* ─── RESET & BASE ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+        }
+.phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .phone-power-btn {
+            position: absolute;
+            right: -4px;
+            top: 140px;
+            width: 4px;
+            height: 60px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+        }
+
+        /* ─── SCREEN ─── */
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+        }
+
+        /* ─── DYNAMIC ISLAND ─── */
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85px;
+            height: 22px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .dynamic-island.notify-error {
+            width: 220px;
+            height: 38px;
+            background: #ff3b30;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+        .dynamic-island.notify-success {
+            width: 220px;
+            height: 38px;
+            background: #34c759;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+
+        /* ─── STATUS BAR ─── */
+        .status {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 900;
+        }
+        .status .left-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .status .time {
+            pointer-events: none;
+        }
+        .status .icons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            pointer-events: auto;
+        }
+        .status .icons i {
+            font-size: 10px;
+        }
+        .notification-trigger-btn {
+            font-size: 12px;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 6px;
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .notification-trigger-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ─── WALLPAPER ─── */
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #1f1a3a, #0f172a, #020617);
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            transition: background 0.8s ease, filter 0.3s ease;
+        }
+
+        /* ─── CLOCK ─── */
+        .clock {
+            position: absolute;
+            top: 60px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            z-index: 5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+        .clock h1 {
+            font-size: 46px;
+            font-weight: 500;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .clock p {
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .apps-open-active .clock {
+            transform: translateY(-20px);
+            opacity: 0.3;
+        }
+
+        /* ─── SCROLL INDICATOR ─── */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            animation: bounce 2s infinite;
+            z-index: 50;
+            cursor: pointer;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+            transition: opacity 0.3s ease, transform 0.1s ease;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .scroll-indicator:active {
+            transform: translate(-50%, -2px) scale(0.95);
+        }
+        .scroll-indicator.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .scroll-indicator i {
+            display: block;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        @keyframes bounce {
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translate(-50%, 0);
+            }
+            40% {
+                transform: translate(-50%, -6px);
+            }
+            60% {
+                transform: translate(-50%, -3px);
+            }
+        }
+
+        /* ─── APPS CONTAINER ─── */
+        .apps-container {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 400px;
+            z-index: 10;
+            padding: 20px 16px 40px;
+            overflow-y: auto;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94), opacity 0.3s ease;
+            pointer-events: none;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 32px 32px 0 0;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .apps-container.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .apps-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px 8px;
+            padding-bottom: 20px;
+        }
+        .app {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .app:active {
+            transform: scale(0.9);
+        }
+        .icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 6px;
+            border-radius: 13px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: 0.25s ease;
+        }
+        .app:hover .icon {
+            transform: scale(1.1);
+        }
+        .app span {
+            display: block;
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        /* App Colors */
+        .instagram {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+        .whatsapp {
+            background: #25D366;
+        }
+        .facebook {
+            background: #1877F2;
+        }
+        .camera {
+            background: linear-gradient(45deg, #434343 0%, #000000 100%);
+        }
+        .gallery {
+            background: #ff9800;
+        }
+        .settings {
+            background: #555;
+        }
+        .browser {
+            background: #00BCD4;
+        }
+        .phoneicon {
+            background: #4CAF50;
+        }
+        .messages {
+            background: #34C759;
+        }
+        .mail {
+            background: #007AFF;
+        }
+        .music {
+            background: #FF2D55;
+        }
+        .photos {
+            background: #FF6B6B;
+        }
+        .maps {
+            background: #4CAF50;
+        }
+        .calendar {
+            background: #FF3B30;
+        }
+        .notes {
+            background: #FFCC00;
+        }
+        .appstore {
+            background: #007AFF;
+        }
+        .logout-icon {
+            background: #ff3b30;
+        }
+        .chat-app-icon {
+            background-image: url('/virtual-phone/uploads/icon/chat.png');
+            background-color: #5865F2;
+        }
+
+        /* Hide logout app by default */
+        #logoutApp {
+            display: none;
+        }
+        #logoutApp.show {
+            display: flex;
+        }
+
+        /* ─── DOCK ─── */
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            z-index: 1001;
+            cursor: pointer;
+        }
+
+        /* ─── CONTROL CENTER ─── */
+        .control-center {
+            position: absolute;
+            top: -480px;
+            left: 0;
+            right: 0;
+            height: 410px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 0 0 32px 32px;
+            padding: 35px 16px 16px;
+            z-index: 950;
+            transition: top 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .control-center.open {
+            top: 0;
+        }
+
+        /* ─── NOTIFICATION CENTER ─── */
+        .notification-center {
+            position: absolute;
+            top: -480px;
+            left: 0;
+            right: 0;
+            height: 410px;
+            background: rgba(10, 10, 15, 0.93);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 0 0 32px 32px;
+            padding: 40px 18px 16px;
+            z-index: 960;
+            transition: top 0.45s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .notification-center.open {
+            top: 0;
+        }
+        .nc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+        .nc-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .nc-header .clear-btn {
+            font-size: 11px;
+            color: #ff3b30;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .nc-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 2px;
+        }
+        .nc-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .nc-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .nc-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-left: 3px solid #007AFF;
+            animation: fadeIn 0.3s ease;
+        }
+        .nc-item.unread {
+            border-left-color: #34c759;
+        }
+        .nc-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .nc-item-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .nc-item-body {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.3;
+        }
+        .nc-handle-bar {
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 10px auto 0;
+            cursor: pointer;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── CC TOGGLES ─── */
+        .cc-grid-block {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .cc-card-4 {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .cc-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .cc-toggle:active {
+            transform: scale(0.95);
+        }
+        .cc-toggle.active {
+            background: #007AFF;
+        }
+        .cc-toggle.active-green {
+            background: #34c759;
+        }
+        .cc-toggle.active-orange {
+            background: #ff9500;
+        }
+        .cc-toggle i {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .cc-toggle span {
+            font-size: 9px;
+            font-weight: 500;
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cc-slider-group {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+        }
+        .cc-slider-group label {
+            font-size: 11px;
+            font-weight: 500;
+            opacity: 0.8;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .cc-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+        .cc-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+        }
+        .cc-handle-bar {
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 12px auto 0;
+            cursor: pointer;
+        }
+
+        /* ─── LOGIN PANEL ─── */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -430px;
+            height: 420px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 45px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            transition: bottom 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            padding: 18px 18px 22px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show {
+            bottom: 0;
+        }
+        .login-panel .handle {
+            width: 40px;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            cursor: pointer;
+        }
+        .login-panel h2 {
+            text-align: center;
+            margin-bottom: 2px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #111;
+        }
+        .login-panel p {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+        .login-panel input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.03);
+            color: #111;
+        }
+        .login-panel input:focus {
+            border-color: #007AFF;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        }
+        .login-panel button {
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            background: #007AFF;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+        .login-panel button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .login-panel button.signup {
+            background: #34C759;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .login-error {
+            color: #ff3b30;
+            font-size: 11px;
+            text-align: center;
+            margin-top: -6px;
+            margin-bottom: 8px;
+            min-height: 18px;
+            font-weight: 500;
+        }
+
+        /* ─── KEYBOARD ─── */
+        .keyboard {
+            position: absolute;
+            bottom: -240px;
+            left: 0;
+            right: 0;
+            height: 210px;
+            background: rgba(220, 224, 230, 0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 18px 18px 0 0;
+            padding: 8px 5px 24px;
+            box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.2);
+            transition: bottom 0.35s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .keyboard.active {
+            bottom: 0;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .key {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            height: 38px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: background 0.1s, transform 0.1s;
+        }
+        .key:active,
+        .key.physical-active {
+            background: #abb4be !important;
+            transform: scale(0.92);
+        }
+        .key.special {
+            background: #acb5be;
+            flex: 1.35;
+            font-size: 13px;
+        }
+        .key.space {
+            flex: 5.2;
+        }
+        .login-panel.keyboard-open {
+            height: 460px;
+        }
+
+        /* ─── LOGIN OVERLAY (blocks taps on apps when not logged in) ─── */
+        .login-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 8;
+            background: transparent;
+            pointer-events: none;
+            display: none;
+        }
+        .login-overlay.active {
+            display: block;
+            pointer-events: auto;
+        }
+
+        /* ─── APP OVERLAY (Phone app) ─── */
+        .app-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 36px;
+        }
+        .app-overlay.show {
+            display: flex;
+        }
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: linear-gradient(90deg, #fdf2f8, #f5f3ff);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+        .app-header .app-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+            flex: 1;
+            text-align: center;
+        }
+        .app-header button {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            color: #111;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .app-header .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-color: #ccc;
+            flex-shrink: 0;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .app-body {
+            flex: 1;
+            position: relative;
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        /* ─── PHONE APP STYLES ─── */
+        .phone-app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #f2f2f7;
+            color: #000;
+            font-family: 'Poppins', sans-serif;
+        }
+        .phone-app-container .tabs {
+            display: flex;
+            background: #e5e5ea;
+            border-radius: 12px;
+            margin: 8px 12px 0;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .phone-app-container .tab {
+            flex: 1;
+            text-align: center;
+            padding: 6px 0;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            transition: 0.2s;
+        }
+        .phone-app-container .tab.active {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .phone-app-container .panel {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            padding: 8px 12px 12px;
+        }
+        .phone-app-container .panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+        .contact-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .contact-list::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border-radius: 14px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .contact-item:active {
+            background: #e5e5ea;
+        }
+        .contact-item .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-color: #d1d1d6;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        .contact-item .info {
+            flex: 1;
+        }
+        .contact-item .info .name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .contact-item .info .number {
+            font-size: 11px;
+            color: #8e8e93;
+        }
+        .contact-item .actions {
+            display: flex;
+            gap: 4px;
+        }
+        .contact-item .actions button {
+            background: transparent;
+            border: none;
+            color: #8e8e93;
+            font-size: 14px;
+            padding: 4px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .contact-item .actions .call-btn {
+            color: #34c759;
+        }
+        .contact-item .actions .edit-btn {
+            color: #007AFF;
+        }
+        .contact-item .actions .delete-btn {
+            color: #ff3b30;
+        }
+        .contact-item .actions button:active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-msg {
+            color: #8e8e93;
+            text-align: center;
+            padding: 30px 0;
+            font-size: 13px;
+        }
+        .contacts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .contacts-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .add-btn {
+            background: #007AFF;
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-btn:active {
+            background: #005bbb;
+        }
+
+        /* Dialer */
+        .dial-number {
+            background: #fff;
+            border-radius: 14px;
+            padding: 10px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            min-height: 54px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-all;
+        }
+        .dial-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 240px;
+            margin: 0 auto 10px;
+        }
+        .dial-key {
+            background: #fff;
+            border: none;
+            border-radius: 50%;
+            aspect-ratio: 1/1;
+            font-size: 22px;
+            font-weight: 500;
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .dial-key:active {
+            transform: scale(0.92);
+            background: #e5e5ea;
+        }
+        .dial-key .sub {
+            font-size: 9px;
+            font-weight: 400;
+            color: #8e8e93;
+        }
+        .dial-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 4px;
+        }
+        .dial-actions button {
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            background: #fff;
+            color: #000;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .dial-actions button:active {
+            transform: scale(0.92);
+        }
+        .dial-actions .call-btn {
+            background: #34c759;
+            color: #fff;
+            font-size: 24px;
+        }
+        .dial-actions .call-btn:active {
+            background: #28a745;
+        }
+
+        /* ─── UPGRADE OVERLAY (full-screen message) ─── */
+        .upgrade-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 160;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .upgrade-overlay.open {
+            display: flex;
+        }
+        .upgrade-overlay .upgrade-icon {
+            font-size: 48px;
+            color: #ffcc00;
+            margin-bottom: 20px;
+        }
+        .upgrade-overlay h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .upgrade-overlay p {
+            font-size: 14px;
+            color: #aaa;
+            max-width: 200px;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+        .upgrade-overlay .close-btn {
+            background: #007AFF;
+            border: none;
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .upgrade-overlay .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal for add/edit contact */
+        .phone-modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            border-radius: 24px;
+        }
+        .phone-modal.open {
+            display: flex;
+        }
+        .phone-modal .modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px 18px;
+            width: 90%;
+            max-width: 280px;
+            color: #000;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        .phone-modal .modal-box h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .phone-modal .modal-box label {
+            font-size: 11px;
+            color: #8e8e93;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .phone-modal .modal-box input[type="text"],
+        .phone-modal .modal-box input[type="tel"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            background: #f8f8fc;
+        }
+        .phone-modal .modal-box input:focus {
+            border-color: #007AFF;
+            outline: none;
+        }
+        .phone-modal .modal-box .file-upload-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .phone-modal .modal-box .file-upload-area input[type="file"] {
+            flex: 1;
+            padding: 6px 0;
+            font-size: 11px;
+        }
+        .phone-modal .modal-box .file-upload-area .preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-color: #e5e5ea;
+            flex-shrink: 0;
+            border: 1px solid #ddd;
+        }
+        .phone-modal .modal-box .row-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .phone-modal .modal-box .row-btns button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .phone-modal .modal-box .cancel {
+            background: #e5e5ea;
+            color: #333;
+        }
+        .phone-modal .modal-box .save {
+            background: #007AFF;
+            color: #fff;
+        }
+
+        /* ─── RESPONSIVE TWEAKS ─── */
+        @media (max-width: 360px) {
+            .phone {
+                width: 290px;
+                height: 480px;
+                border-radius: 40px;
+                padding: 10px;
+            }
+            .screen {
+                border-radius: 30px;
+            }
+            .clock h1 {
+                font-size: 38px;
+            }
+            .icon {
+                width: 42px;
+                height: 42px;
+                font-size: 17px;
+                border-radius: 11px;
+            }
+            .app span {
+                font-size: 9px;
+            }
+            .apps-grid {
+                gap: 12px 6px;
+            }
+            .login-panel {
+                height: 380px;
+                padding: 14px 14px 18px;
+            }
+            .login-panel h2 {
+                font-size: 17px;
+            }
+            .login-panel input {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+            .login-panel button {
+                padding: 10px;
+                font-size: 12px;
+            }
+            .app-overlay {
+                padding: 4px;
+                border-radius: 30px;
+            }
+            .app-shell {
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone">
+        <div class="phone-power-btn"></div>
+        <div class="screen" id="screen">
+
+            <!-- Wallpaper -->
+            <div class="wallpaper" id="wallpaper"></div>
+
+            <!-- Dynamic Island -->
+            <div class="dynamic-island" id="dynamicIsland"></div>
+
+            <!-- Status Bar -->
+            <div class="status" id="statusBar">
+                <div class="left-side" id="openCCBtn">
+                    <div class="time" id="time">12:00</div>
+                </div>
+                <div class="icons">
+                    <button class="notification-trigger-btn" id="ncTriggerBtn" type="button" title="Notifications" aria-label="Open notifications">
+                        <i class="fas fa-bell" aria-hidden="true"></i>
+                    </button>
+                    <i class="fas fa-signal" id="cellularStatus"></i>
+                    <i class="fas fa-wifi" id="wifiStatus"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <!-- Clock -->
+            <div class="clock" id="clockWidget">
+                <h1 id="clock">12:00</h1>
+                <p id="date">Tuesday, July 14</p>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator" id="scrollIndicator">
+                <span id="indicatorText">virtual phone running</span>
+                <i class="fas fa-chevron-up"></i>
+            </div>
+
+            <!-- Login Overlay -->
+            <div class="login-overlay active" id="loginOverlay"></div>
+
+            <!-- Apps Container -->
+            <div class="apps-container" id="appsContainer">
+                <div class="apps-grid" id="appsGrid">
+
+                    <a href="/virtual-phone/user/appstore/appstore.html" class="app">
+                        <div class="icon appstore"><i class="fas fa-app-store"></i></div>
+                        <span>App Store</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/browser/browser.html" class="app">
+                        <div class="icon browser"><i class="fas fa-globe"></i></div>
+                        <span>Browser</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/calender/calender_App.html" class="app">
+                        <div class="icon calendar"><i class="fas fa-calendar-alt"></i></div>
+                        <span>Calendar</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/camera/camera.html" class="app">
+                        <div class="icon camera"><i class="fas fa-camera"></i></div>
+                        <span>Camera</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/chat_room/vphone_chat.html" class="app">
+                        <div class="icon chat-app-icon"></div>
+                        <span>Chat Room</span>
+                    </a>
+
+                    <a href="https://www.facebook.com/" class="app" target="_blank" rel="noopener noreferrer">
+                        <div class="icon facebook"><i class="fab fa-facebook-f"></i></div>
+                        <span>Facebook</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/gallery/gallery.html" class="app">
+                        <div class="icon gallery"><i class="fas fa-image"></i></div>
+                        <span>Gallery</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/test/instgram.php" class="app">
+                        <div class="icon instagram"><i class="fab fa-instagram"></i></div>
+                        <span>Instagram</span>
+                    </a>
+
+                    <a href="https://mail.google.com/" class="app" target="_blank" rel="noopener noreferrer">
+                        <div class="icon mail"><i class="fas fa-envelope"></i></div>
+                        <span>Mail</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/maps/maps.html" class="app">
+                        <div class="icon maps"><i class="fas fa-map-marked-alt"></i></div>
+                        <span>Maps</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/messages/messages.html" class="app">
+                        <div class="icon messages"><i class="fas fa-comment-dots"></i></div>
+                        <span>Messages</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/music/music.html" class="app">
+                        <div class="icon music"><i class="fas fa-music"></i></div>
+                        <span>Music</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/notes/notes.html" class="app">
+                        <div class="icon notes"><i class="fas fa-sticky-note"></i></div>
+                        <span>Notes</span>
+                    </a>
+
+                    <!-- Phone App (div) -->
+                    <div class="app" id="phoneApp">
+                        <div class="icon phoneicon"><i class="fas fa-phone"></i></div>
+                        <span>Phone</span>
+                    </div>
+
+                    <a href="/virtual-phone/user/photos/photos.html" class="app">
+                        <div class="icon photos"><i class="fas fa-images"></i></div>
+                        <span>Photos</span>
+                    </a>
+
+                    <a href="/virtual-phone/user/settings/settings.html" class="app">
+                        <div class="icon settings"><i class="fas fa-cog"></i></div>
+                        <span>Settings</span>
+                    </a>
+
+                    <a href="https://web.whatsapp.com/" class="app" target="_blank" rel="noopener noreferrer">
+                        <div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div>
+                        <span>WhatsApp</span>
+                    </a>
+
+                    <!-- ─── LOGOUT BUTTON ─── -->
+                    <div class="app" id="logoutApp">
+                        <div class="icon logout-icon">
+                            <i class="fas fa-power-off"></i>
+                        </div>
+                        <span>Logout</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Dock -->
+            <div class="dock" id="homeIndicator"></div>
+
+            <!-- Control Center -->
+            <div class="control-center" id="controlCenter">
+                <div class="cc-grid-block">
+                    <div class="cc-card-4">
+                        <div class="cc-toggle active" data-toggle="wifi" id="wifiToggle"><i class="fas fa-wifi"></i><span>Wi-Fi</span></div>
+                        <div class="cc-toggle active" data-toggle="cellular" id="cellularToggle"><i class="fas fa-signal"></i><span>Cellular</span></div>
+                        <div class="cc-toggle active" data-toggle="bluetooth"><i class="fab fa-bluetooth-b"></i><span>Bluetooth</span></div>
+                        <div class="cc-toggle" data-toggle="hotspot" id="hotspotToggle"><i class="fas fa-wifi-slash"></i><span>Hotspot</span></div>
+                    </div>
+                    <div class="cc-card-4">
+                        <div class="cc-toggle active-green" data-toggle="location"><i class="fas fa-location-arrow"></i><span>Location</span></div>
+                        <div class="cc-toggle" data-toggle="sound" id="muteToggle"><i class="fas fa-volume-up"></i><span>Sound</span></div>
+                        <div class="cc-toggle" data-toggle="flashlight" id="flashlightToggle"><i class="fas fa-lightbulb"></i><span>Flashlight</span></div>
+                        <div class="cc-toggle active-orange" data-toggle="airplane" id="airplaneToggle"><i class="fas fa-plane"></i><span>Airplane</span></div>
+                    </div>
+                </div>
+                <div class="cc-slider-group">
+                    <label>Brightness <span id="brightnessValue">50%</span></label>
+                    <input type="range" min="10" max="100" value="50" class="cc-slider" id="brightnessSlider">
+                </div>
+                <div class="cc-slider-group">
+                    <label>Volume <span id="volumeValue">50%</span></label>
+                    <input type="range" min="0" max="100" value="50" class="cc-slider" id="volumeSlider">
+                </div>
+                <div class="cc-handle-bar" id="ccHandle"></div>
+            </div>
+
+            <!-- Notification Center -->
+            <div class="notification-center" id="notificationCenter">
+                <div class="nc-header">
+                    <h3>Notifications</h3>
+                    <span class="clear-btn" id="ncClearBtn">Clear All</span>
+                </div>
+                <div class="nc-list" id="ncList">
+                    <div class="nc-item unread">
+                        <div class="nc-item-header"><span>SYSTEM</span><span>Just now</span></div>
+                        <div class="nc-item-title">Welcome to Virtual Phone!</div>
+                        <div class="nc-item-body">Swipe up from the bottom to see all your apps.</div>
+                    </div>
+                    <div class="nc-item">
+                        <div class="nc-item-header"><span>CHAT</span><span>5m ago</span></div>
+                        <div class="nc-item-title">New group message</div>
+                        <div class="nc-item-body">Open the Chat app to join the conversation.</div>
+                    </div>
+                </div>
+                <div class="nc-handle-bar" id="ncHandle"></div>
+            </div>
+
+            <!-- Login Panel -->
+            <div id="loginPanel" class="login-panel">
+                <div class="handle" id="loginHandle"></div>
+                <h2>Welcome</h2>
+                <p>Sign in to access your Virtual Phone</p>
+                <form id="loginForm" onsubmit="return false;">
+                    <input type="text" id="usernameInput" placeholder="Username" inputmode="none" autocomplete="off" required />
+                    <input type="password" id="passwordInput" placeholder="Password" inputmode="none" required />
+                    <div class="login-error" id="loginError"></div>
+                    <button type="submit" id="loginBtn">
+                        <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                        <span id="btnText">Login</span>
+                    </button>
+                    <button type="button" class="signup" id="signupBtn">Create Account</button>
+                </form>
+            </div>
+
+            <!-- Keyboard -->
+            <div id="keyboard" class="keyboard">
+                <div class="keyboard-row" id="row-1">
+                    <button class="key" data-key="q">q</button>
+                    <button class="key" data-key="w">w</button>
+                    <button class="key" data-key="e">e</button>
+                    <button class="key" data-key="r">r</button>
+                    <button class="key" data-key="t">t</button>
+                    <button class="key" data-key="y">y</button>
+                    <button class="key" data-key="u">u</button>
+                    <button class="key" data-key="i">i</button>
+                    <button class="key" data-key="o">o</button>
+                    <button class="key" data-key="p">p</button>
+                </div>
+                <div class="keyboard-row" id="row-2">
+                    <button class="key" data-key="a">a</button>
+                    <button class="key" data-key="s">s</button>
+                    <button class="key" data-key="d">d</button>
+                    <button class="key" data-key="f">f</button>
+                    <button class="key" data-key="g">g</button>
+                    <button class="key" data-key="h">h</button>
+                    <button class="key" data-key="j">j</button>
+                    <button class="key" data-key="k">k</button>
+                    <button class="key" data-key="l">l</button>
+                </div>
+                <div class="keyboard-row" id="row-3">
+                    <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                    <button class="key" data-key="z">z</button>
+                    <button class="key" data-key="x">x</button>
+                    <button class="key" data-key="c">c</button>
+                    <button class="key" data-key="v">v</button>
+                    <button class="key" data-key="b">b</button>
+                    <button class="key" data-key="n">n</button>
+                    <button class="key" data-key="m">m</button>
+                    <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key special" id="mode-btn" data-key="mode">123</button>
+                    <button class="key space" id="space-btn" data-key=" ">space</button>
+                    <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+                </div>
+            </div>
+
+            <!-- App Overlay (Phone app) -->
+            <div class="app-overlay" id="appOverlay">
+                <div class="app-shell">
+                    <div class="app-header">
+                        <button id="appCloseBtn"><i class="fas fa-times"></i></button>
+                        <div class="app-title" id="appTitle">Phone</div>
+                        <div class="user-avatar" id="userAvatar"></div>
+                    </div>
+                    <div class="app-body" id="appBody">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /screen -->
+    </div><!-- /phone -->
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── DOM REFS ───
+            const $ = id => document.getElementById(id);
+            const qs = (sel, ctx = document) => ctx.querySelector(sel);
+            const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+            const DOM = {
+                screen: $('screen'),
+                clock: $('clock'),
+                time: $('time'),
+                date: $('date'),
+                clockWidget: $('clockWidget'),
+                wallpaper: $('wallpaper'),
+                loginPanel: $('loginPanel'),
+                loginHandle: $('loginHandle'),
+                loginOverlay: $('loginOverlay'),
+                scrollIndicator: $('scrollIndicator'),
+                indicatorText: $('indicatorText'),
+                keyboard: $('keyboard'),
+                usernameInput: $('usernameInput'),
+                passwordInput: $('passwordInput'),
+                loginForm: $('loginForm'),
+                loginBtn: $('loginBtn'),
+                btnText: $('btnText'),
+                loginSpinner: $('loginSpinner'),
+                loginError: $('loginError'),
+                dynamicIsland: $('dynamicIsland'),
+                logoutApp: $('logoutApp'),
+                allKeys: qsa('.key'),
+                row1: $('row-1'),
+                row2: $('row-2'),
+                row3: $('row-3'),
+                shiftBtn: $('shift-btn'),
+                backspaceBtn: $('backspace-btn'),
+                spaceBtn: $('space-btn'),
+                modeBtn: $('mode-btn'),
+                controlCenter: $('controlCenter'),
+                ccHandle: $('ccHandle'),
+                openCCBtn: $('openCCBtn'),
+                notificationCenter: $('notificationCenter'),
+                ncTriggerBtn: $('ncTriggerBtn'),
+                ncHandle: $('ncHandle'),
+                ncClearBtn: $('ncClearBtn'),
+                ncList: $('ncList'),
+                brightnessSlider: $('brightnessSlider'),
+                volumeSlider: $('volumeSlider'),
+                brightnessValue: $('brightnessValue'),
+                volumeValue: $('volumeValue'),
+                appsContainer: $('appsContainer'),
+                statusBar: $('statusBar'),
+                homeIndicator: $('homeIndicator'),
+                signupBtn: $('signupBtn'),
+                appOverlay: $('appOverlay'),
+                appBody: $('appBody'),
+                appTitle: $('appTitle'),
+                appCloseBtn: $('appCloseBtn'),
+                userAvatar: $('userAvatar'),
+                phoneApp: $('phoneApp'),
+            };
+
+            // ─── STATE ───
+            const STATE = {
+                isShifted: false,
+                isNumMode: false,
+                activeInput: null,
+                isLoggedIn: false,
+                isLoginPending: false,
+                isLoggingOut: false,
+                wallpaperIndex: 0,
+                sessionUser: null,
+                isControlCenterOpen: false,
+                isNotificationCenterOpen: false,
+                isAppsOpen: false,
+                currentContacts: [],
+                autoOpenDone: false, // flag to prevent auto-open loops
+            };
+
+            const CONFIG = {
+                CLOCK_INTERVAL: 1000,
+                NOTIFICATION_DURATION: 3000,
+                LOGIN_TIMEOUT: 15000,
+                STORAGE_KEY: 'vphone_user',
+                API_ENDPOINT: '/virtual-phone/user/contact/api/login_api.php',
+                LOGOUT_API_ENDPOINT: '/virtual-phone/user/contact/api/logout.php',
+                CONTACTS_API: '/virtual-phone/user/contact/api/contacts.php',
+                UPLOAD_CONTACT_PHOTO_API: '/virtual-phone/user/contact/api/upload_contact_photo.php',
+                DEFAULT_AVATAR: '/virtual-phone/uploads/icon/account_profile.jpeg',
+                DEMO_USERNAME: 'admin',
+                DEMO_PASSWORD: 'admin',
+                DASHBOARD_URL: '/virtual-phone/user/user_phone_dashboard.html',
+            };
+
+            const WALLPAPERS = [
+                "linear-gradient(135deg, rgba(10,10,30,0.7), rgba(30,20,60,0.8)), url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(20,30,50,0.7), rgba(10,50,80,0.8)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(40,20,30,0.7), rgba(80,30,50,0.8)), url('https://images.unsplash.com/photo-1470071459604-7b8ec44ffd5d?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(10,40,30,0.7), rgba(20,70,60,0.8)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80')",
+            ];
+
+            const KEYS_ALPHABET = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k',
+                'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm'
+            ];
+            const KEYS_NUMBERS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/', ':', ';', '(', '7', '&', '@',
+                '"', '.', ',', '?', '!', "'", '_'
+            ];
+
+            // ─── HELPERS ───
+            function safeParseJSON(text) { try { return JSON.parse(text); } catch (_) { return null; } }
+
+            function isOnline() { return navigator.onLine !== false; }
+
+            function getAvatarUrl(photo) { return (photo && photo.trim()) ? photo.trim() : CONFIG.DEFAULT_AVATAR; }
+
+            function escapeHtml(text) { const d = document.createElement('div');
+                d.textContent = text; return d.innerHTML; }
+
+            function showNotification(message, isSuccess = false) {
+                const island = DOM.dynamicIsland;
+                if (!island) return;
+                island.textContent = message;
+                island.className = 'dynamic-island ' + (isSuccess ? 'notify-success' : 'notify-error');
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => {
+                    island.className = 'dynamic-island';
+                    island.textContent = '';
+                }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            function setLoginError(msg) {
+                if (DOM.loginError) DOM.loginError.textContent = msg || '';
+            }
+
+            // ─── CLOCK ───
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const timeStr = h + ':' + m;
+                if (DOM.clock) DOM.clock.textContent = timeStr;
+                if (DOM.time) DOM.time.textContent = timeStr;
+                if (DOM.date) {
+                    DOM.date.textContent = now.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+
+            // ─── WALLPAPER ───
+            let wallpaperTimer = null;
+
+            function setWallpaper(style) {
+                if (DOM.wallpaper) DOM.wallpaper.style.background = style;
+            }
+
+            function rotateWallpaper() {
+                if (STATE.isLoggedIn && STATE.sessionUser && STATE.sessionUser.profile_image) {
+                    setWallpaper(
+                        `linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('${STATE.sessionUser.profile_image}')`
+                        );
+                    return;
+                }
+                setWallpaper(WALLPAPERS[STATE.wallpaperIndex]);
+                STATE.wallpaperIndex = (STATE.wallpaperIndex + 1) % WALLPAPERS.length;
+            }
+
+            function startWallpaperRotation() {
+                if (wallpaperTimer) clearInterval(wallpaperTimer);
+                rotateWallpaper();
+                wallpaperTimer = setInterval(rotateWallpaper, 10000);
+            }
+
+            function updateWallpaperForUser(user) {
+                if (user && user.profile_image) {
+                    setWallpaper(
+                        `linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('${user.profile_image}')`);
+                    if (wallpaperTimer) { clearInterval(wallpaperTimer);
+                        wallpaperTimer = null; }
+                } else {
+                    if (!wallpaperTimer) startWallpaperRotation();
+                }
+            }
+
+            // ─── APP DRAWER ───
+            function toggleApps(open) {
+                const container = DOM.appsContainer;
+                const indicator = DOM.scrollIndicator;
+                if (open === undefined) open = !STATE.isAppsOpen;
+
+                if (open) {
+                    if (!STATE.isLoggedIn) {
+                        showLoginPanel();
+                        return;
+                    }
+                    container.classList.add('open');
+                    indicator.classList.add('hidden');
+                    DOM.screen.classList.add('apps-open-active');
+                    STATE.isAppsOpen = true;
+                } else {
+                    container.classList.remove('open');
+                    indicator.classList.remove('hidden');
+                    DOM.screen.classList.remove('apps-open-active');
+                    STATE.isAppsOpen = false;
+                }
+            }
+
+            // ─── LOGIN PANEL ───
+            function showLoginPanel() {
+                if (STATE.isLoggedIn) return;
+                DOM.loginPanel.classList.add('show');
+                DOM.loginOverlay.classList.add('active');
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.classList.add('hidden');
+                }
+                toggleApps(false);
+                setLoginError('');
+            }
+
+            function hideLoginPanel() {
+                DOM.loginPanel.classList.remove('show');
+                DOM.loginOverlay.classList.remove('active');
+                hideKeyboard();
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.classList.remove('hidden');
+                }
+                setLoginError('');
+            }
+
+            // ─── KEYBOARD ───
+            function showKeyboard(inputTarget) {
+                if (!inputTarget) return;
+                STATE.activeInput = inputTarget;
+                DOM.keyboard.classList.add('active');
+                DOM.loginPanel.classList.add('keyboard-open');
+                inputTarget.focus();
+            }
+
+            function hideKeyboard() {
+                DOM.keyboard.classList.remove('active');
+                DOM.loginPanel.classList.remove('keyboard-open');
+                if (STATE.activeInput) {
+                    STATE.activeInput.blur();
+                    STATE.activeInput = null;
+                }
+            }
+
+            function handleKeyInput(char) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                switch (char) {
+                    case 'space':
+                        input.value += ' ';
+                        break;
+                    case '⌫':
+                    case 'backspace':
+                        input.value = input.value.slice(0, -1);
+                        break;
+                    case '⇧':
+                        toggleShift();
+                        return;
+                    case '123':
+                    case 'ABC':
+                        toggleMode();
+                        return;
+                    case '▼':
+                        hideKeyboard();
+                        return;
+                    default:
+                        input.value += char;
+                        if (STATE.isShifted) toggleShift();
+                        break;
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            function toggleShift() {
+                STATE.isShifted = !STATE.isShifted;
+                if (DOM.shiftBtn) {
+                    DOM.shiftBtn.style.background = STATE.isShifted ? '#ffffff' : '#acb5be';
+                }
+                DOM.allKeys.forEach(key => {
+                    const val = key.getAttribute('data-key');
+                    if (val && val.length === 1 && /^[a-zA-Z]$/.test(val)) {
+                        key.textContent = STATE.isShifted ? val.toUpperCase() : val.toLowerCase();
+                    }
+                });
+            }
+
+            function toggleMode() {
+                STATE.isNumMode = !STATE.isNumMode;
+                if (DOM.modeBtn) DOM.modeBtn.textContent = STATE.isNumMode ? 'ABC' : '123';
+                if (DOM.shiftBtn) DOM.shiftBtn.textContent = STATE.isNumMode ? '#+=' : '⇧';
+                const currentSet = STATE.isNumMode ? KEYS_NUMBERS : KEYS_ALPHABET;
+                const rows = [DOM.row1, DOM.row2, DOM.row3];
+                let idx = 0;
+                rows.forEach(row => {
+                    if (!row) return;
+                    row.querySelectorAll('.key').forEach(key => {
+                        if (key.id === 'shift-btn' || key.id === 'backspace-btn' || key.id ===
+                            'mode-btn') return;
+                        if (idx < currentSet.length) {
+                            key.textContent = currentSet[idx];
+                            key.setAttribute('data-key', currentSet[idx]);
+                            idx++;
+                        }
+                    });
+                });
+            }
+
+            function onKeyClick(e) {
+                const key = e.currentTarget;
+                if (!key || !STATE.activeInput) return;
+                const text = key.textContent.trim();
+                let char = text;
+                if (key.id === 'shift-btn') char = '⇧';
+                else if (key.id === 'backspace-btn') char = '⌫';
+                else if (key.id === 'mode-btn') char = STATE.isNumMode ? 'ABC' : '123';
+                else if (key.id === 'space-btn') char = 'space';
+                handleKeyInput(char);
+            }
+
+            function highlightPhysicalKey(el) {
+                if (!el) return;
+                el.classList.add('physical-active');
+                clearTimeout(el._phyTimer);
+                el._phyTimer = setTimeout(() => el.classList.remove('physical-active'), 100);
+            }
+
+            // ─── CONTROL CENTER ───
+            function toggleControlCenter(open) {
+                const cc = DOM.controlCenter;
+                if (open === undefined) open = !STATE.isControlCenterOpen;
+                if (open) {
+                    toggleNotificationCenter(false);
+                    cc.classList.add('open');
+                    STATE.isControlCenterOpen = true;
+                } else {
+                    cc.classList.remove('open');
+                    STATE.isControlCenterOpen = false;
+                }
+            }
+
+            // ─── NOTIFICATION CENTER ───
+            function toggleNotificationCenter(open) {
+                const nc = DOM.notificationCenter;
+                if (open === undefined) open = !STATE.isNotificationCenterOpen;
+                if (open) {
+                    toggleControlCenter(false);
+                    nc.classList.add('open');
+                    STATE.isNotificationCenterOpen = true;
+                } else {
+                    nc.classList.remove('open');
+                    STATE.isNotificationCenterOpen = false;
+                }
+            }
+
+            // ─── API REQUEST ───
+            async function apiRequest(endpoint, options = {}) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.LOGIN_TIMEOUT);
+                try {
+                    const response = await fetch(endpoint, {
+                        ...options,
+                        signal: controller.signal,
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json',
+                            ...(options.headers || {})
+                        }
+                    });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error('HTTP_ERROR_' + response.status);
+                    const text = await response.text();
+                    const data = safeParseJSON(text);
+                    if (data === null) throw new Error('INVALID_JSON');
+                    return data;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') throw new Error('TIMEOUT');
+                    if (error.message === 'INVALID_JSON') throw new Error('INVALID_JSON');
+                    if (error.message.startsWith('HTTP_ERROR_')) throw new Error('HTTP_ERROR');
+                    if (!isOnline()) throw new Error('OFFLINE');
+                    throw new Error('CONNECTION_ERROR');
+                }
+            }
+
+            // ─── UPLOAD CONTACT PHOTO ───
+            async function uploadContactPhoto(file) {
+                const formData = new FormData();
+                formData.append('contact_photo', file);
+                try {
+                    const data = await apiRequest(CONFIG.UPLOAD_CONTACT_PHOTO_API, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {}
+                    });
+                    if (data.success) {
+                        return data.url;
+                    } else {
+                        showNotification('⚠ Upload failed: ' + (data.message || ''), false);
+                        return null;
+                    }
+                } catch (error) {
+                    showNotification('⚠ Could not upload photo.', false);
+                    console.error(error);
+                    return null;
+                }
+            }
+
+            // ─── USER AVATAR UPDATE ───
+            function updateUserAvatar() {
+                const avatar = DOM.userAvatar;
+                if (!avatar) return;
+                if (STATE.sessionUser && STATE.sessionUser.profile_image) {
+                    const img = STATE.sessionUser.profile_image;
+                    avatar.style.backgroundImage = `url('${img}')`;
+                    avatar.style.backgroundSize = 'cover';
+                    avatar.style.backgroundPosition = 'center';
+                    avatar.style.backgroundColor = 'transparent';
+                } else {
+                    avatar.style.backgroundImage = 'none';
+                    avatar.style.backgroundColor = '#ccc';
+                }
+            }
+
+            // ─── CONTACTS API ───
+            async function loadContactsForUser(userId) {
+                try {
+                    const data = await apiRequest(CONFIG.CONTACTS_API, { method: 'GET' });
+                    if (data.success) {
+                        STATE.currentContacts = data.contacts || [];
+                    } else {
+                        showNotification('⚠ Failed to load contacts.', false);
+                        STATE.currentContacts = [];
+                    }
+                } catch (error) {
+                    showNotification('⚠ Could not load contacts.', false);
+                    STATE.currentContacts = [];
+                    console.error('[LoadContacts]', error);
+                }
+                if (document.querySelector('.phone-app-container')) {
+                    renderPhoneApp();
+                }
+            }
+
+            // ─── LOGIN / LOGOUT ───
+            function toggleLogoutButton(show) {
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.classList.toggle('show', show);
+                }
+            }
+
+            function updateIndicatorText() {
+                if (DOM.indicatorText) {
+                    DOM.indicatorText.textContent = STATE.isLoggedIn ?
+                        'Swipe up to open apps' :
+                        'Login to access your apps';
+                }
+            }
+
+            function onLoginSuccess(user) {
+                STATE.isLoggedIn = true;
+                STATE.sessionUser = user;
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+                showNotification('✓ Welcome, ' + user.username + '!', true);
+                hideLoginPanel();
+                toggleLogoutButton(true);
+                updateIndicatorText();
+                updateWallpaperForUser(user);
+                toggleApps(false);
+                toggleControlCenter(false);
+                toggleNotificationCenter(false);
+                loadContactsForUser(user.id);
+                updateUserAvatar();
+
+                // ─── AUTO-OPEN PHONE APP AFTER LOGIN ───
+                setTimeout(function() {
+                    if (!STATE.autoOpenDone && STATE.isLoggedIn) {
+                        openPhoneApp();
+                        STATE.autoOpenDone = true;
+                    }
+                }, 400);
+            }
+
+            async function handleLogin(e) {
+                e.preventDefault();
+                if (STATE.isLoginPending) return;
+
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                setLoginError('');
+
+                if (!username || !password) {
+                    setLoginError('⚠ Please enter username and password.');
+                    return;
+                }
+
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Wait...';
+                DOM.loginSpinner.style.display = 'inline-block';
+
+                try {
+                    const fd = new FormData();
+                    fd.append('username', username);
+                    fd.append('password', password);
+
+                    const data = await apiRequest(CONFIG.API_ENDPOINT, {
+                        method: 'POST',
+                        body: fd,
+                        headers: {}
+                    });
+
+                    if (data.success && data.user) {
+                        onLoginSuccess(data.user);
+                        return;
+                    }
+
+                    // ─── DEMO FALLBACK ───
+                    if (username === CONFIG.DEMO_USERNAME && password === CONFIG.DEMO_PASSWORD) {
+                        const demoUser = {
+                            id: 1,
+                            username: username,
+                            profile_image: null,
+                        };
+                        onLoginSuccess(demoUser);
+                        return;
+                    }
+
+                    const msg = data && data.message ? data.message : 'Invalid credentials.';
+                    setLoginError('⚠ ' + msg);
+                    showNotification('Login failed: ' + msg, false);
+
+                } catch (error) {
+                    if (username === CONFIG.DEMO_USERNAME && password === CONFIG.DEMO_PASSWORD) {
+                        const demoUser = {
+                            id: 1,
+                            username: username,
+                            profile_image: null,
+                        };
+                        onLoginSuccess(demoUser);
+                        showNotification('✓ Offline login successful (demo)', true);
+                        return;
+                    }
+                    let msg = '⚠ Connection error.';
+                    if (error.message === 'OFFLINE') msg = '⚠ No internet.';
+                    else if (error.message === 'TIMEOUT') msg = '⚠ Request timed out.';
+                    else if (error.message === 'HTTP_ERROR') msg = '⚠ Server error.';
+                    setLoginError(msg);
+                    showNotification(msg, false);
+                    console.error('[Login]', error);
+                } finally {
+                    STATE.isLoginPending = false;
+                    DOM.loginBtn.disabled = false;
+                    DOM.btnText.textContent = 'Login';
+                    DOM.loginSpinner.style.display = 'none';
+                }
+            }
+
+            function loadCurrentUser() {
+                try {
+                    const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                    if (!stored) return null;
+                    const user = JSON.parse(stored);
+                    if (user && user.id) {
+                        STATE.sessionUser = user;
+                        STATE.isLoggedIn = true;
+                        return user;
+                    }
+                    return null;
+                } catch (_) { return null; }
+            }
+
+            function checkSession() {
+                const user = loadCurrentUser();
+                if (user) {
+                    hideLoginPanel();
+                    toggleLogoutButton(true);
+                    updateIndicatorText();
+                    updateWallpaperForUser(user);
+                    loadContactsForUser(user.id);
+                    updateUserAvatar();
+                    return true;
+                } else {
+                    toggleLogoutButton(false);
+                    showLoginPanel();
+                    updateIndicatorText();
+                    if (!wallpaperTimer) startWallpaperRotation();
+                    return false;
+                }
+            }
+
+            async function logout() {
+                if (STATE.isLoggingOut) return;
+                STATE.isLoggingOut = true;
+                showNotification('⏳ Logging out...', false);
+
+                try {
+                    await apiRequest(CONFIG.LOGOUT_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                } catch (_) { /* ignore */ }
+
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+                STATE.isLoggedIn = false;
+                STATE.sessionUser = null;
+                STATE.isLoggingOut = false;
+                STATE.currentContacts = [];
+                STATE.autoOpenDone = false;
+
+                DOM.usernameInput.value = '';
+                DOM.passwordInput.value = '';
+                toggleLogoutButton(false);
+                toggleApps(false);
+                updateIndicatorText();
+                startWallpaperRotation();
+                updateUserAvatar();
+                closeAppOverlay();
+                showLoginPanel();
+                showNotification('✓ Logged out successfully.', true);
+            }
+
+            // ─── APP OVERLAY (PHONE APP) ───
+            function closeAppOverlay() {
+                DOM.appOverlay.classList.remove('show');
+                const upgradeOverlay = document.querySelector('.upgrade-overlay');
+                if (upgradeOverlay) upgradeOverlay.classList.remove('open');
+                const modal = document.querySelector('.phone-modal');
+                if (modal) modal.classList.remove('open');
+                // stay on this page (dashboard)
+            }
+
+            function openPhoneApp() {
+                if (!STATE.isLoggedIn) {
+                    showNotification('Please login first.', false);
+                    showLoginPanel();
+                    return;
+                }
+                // If already open, just bring to front
+                if (DOM.appOverlay.classList.contains('show')) {
+                    return;
+                }
+                const container = document.createElement('div');
+                container.className = 'phone-app-container';
+                container.id = 'phoneAppContainer';
+                DOM.appBody.innerHTML = '';
+                DOM.appBody.appendChild(container);
+                DOM.appTitle.textContent = 'Phone';
+                DOM.appOverlay.classList.add('show');
+                updateUserAvatar();
+                renderPhoneApp();
+                STATE.autoOpenDone = true;
+            }
+
+            // ─── RENDER PHONE APP ───
+            function renderPhoneApp() {
+                const container = document.getElementById('phoneAppContainer');
+                if (!container) return;
+                const userId = STATE.sessionUser ? STATE.sessionUser.id : null;
+                const contacts = userId ? STATE.currentContacts : [];
+
+                container.innerHTML = `
+                    <div class="tabs">
+                        <button class="tab active" data-tab="contacts"><i class="fas fa-address-book"></i> Contacts</button>
+                        <button class="tab" data-tab="dialer"><i class="fas fa-phone"></i> Dialer</button>
+                    </div>
+                    <div class="panel active" id="phoneContactsPanel">
+                        <div class="contacts-header">
+                            <h3>Contacts</h3>
+                            <button class="add-btn" id="phoneAddContactBtn"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div class="contact-list" id="phoneContactList">
+                            ${contacts.length === 0 ? `<div class="empty-msg"><i class="fas fa-address-book" style="font-size:28px;display:block;margin-bottom:8px;color:#ccc;"></i>No contacts yet<br><span style="font-size:11px;color:#aaa;">Tap + to add</span></div>` : ''}
+                            ${contacts.map((c, idx) => `
+                                <div class="contact-item" data-id="${c.id}" data-idx="${idx}">
+                                    <div class="avatar" style="background-image: url('${getAvatarUrl(c.photo)}'); background-size: cover; background-position: center;">
+                                        ${!c.photo ? (c.name ? c.name.charAt(0).toUpperCase() : '?') : ''}
+                                    </div>
+                                    <div class="info">
+                                        <div class="name">${escapeHtml(c.name)}</div>
+                                        <div class="number">${escapeHtml(c.number)}</div>
+                                    </div>
+                                    <div class="actions">
+                                        <button class="call-btn" data-action="call" data-id="${c.id}"><i class="fas fa-phone"></i></button>
+                                        <button class="edit-btn" data-action="edit" data-id="${c.id}"><i class="fas fa-pencil"></i></button>
+                                        <button class="delete-btn" data-action="delete" data-id="${c.id}"><i class="fas fa-trash-can"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="panel" id="phoneDialerPanel">
+                        <div class="dial-number" id="dialNumber"> </div>
+                        <div class="dial-pad">
+                            ${['1','2','3','4','5','6','7','8','9','*','0','#'].map(d => `
+                                <button class="dial-key" data-digit="${d}">${d} ${d==='2'?'<span class="sub">ABC</span>':d==='3'?'<span class="sub">DEF</span>':d==='4'?'<span class="sub">GHI</span>':d==='5'?'<span class="sub">JKL</span>':d==='6'?'<span class="sub">MNO</span>':d==='7'?'<span class="sub">PQRS</span>':d==='8'?'<span class="sub">TUV</span>':d==='9'?'<span class="sub">WXYZ</span>':''}</button>
+                            `).join('')}
+                        </div>
+                        <div class="dial-actions">
+                            <button id="dialBackspace"><i class="fas fa-delete-left"></i></button>
+                            <button class="call-btn" id="dialCallBtn"><i class="fas fa-phone"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- UPGRADE OVERLAY -->
+                    <div class="upgrade-overlay" id="upgradeOverlay">
+                        <div class="upgrade-icon"><i class="fas fa-rocket"></i></div>
+                        <h2>Upgrade to Second Version</h2>
+                        <p>Calling feature is available in the next version. Stay tuned!</p>
+                        <button class="close-btn" id="upgradeCloseBtn">Got it</button>
+                    </div>
+
+                    <!-- MODAL -->
+                    <div class="phone-modal" id="phoneModal">
+                        <div class="modal-box">
+                            <h3 id="modalTitle">Add Contact</h3>
+                            <label>Name</label>
+                            <input type="text" id="modalName" placeholder="John Doe" />
+                            <label>Phone Number</label>
+                            <input type="tel" id="modalNumber" placeholder="+1 234 567 890" />
+                            <label>Photo</label>
+                            <div class="file-upload-area">
+                                <input type="file" id="modalPhotoFile" accept="image/*" />
+                                <div class="preview" id="photoPreview" style="background-image: none; background-color: #e5e5ea;"></div>
+                            </div>
+                            <input type="hidden" id="modalPhotoUrl" value="" />
+                            <input type="hidden" id="modalEditId" value="" />
+                            <div class="row-btns">
+                                <button class="cancel" id="modalCancel">Cancel</button>
+                                <button class="save" id="modalSave">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // ── Upgrade overlay ──
+                const upgradeOverlay = container.querySelector('#upgradeOverlay');
+                const upgradeCloseBtn = container.querySelector('#upgradeCloseBtn');
+
+                function showUpgradeMessage() {
+                    upgradeOverlay.classList.add('open');
+                }
+
+                function hideUpgradeMessage() {
+                    upgradeOverlay.classList.remove('open');
+                }
+                upgradeCloseBtn.addEventListener('click', hideUpgradeMessage);
+
+                // ── Tabs ──
+                container.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        const target = this.dataset.tab;
+                        container.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                        container.querySelector('#phone' + target.charAt(0).toUpperCase() + target.slice(
+                            1) + 'Panel').classList.add('active');
+                    });
+                });
+
+                // ── Add contact ──
+                const addBtn = container.querySelector('#phoneAddContactBtn');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function() {
+                        openContactModal(null);
+                    });
+                }
+
+                // ── Contact actions ──
+                const list = container.querySelector('#phoneContactList');
+                if (list) {
+                    list.addEventListener('click', async function(e) {
+                        const target = e.target.closest('button');
+                        if (!target) return;
+                        const action = target.dataset.action;
+                        const id = target.dataset.id;
+                        if (!id) return;
+                        if (action === 'call') {
+                            showUpgradeMessage();
+                            return;
+                        } else if (action === 'edit') {
+                            openContactModal(id);
+                        } else if (action === 'delete') {
+                            if (confirm('Delete this contact?')) {
+                                try {
+                                    await apiRequest(CONFIG.CONTACTS_API + '?id=' + id, { method: 'DELETE' });
+                                    showNotification('Contact deleted.', true);
+                                    await loadContactsForUser(STATE.sessionUser.id);
+                                } catch (error) {
+                                    showNotification('⚠ Could not delete.', false);
+                                    console.error(error);
+                                }
+                            }
+                        }
+                    });
+                    list.addEventListener('click', function(e) {
+                        const item = e.target.closest('.contact-item');
+                        if (!item) return;
+                        if (e.target.closest('.actions')) return;
+                        showUpgradeMessage();
+                    });
+                }
+
+                // ── Dialer ──
+                const dialNumberEl = container.querySelector('#dialNumber');
+                let currentDial = '';
+
+                function updateDialDisplay() {
+                    dialNumberEl.textContent = currentDial || ' ';
+                }
+                container.querySelectorAll('.dial-key[data-digit]').forEach(key => {
+                    key.addEventListener('click', function() {
+                        const digit = this.dataset.digit;
+                        if (currentDial.length < 20) {
+                            currentDial += digit;
+                            updateDialDisplay();
+                        }
+                    });
+                });
+                container.querySelector('#dialBackspace').addEventListener('click', function() {
+                    currentDial = currentDial.slice(0, -1);
+                    updateDialDisplay();
+                });
+                container.querySelector('#dialCallBtn').addEventListener('click', function() {
+                    showUpgradeMessage();
+                });
+
+                // ── Modal functions ──
+                function openContactModal(id) {
+                    const modal = container.querySelector('#phoneModal');
+                    const title = container.querySelector('#modalTitle');
+                    const nameInput = container.querySelector('#modalName');
+                    const numberInput = container.querySelector('#modalNumber');
+                    const fileInput = container.querySelector('#modalPhotoFile');
+                    const preview = container.querySelector('#photoPreview');
+                    const photoUrlInput = container.querySelector('#modalPhotoUrl');
+                    const editIdInput = container.querySelector('#modalEditId');
+
+                    fileInput.value = '';
+                    preview.style.backgroundImage = `url('${CONFIG.DEFAULT_AVATAR}')`;
+                    preview.style.backgroundSize = 'cover';
+                    preview.style.backgroundPosition = 'center';
+                    preview.style.backgroundColor = '#e5e5ea';
+                    photoUrlInput.value = '';
+
+                    if (id) {
+                        const c = STATE.currentContacts.find(ct => ct.id == id);
+                        if (!c) return;
+                        title.textContent = 'Edit Contact';
+                        nameInput.value = c.name || '';
+                        numberInput.value = c.number || '';
+                        photoUrlInput.value = c.photo || '';
+                        if (c.photo) {
+                            preview.style.backgroundImage = `url('${c.photo}')`;
+                            preview.style.backgroundSize = 'cover';
+                            preview.style.backgroundPosition = 'center';
+                            preview.style.backgroundColor = 'transparent';
+                        }
+                        editIdInput.value = id;
+                    } else {
+                        title.textContent = 'Add Contact';
+                        nameInput.value = '';
+                        numberInput.value = '';
+                        photoUrlInput.value = '';
+                        editIdInput.value = '';
+                    }
+                    modal.classList.add('open');
+                    nameInput.focus();
+
+                    fileInput.onchange = function(e) {
+                        const file = this.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(ev) {
+                                preview.style.backgroundImage = `url('${ev.target.result}')`;
+                                preview.style.backgroundSize = 'cover';
+                                preview.style.backgroundPosition = 'center';
+                                preview.style.backgroundColor = 'transparent';
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            preview.style.backgroundImage = `url('${CONFIG.DEFAULT_AVATAR}')`;
+                            preview.style.backgroundSize = 'cover';
+                            preview.style.backgroundPosition = 'center';
+                            preview.style.backgroundColor = '#e5e5ea';
+                        }
+                    };
+                }
+
+                function closeModal() {
+                    container.querySelector('#phoneModal').classList.remove('open');
+                }
+
+                container.querySelector('#modalCancel').addEventListener('click', closeModal);
+                container.querySelector('#modalSave').addEventListener('click', async function() {
+                    const name = container.querySelector('#modalName').value.trim();
+                    const number = container.querySelector('#modalNumber').value.trim();
+                    const fileInput = container.querySelector('#modalPhotoFile');
+                    const photoUrlInput = container.querySelector('#modalPhotoUrl');
+                    const editIdInput = container.querySelector('#modalEditId');
+                    const id = editIdInput.value;
+
+                    if (!name || !number) {
+                        showNotification('⚠ Name and number required.', false);
+                        return;
+                    }
+
+                    let photoUrl = photoUrlInput.value;
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        if (!file.type.startsWith('image/')) {
+                            showNotification('⚠ Choose an image for the contact photo.', false);
+                            return;
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                            showNotification('⚠ Contact photos must be 5 MB or smaller.', false);
+                            return;
+                        }
+                        const uploaded = await uploadContactPhoto(file);
+                        if (!uploaded) return;
+                        photoUrl = uploaded;
+                    }
+
+                    const payload = { name, number, photo: photoUrl || '' };
+                    let action = 'add';
+                    if (id) {
+                        action = 'update';
+                        payload.id = id;
+                    }
+                    try {
+                        const data = await apiRequest(CONFIG.CONTACTS_API, {
+                            method: 'POST',
+                            body: JSON.stringify({ action, ...payload })
+                        });
+                        if (data.success) {
+                            showNotification('Contact saved.', true);
+                            closeModal();
+                            await loadContactsForUser(STATE.sessionUser.id);
+                        } else {
+                            showNotification('⚠ ' + (data.message || 'Save failed.'), false);
+                        }
+                    } catch (error) {
+                        showNotification('⚠ Could not save.', false);
+                        console.error(error);
+                    }
+                });
+
+                container.querySelector('#phoneModal').addEventListener('click', function(e) {
+                    if (e.target === this) closeModal();
+                });
+
+                container.addEventListener('keydown', function(e) {
+                    if (!container.querySelector('.panel.active')) return;
+                    if (e.key >= '0' && e.key <= '9') {
+                        const digit = e.key;
+                        const dialKeys = container.querySelectorAll('.dial-key[data-digit]');
+                        const targetKey = Array.from(dialKeys).find(k => k.dataset.digit === digit);
+                        if (targetKey) targetKey.click();
+                    } else if (e.key === 'Backspace') {
+                        container.querySelector('#dialBackspace').click();
+                    } else if (e.key === 'Enter') {
+                        showUpgradeMessage();
+                    }
+                });
+            }
+
+            // ─── APP OVERLAY CLOSE ───
+            DOM.appCloseBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sessionStorage.setItem('phoneAppJustClosed', 'true');
+                window.location.assign(CONFIG.DASHBOARD_URL);
+            });
+
+            DOM.appOverlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAppOverlay();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeAppOverlay();
+            });
+
+            // ─── PHONE APP ICON CLICK ───
+            if (DOM.phoneApp) {
+                DOM.phoneApp.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openPhoneApp();
+                });
+            }
+
+            // ─── LOGOUT APP ───
+            if (DOM.logoutApp) {
+                DOM.logoutApp.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    logout();
+                });
+            }
+
+            // ─── TOUCH / SWIPE ───
+            let touchStartY = 0;
+            let touchStartX = 0;
+            const SWIPE_THRESHOLD = 40;
+
+            function onTouchStart(e) {
+                touchStartY = e.touches[0].clientY;
+                touchStartX = e.touches[0].clientX;
+            }
+
+            function onTouchMove(e) {
+                const currentY = e.touches[0].clientY;
+                const currentX = e.touches[0].clientX;
+                const diffY = touchStartY - currentY;
+                const diffX = Math.abs(touchStartX - currentX);
+                if (diffX > 30) return;
+
+                if (diffY > SWIPE_THRESHOLD) {
+                    if (!STATE.isLoggedIn) {
+                        showLoginPanel();
+                    } else {
+                        toggleApps(true);
+                    }
+                } else if (diffY < -SWIPE_THRESHOLD) {
+                    if (STATE.isAppsOpen) {
+                        toggleApps(false);
+                    }
+                }
+            }
+
+            function onDocumentClick(e) {
+                const cc = DOM.controlCenter;
+                if (cc.classList.contains('open') && !cc.contains(e.target) && !DOM.statusBar.contains(e.target)) {
+                    toggleControlCenter(false);
+                }
+                const nc = DOM.notificationCenter;
+                if (nc.classList.contains('open') && !nc.contains(e.target) && !DOM.ncTriggerBtn.contains(e.target)) {
+                    toggleNotificationCenter(false);
+                }
+            }
+
+            // ─── CC TOGGLES ───
+            qsa('.cc-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const label = this.querySelector('span')?.textContent || 'Toggle';
+                    showNotification(label + ' toggled', true);
+                });
+            });
+
+            DOM.brightnessSlider?.addEventListener('input', function() {
+                const val = this.value;
+                DOM.brightnessValue.textContent = val + '%';
+                DOM.screen.style.filter = `brightness(${val/100 + 0.35})`;
+            });
+
+            DOM.volumeSlider?.addEventListener('input', function() {
+                DOM.volumeValue.textContent = this.value + '%';
+            });
+
+            // ─── INIT ───
+            function init() {
+                updateClock();
+                setInterval(updateClock, CONFIG.CLOCK_INTERVAL);
+
+                // Check if we just closed the app and returned to dashboard
+                const justClosed = sessionStorage.getItem('phoneAppJustClosed');
+                if (justClosed === 'true') {
+                    sessionStorage.removeItem('phoneAppJustClosed');
+                    // Don't auto-open, user just closed it
+                    STATE.autoOpenDone = true;
+                }
+
+                const hasSession = checkSession();
+                if (!hasSession) {
+                    showLoginPanel();
+                } else {
+                    // ─── AUTO-OPEN PHONE APP ON LOAD (if logged in) ───
+                    if (!STATE.autoOpenDone && STATE.isLoggedIn) {
+                        setTimeout(function() {
+                            openPhoneApp();
+                            STATE.autoOpenDone = true;
+                        }, 500);
+                    }
+                }
+
+                startWallpaperRotation();
+
+                document.addEventListener('touchstart', onTouchStart, { passive: true });
+                document.addEventListener('touchmove', onTouchMove, { passive: true });
+                document.addEventListener('click', onDocumentClick);
+
+                DOM.scrollIndicator?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) {
+                        showLoginPanel();
+                    } else {
+                        toggleApps(true);
+                    }
+                });
+
+                DOM.homeIndicator?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleApps(false);
+                    toggleControlCenter(false);
+                    toggleNotificationCenter(false);
+                });
+
+                DOM.openCCBtn?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleControlCenter(true);
+                });
+                DOM.ccHandle?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleControlCenter(false);
+                });
+
+                DOM.ncTriggerBtn?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleNotificationCenter(true);
+                });
+                DOM.ncHandle?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleNotificationCenter(false);
+                });
+                DOM.ncClearBtn?.addEventListener('click', function() {
+                    DOM.ncList.innerHTML =
+                        '<div class="nc-item"><div class="nc-item-title" style="text-align:center;color:rgba(255,255,255,0.4)">No notifications</div></div>';
+                });
+
+                DOM.loginHandle?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) {
+                        showNotification('Please login to continue', false);
+                    } else {
+                        hideLoginPanel();
+                    }
+                });
+
+                DOM.usernameInput?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) showKeyboard(this);
+                });
+                DOM.passwordInput?.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!STATE.isLoggedIn) showKeyboard(this);
+                });
+
+                DOM.allKeys.forEach(key => key.addEventListener('click', onKeyClick));
+                DOM.keyboard?.addEventListener('click', function(e) { e.stopPropagation(); });
+
+                document.addEventListener('keydown', function(e) {
+                    const input = STATE.activeInput;
+                    if (!input) return;
+                    const key = e.key;
+                    if (key === 'Backspace') { handleKeyInput('⌫');
+                        e.preventDefault();
+                        highlightPhysicalKey(DOM.backspaceBtn); return; }
+                    if (key === ' ') { handleKeyInput('space');
+                        e.preventDefault();
+                        highlightPhysicalKey(DOM.spaceBtn); return; }
+                    if (key === 'Shift') { toggleShift();
+                        e.preventDefault();
+                        highlightPhysicalKey(DOM.shiftBtn); return; }
+                    if (key === 'Enter') {
+                        if (input === DOM.usernameInput) {
+                            DOM.passwordInput.focus();
+                            showKeyboard(DOM.passwordInput);
+                        } else {
+                            hideKeyboard();
+                            DOM.loginForm.dispatchEvent(new Event('submit', { bubbles: true }));
+                        }
+                        e.preventDefault();
+                        return;
+                    }
+                    if (key.length === 1) {
+                        const targetKey = Array.from(DOM.allKeys).find(k => k.getAttribute('data-key') === key
+                            .toLowerCase());
+                        if (targetKey) {
+                            const char = STATE.isShifted ? key.toUpperCase() : key.toLowerCase();
+                            handleKeyInput(char);
+                            e.preventDefault();
+                            highlightPhysicalKey(targetKey);
+                        }
+                    }
+                });
+
+                DOM.loginForm?.addEventListener('submit', handleLogin);
+
+                DOM.signupBtn?.addEventListener('click', function() {
+                    showNotification('Create account feature coming soon!', true);
+                });
+
+                window.addEventListener('online', () => showNotification('📶 Back online.', true));
+                window.addEventListener('offline', () => showNotification('📡 Disconnected.', false));
+
+                if (!STATE.isLoggedIn) {
+                    DOM.loginOverlay.classList.add('active');
+                }
+
+                console.log('[Virtual Phone] Initialized.');
+            }
+
+            // ─── START ───
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+</body>
+</html>

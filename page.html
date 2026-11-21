@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UWAMAHORO LETITIA - Our Business</title>
+    <style>
+        /* CSS Reset & Design Tokens */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            height: 100vh;
+            /* Background Image with Gradient Overlay */
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 27, 75, 0.85)),
+                        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop') no-repeat center center/cover;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden; /* Fits screen perfectly without scroll */
+        }
+
+        /* Glassmorphism Panel with Heavy Blur */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        /* Header Styling */
+        header {
+            padding: 24px 20px 16px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Main Container */
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .section-title {
+            color: #f8fafc;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: #38bdf8;
+            border-radius: 2px;
+        }
+
+        p.desc {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            list-style: none;
+        }
+
+        .products-grid li {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .products-grid li:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-2px);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        /* Contact Section */
+        .contact {
+            padding: 16px 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .contact-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-item span.label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #38bdf8;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .contact-item span.value {
+            font-size: 0.9rem;
+            color: #f1f5f9;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            header h1 {
+                font-size: 1.3rem;
+            }
+
+            .container {
+                width: 95%;
+                padding: 18px;
+                gap: 14px;
+            }
+
+            p.desc {
+                font-size: 0.85rem;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Welcome To Our Business</h1>
+        <p>Your Satisfaction Is Our Priority!</p>
+    </header>
+
+    <main class="container glass-panel">
+        <section>
+            <h2 class="section-title">About Our Business</h2>
+            <p class="desc">
+                Welcome to our business website. We excel at delivering top-quality products, providing reliable services, and ensuring total customer satisfaction.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="section-title">Our Products</h2>
+            <ul class="products-grid">
+                <li class="glass-panel"><span>💻</span> Computers</li>
+                <li class="glass-panel"><span>📺</span> Television</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact glass-panel">
+                <div class="contact-item">
+                    <span class="label">Name</span>
+                    <span class="value">Uwamahoro Letitia</span>
+                </div>
+                <div class="contact-item">
+                    <span class="label">Email</span>
+                    <span class="value">contact@uwamahoro.com</span>
+                </div>
+                <div class="contact-item">
+                    <span class="label">Phone</span>
+                    <span class="value">+250 782 797 704</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Uwamahoro Letitia | All Rights Reserved</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Profile</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js">
+    </script>
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow: 0 28px 70px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+            touch-action: pan-y;
+        }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 900;
+        }
+
+        .status-bar .icons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85px;
+            height: 22px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .dynamic-island.notify-error {
+            width: 220px;
+            height: 38px;
+            background: #ff3b30;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+        .dynamic-island.notify-success {
+            width: 220px;
+            height: 38px;
+            background: #34c759;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+        .dynamic-island.notify-info {
+            width: 220px;
+            height: 38px;
+            background: #007aff;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+            padding: 0 15px;
+            pointer-events: auto;
+        }
+
+        .conn-badge {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: #f59e0b;
+            z-index: 1002;
+            pointer-events: none;
+        }
+
+        .dock {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        /* ===== SPLASH ===== */
+        .splash-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 36px;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .splash-screen.hidden {
+            opacity: 0;
+        }
+        .splash-screen img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: #fff;
+            padding: 8px;
+            margin-bottom: 16px;
+        }
+        .splash-screen p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* ===== APP ===== */
+        .app-container {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            background: #f8f9fa;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+        .app-container.active {
+            display: flex;
+        }
+
+        /* ===== PROFILE ===== */
+        .profile-scroll {
+            flex: 1;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        .profile-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+        .profile-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 44px 16px 12px;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .profile-header h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1c1c1e;
+        }
+
+        .profile-header .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .profile-header .header-actions button {
+            background: none;
+            border: none;
+            color: #1c1c1e;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 6px;
+            position: relative;
+        }
+
+        .profile-header .logout-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .profile-header .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ===== PROFILE CARD ===== */
+        .profile-card {
+            background: #fff;
+            margin: 16px 10px;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .profile-card .p-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #d1d5db;
+            margin: 0 auto 10px;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1c1c1e;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-card .p-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+
+        .profile-card .p-username {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 2px;
+        }
+
+        .profile-card .p-bio {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+            padding: 0 10px;
+        }
+
+        .profile-card .p-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .profile-card .p-stats .stat {
+            text-align: center;
+        }
+
+        .profile-card .p-stats .stat .num {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+
+        .profile-card .p-stats .stat .label {
+            font-size: 10px;
+            color: #8e8e93;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== PROFILE POSTS GRID ===== */
+        .profile-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1c1c1e;
+            padding: 12px 16px 4px;
+        }
+
+        .profile-post-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            padding: 0 10px 16px;
+        }
+
+        .profile-post-grid .grid-item {
+            aspect-ratio: 1;
+            background: #f1f3f5;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .profile-post-grid .grid-item img,
+        .profile-post-grid .grid-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .profile-post-grid .grid-item .grid-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            gap: 12px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            backdrop-filter: blur(2px);
+        }
+
+        .profile-post-grid .grid-item:hover .grid-overlay {
+            opacity: 1;
+        }
+
+        .profile-post-grid .grid-item .grid-overlay span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .profile-post-grid .grid-item .grid-overlay i {
+            font-size: 14px;
+        }
+
+        .profile-post-grid .grid-empty {
+            grid-column: 1 / 4;
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+            font-size: 13px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            display: flex;
+            background: #fff;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 4px 0 8px;
+            flex-shrink: 0;
+            z-index: 50;
+            position: relative;
+        }
+
+        .bottom-nav .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px 0;
+            color: #8e8e93;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            border: none;
+            background: none;
+            position: relative;
+        }
+
+        .bottom-nav .nav-item i {
+            font-size: 20px;
+        }
+
+        .bottom-nav .nav-item.active {
+            color: #4f46e5;
+        }
+
+        .bottom-nav .nav-item .badge {
+            position: absolute;
+            top: 0;
+            right: 50%;
+            transform: translateX(18px);
+            background: #ef4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 50%;
+            min-width: 16px;
+            height: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        .bottom-nav .nav-item .badge.show {
+            display: flex;
+        }
+
+        /* ===== THEME DARK ===== */
+        .app-container.theme-dark .profile-header {
+            background: rgba(24, 24, 27, 0.95);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .profile-header h1 {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .profile-header .header-actions button {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .profile-scroll {
+            background: #121214;
+        }
+        .app-container.theme-dark .profile-card {
+            background: #1c1c1f;
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .app-container.theme-dark .profile-card .p-name {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .profile-card .p-username {
+            color: #8e8e93;
+        }
+        .app-container.theme-dark .profile-card .p-bio {
+            color: #a1a1aa;
+        }
+        .app-container.theme-dark .profile-card .p-stats .stat .num {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .profile-card .p-stats {
+            border-top-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .profile-section-title {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .profile-post-grid .grid-item {
+            background: #27272a;
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .app-container.theme-dark .profile-post-grid .grid-empty {
+            background: #1c1c1f;
+            color: #6b6b70;
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .app-container.theme-dark .bottom-nav {
+            background: #18181b;
+            border-top-color: rgba(255, 255, 255, 0.08);
+        }
+        .app-container.theme-dark .bottom-nav .nav-item {
+            color: #6b6b70;
+        }
+        .app-container.theme-dark .bottom-nav .nav-item.active {
+            color: #818cf8;
+        }
+        .app-container.theme-dark .profile-header .logout-btn {
+            color: #f87171;
+        }
+        .app-container.theme-dark .profile-header .logout-btn:hover {
+            background: rgba(248, 113, 113, 0.1);
+        }
+
+        /* ===== NOTIFICATION PANEL (Minimal for Profile) ===== */
+        .notif-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+            opacity: 0;
+            box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+        .notif-panel.open {
+            max-height: 70%;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .notif-panel .panel-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin: 8px auto 4px;
+            flex-shrink: 0;
+            cursor: grab;
+        }
+
+        .notif-panel .panel-header {
+            padding: 8px 16px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1c1c1e;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+
+        .notif-panel .panel-header .clear-btn {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 10px;
+            cursor: pointer;
+            color: #1c1c1e;
+            font-weight: 500;
+        }
+
+        .notif-panel .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+            background: #f8f9fa;
+        }
+
+        .notif-panel .panel-body .notif-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            background: #fff;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .notif-panel .panel-body .notif-item:hover {
+            background: #f1f3f5;
+        }
+
+        .notif-panel .panel-body .notif-item .notif-sender {
+            font-weight: 600;
+            font-size: 12px;
+            color: #1c1c1e;
+        }
+
+        .notif-panel .panel-body .notif-item .notif-msg {
+            font-size: 11px;
+            color: #374151;
+            margin-top: 2px;
+            word-break: break-word;
+        }
+
+        .notif-panel .panel-body .notif-item .notif-time {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .notif-panel .panel-body .empty-notif {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 120px;
+            color: #9ca3af;
+            font-size: 13px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .notif-panel .panel-body .empty-notif i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.4;
+        }
+
+        .notif-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 55;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            border-radius: 36px;
+        }
+        .notif-overlay.show {
+            display: block;
+        }
+
+        /* ===== DRAGGABLE BELL ===== */
+        #draggableBell {
+            position: absolute;
+            z-index: 99999;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #1c1c1e;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: grab;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            transition: box-shadow 0.2s, transform 0.15s;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: auto;
+        }
+        #draggableBell:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+            transform: scale(1.05);
+        }
+        #draggableBell:active {
+            cursor: grabbing;
+            transform: scale(0.92);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        }
+        #draggableBell .bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid #1c1c1e;
+            line-height: 1;
+        }
+        #draggableBell .bell-badge.show {
+            display: flex;
+        }
+
+        /* ===== CONFIRM MODAL (Reused) ===== */
+        .confirm-modal {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 400;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 36px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-modal.active {
+            display: flex;
+        }
+
+        .confirm-modal .confirm-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            max-width: 260px;
+            text-align: center;
+        }
+
+        .confirm-modal .confirm-box h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #111827;
+        }
+
+        .confirm-modal .confirm-box p {
+            font-size: 13px;
+            color: #4b5563;
+            margin-bottom: 16px;
+        }
+
+        .confirm-modal .confirm-box .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .confirm-modal .confirm-box .buttons button {
+            padding: 6px 20px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 12px;
+            transition: opacity 0.15s;
+        }
+        .confirm-modal .confirm-box .buttons button:active {
+            opacity: 0.7;
+        }
+
+        .confirm-modal .confirm-box .buttons .confirm-yes {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .confirm-modal .confirm-box .buttons .confirm-no {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .app-container.theme-dark .confirm-modal .confirm-box {
+            background: #1c1c1f;
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box h3 {
+            color: #f4f4f5;
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box p {
+            color: #c8c8cc;
+        }
+        .app-container.theme-dark .confirm-modal .confirm-box .buttons .confirm-no {
+            background: #3f3f46;
+            color: #f4f4f5;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 400px) {
+            .phone {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            .screen {
+                border-radius: 0;
+            }
+            .app-container {
+                border-radius: 0;
+            }
+            .splash-screen,
+            .notif-overlay,
+            .confirm-modal {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== PHONE ===== -->
+    <div class="phone" id="phone">
+        <div class="screen" id="screen">
+            <!-- Status -->
+            <div class="status-bar">
+                <div class="time" id="statusTime">12:00</div>
+                <div class="icons">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <div class="dynamic-island" id="dynamicIsland"></div>
+            <div class="conn-badge" id="connBadge"></div>
+
+            <!-- Draggable Bell -->
+            <div id="draggableBell">
+                <i class="fas fa-bell"></i>
+                <span class="bell-badge" id="bellBadgeDrag">0</span>
+            </div>
+
+            <!-- Splash -->
+            <div class="splash-screen" id="splashScreen">
+                <img src="/virtual-phone/uploads/icon/chat.png" alt="Profile" />
+                <p>Loading Profile …</p>
+            </div>
+
+            <!-- Notification Overlay & Panel -->
+            <div class="notif-overlay" id="notifOverlay"></div>
+            <div class="notif-panel" id="notifPanel">
+                <div class="panel-handle" id="panelHandle"></div>
+                <div class="panel-header">
+                    <span><i class="fas fa-bell" style="margin-right:8px;"></i>Notifications</span>
+                    <button class="clear-btn" id="clearNotifBtn"><i class="fas fa-trash-alt"></i> Clear</button>
+                </div>
+                <div class="panel-body" id="notifPanelBody">
+                    <div class="empty-notif">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Modal -->
+            <div class="confirm-modal" id="confirmModal">
+                <div class="confirm-box">
+                    <h3 id="confirmTitle">Confirm</h3>
+                    <p id="confirmMessage">Are you sure?</p>
+                    <div class="buttons">
+                        <button class="confirm-no" id="confirmNo">Cancel</button>
+                        <button class="confirm-yes" id="confirmYes">Yes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== MAIN APP ===== -->
+            <div class="app-container" id="appContainer">
+                <!-- Profile Content -->
+                <div class="profile-scroll" id="profileScroll">
+                    <!-- Profile Header -->
+                    <div class="profile-header">
+                        <h1><i class="fas fa-user" style="font-size:18px;margin-right:6px;color:#4f46e5;"></i>Profile</h1>
+                        <div class="header-actions">
+                            <button id="themeBtn" title="Theme"><i class="fas fa-moon"></i></button>
+                            <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Card -->
+                    <div class="profile-card" id="profileCard">
+                        <div class="p-avatar" id="profileAvatar">👤</div>
+                        <div class="p-name" id="profileName">Username</div>
+                        <div class="p-username" id="profileUsername">@username</div>
+                        <div class="p-bio" id="profileBio">No bio yet</div>
+                        <div class="p-stats">
+                            <div class="stat"><div class="num" id="statPosts">0</div><div class="label">Posts</div></div>
+                            <div class="stat"><div class="num" id="statGroups">0</div><div class="label">Groups</div></div>
+                            <div class="stat"><div class="num" id="statFollowers">0</div><div class="label">Followers</div></div>
+                        </div>
+                    </div>
+
+                    <!-- My Posts -->
+                    <div class="profile-section-title">My Posts</div>
+                    <div class="profile-post-grid" id="profilePostGrid">
+                        <div class="grid-empty">No posts yet. <a href="feed.html" style="color:#4f46e5;text-decoration:none;font-weight:500;">Create one</a></div>
+                    </div>
+                    <div style="height:20px;"></div>
+                </div>
+
+                <!-- BOTTOM NAV -->
+                <div class="bottom-nav" id="bottomNav">
+                    <button class="nav-item" data-tab="chat"><i class="fas fa-comment-dots"></i><span>Chat</span></button>
+                    <button class="nav-item" data-tab="feed"><i class="fas fa-newspaper"></i><span>Feed</span></button>
+                    <button class="nav-item" data-tab="groups"><i class="fas fa-users"></i><span>Groups</span></button>
+                    <button class="nav-item active" data-tab="profile"><i class="fas fa-user"></i><span>Profile</span></button>
+                    <button class="nav-item" data-tab="home"><i class="fas fa-home"></i><span>Home</span></button>
+                </div>
+            </div>
+
+            <div class="dock"></div>
+        </div>
+    </div>
+
+    <!-- ===== NOTIFICATION SNIPPET CONTAINER ===== -->
+    <div id="notifSnippetContainer" style="position:fixed;top:0;left:0;right:0;z-index:99998;pointer-events:none;display:flex;flex-direction:column;align-items:center;padding-top:8px;"></div>
+
+    <audio id="notifySound" preload="auto" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAgICAgICAgIA=" style="display:none;"></audio>
+
+    <!-- ===== MAIN SCRIPT ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== CONFIG =====
+            const CONFIG = {
+                STORAGE_KEY: 'vphone_user',
+                SERVER_URL: 'http://localhost:3001',
+                SPLASH_DURATION: 800,
+                NOTIFICATION_DURATION: 3000,
+                NOTIF_API: 'http://localhost:3001/api/notifications',
+                POST_API: 'http://localhost:3001/api/posts',
+                GROUPS_API: 'http://localhost:3001/api/groups',
+                USERS_API: 'http://localhost:3001/api/users',
+            };
+
+            const $ = (id) => document.getElementById(id);
+            const DOM = {
+                dynamicIsland: $('dynamicIsland'),
+                connBadge: $('connBadge'),
+                statusTime: $('statusTime'),
+                appContainer: $('appContainer'),
+                splashScreen: $('splashScreen'),
+                screen: $('screen'),
+                draggableBell: $('draggableBell'),
+                bellBadgeDrag: $('bellBadgeDrag'),
+                notifOverlay: $('notifOverlay'),
+                notifPanel: $('notifPanel'),
+                notifPanelBody: $('notifPanelBody'),
+                clearNotifBtn: $('clearNotifBtn'),
+                panelHandle: $('panelHandle'),
+                themeBtn: $('themeBtn'),
+                bottomNav: $('bottomNav'),
+                notifySound: $('notifySound'),
+                confirmModal: $('confirmModal'),
+                confirmTitle: $('confirmTitle'),
+                confirmMessage: $('confirmMessage'),
+                confirmYes: $('confirmYes'),
+                confirmNo: $('confirmNo'),
+                profileAvatar: $('profileAvatar'),
+                profileName: $('profileName'),
+                profileUsername: $('profileUsername'),
+                profileBio: $('profileBio'),
+                statPosts: $('statPosts'),
+                statGroups: $('statGroups'),
+                statFollowers: $('statFollowers'),
+                profilePostGrid: $('profilePostGrid'),
+                logoutBtn: $('logoutBtn'),
+            };
+
+            // ===== STATE =====
+            const STATE = {
+                isLoggedIn: false,
+                sessionUser: null,
+                users: [],
+                posts: [],
+                groups: [],
+                darkMode: localStorage.getItem('vphone_theme') === 'dark',
+                socket: null,
+                notifications: [],
+                notifCount: 0,
+                isNotifPanelOpen: false,
+                soundEnabled: localStorage.getItem('vphone_sound') !== 'false',
+                muted: new Set(JSON.parse(localStorage.getItem('vphone_muted') || '[]')),
+                bellVisible: false,
+                friendRequestCount: 0,
+            };
+
+            // ===== HELPERS =====
+            function showNotification(message, kind = 'error') {
+                const island = DOM.dynamicIsland;
+                island.textContent = message;
+                const cls = kind === 'success' ? 'notify-success' : kind === 'info' ? 'notify-info' : 'notify-error';
+                island.className = 'dynamic-island ' + cls;
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => { island.className = 'dynamic-island';
+                    island.textContent = ''; }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            function getInitials(name) { return (name || '?').charAt(0).toUpperCase(); }
+
+            function getAvatarUrl(user) {
+                if (user && user.profile_image) {
+                    if (user.profile_image.startsWith('http') || user.profile_image.startsWith('/')) {
+                        return user.profile_image;
+                    }
+                    return '/virtual-phone/uploads/profile/' + user.profile_image;
+                }
+                return null;
+            }
+
+            function formatTime(value) { return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+            function timeAgo(date) {
+                const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+                if (diff < 60) return 'just now';
+                if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+                if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+                return new Date(date).toLocaleString();
+            }
+
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                DOM.statusTime.textContent = h + ':' + m;
+            }
+
+            function updateBadge() {
+                const count = STATE.notifCount + STATE.friendRequestCount;
+                const badge = DOM.bellBadgeDrag;
+                if (badge) {
+                    if (count > 0) { badge.textContent = count > 99 ? '99+' : count;
+                        badge.classList.add('show'); } else { badge.classList.remove('show'); }
+                }
+            }
+
+            function applyTheme() {
+                DOM.appContainer.classList.toggle('theme-dark', STATE.darkMode);
+                DOM.themeBtn.innerHTML = STATE.darkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                if (STATE.darkMode) {
+                    DOM.draggableBell.style.borderColor = 'rgba(255,255,255,0.2)';
+                } else {
+                    DOM.draggableBell.style.borderColor = 'rgba(255,255,255,0.15)';
+                }
+            }
+
+            function customConfirm(title, message) {
+                return new Promise((resolve) => {
+                    DOM.confirmTitle.textContent = title;
+                    DOM.confirmMessage.textContent = message;
+                    DOM.confirmModal.classList.add('active');
+                    const yesHandler = () => { DOM.confirmModal.classList.remove('active');
+                        DOM.confirmYes.removeEventListener('click', yesHandler);
+                        DOM.confirmNo.removeEventListener('click', noHandler);
+                        resolve(true); };
+                    const noHandler = () => { DOM.confirmModal.classList.remove('active');
+                        DOM.confirmYes.removeEventListener('click', yesHandler);
+                        DOM.confirmNo.removeEventListener('click', noHandler);
+                        resolve(false); };
+                    DOM.confirmYes.addEventListener('click', yesHandler);
+                    DOM.confirmNo.addEventListener('click', noHandler);
+                });
+            }
+
+            // ===== NOTIFICATIONS =====
+            function getNotifStorageKey() { return 'vphone_notifications'; }
+
+            function saveNotifsToStorage() { try { localStorage.setItem(getNotifStorageKey(), JSON.stringify(STATE
+                        .notifications)); } catch (e) {} }
+
+            function loadNotifsFromStorage() {
+                try {
+                    const data = localStorage.getItem(getNotifStorageKey());
+                    if (data) { STATE.notifications = JSON.parse(data);
+                        STATE.notifCount = STATE.notifications.length;
+                        renderNotificationPanel();
+                        updateBadge(); return true; }
+                } catch (e) {}
+                return false;
+            }
+
+            async function loadNotificationsFromAPI() {
+                try {
+                    const res = await fetch(CONFIG.NOTIF_API);
+                    const data = await res.json();
+                    STATE.notifications = data.notifications || [];
+                    STATE.notifCount = STATE.notifications.length;
+                    saveNotifsToStorage();
+                    renderNotificationPanel();
+                    updateBadge();
+                } catch (e) { console.warn('Notif load error:', e); }
+            }
+
+            async function clearNotificationsAPI() {
+                try { await fetch(CONFIG.NOTIF_API, { method: 'DELETE' }); } catch (e) {}
+                STATE.notifications = [];
+                STATE.notifCount = 0;
+                saveNotifsToStorage();
+                renderNotificationPanel();
+                updateBadge();
+                showNotification('Cleared', 'success');
+            }
+
+            function renderNotificationPanel() {
+                const body = DOM.notifPanelBody;
+                body.innerHTML = '';
+                const notifs = STATE.notifications || [];
+                if (notifs.length === 0) {
+                    body.innerHTML =
+                        `<div class="empty-notif"><i class="fas fa-bell-slash"></i><p>No notifications yet</p></div>`;
+                    return;
+                }
+                const sorted = [...notifs].reverse();
+                sorted.forEach((n) => {
+                    const div = document.createElement('div');
+                    div.className = 'notif-item';
+                    const sender = STATE.users.find(u => u.id === n.sender_id);
+                    const senderName = sender ? (sender.username || 'User') : 'User ' + n.sender_id;
+                    div.innerHTML =
+                        `<div class="notif-sender">${senderName}</div><div class="notif-msg">${n.message || 'Sent a message'}</div><span class="notif-time">${n.time ? new Date(n.time).toLocaleString() : ''}</span>`;
+                    div.addEventListener('click', () => {
+                        if (sender) window.location.href = 'vphone_chat.html?user=' + sender.id;
+                        if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                    });
+                    body.appendChild(div);
+                });
+            }
+
+            function toggleNotifPanel(forceOpen) {
+                const panel = DOM.notifPanel;
+                const overlay = DOM.notifOverlay;
+                const isOpen = panel.classList.contains('open');
+                if (forceOpen === true || (forceOpen !== false && !isOpen)) {
+                    panel.classList.add('open');
+                    overlay.classList.add('show');
+                    STATE.isNotifPanelOpen = true;
+                    loadNotificationsFromAPI();
+                } else {
+                    panel.classList.remove('open');
+                    overlay.classList.remove('show');
+                    STATE.isNotifPanelOpen = false;
+                }
+            }
+
+            // ===== PROFILE DATA =====
+            async function fetchUsers() {
+                if (!STATE.sessionUser) return;
+                try {
+                    const res = await fetch(CONFIG.USERS_API);
+                    const data = await res.json();
+                    STATE.users = data.users || [];
+                    try { localStorage.setItem('vphone_users', JSON.stringify(STATE.users)); } catch (e) {}
+                } catch (error) { console.error('Fetch users error:', error); }
+            }
+
+            async function fetchPosts() {
+                if (!STATE.sessionUser) return;
+                try {
+                    const res = await fetch(CONFIG.POST_API);
+                    const data = await res.json();
+                    STATE.posts = data.posts || [];
+                    renderProfile();
+                } catch (e) { console.error('Fetch posts error:', e);
+                    showNotification('Could not load posts', 'error'); }
+            }
+
+            async function fetchGroups() {
+                if (!STATE.sessionUser) return;
+                try {
+                    const res = await fetch(CONFIG.GROUPS_API + '?user_id=' + STATE.sessionUser.id);
+                    const data = await res.json();
+                    STATE.groups = data.groups || [];
+                    renderProfile();
+                } catch (e) { console.error('Fetch groups error:', e); }
+            }
+
+            async function fetchFriends() {
+                if (!STATE.sessionUser) return;
+                try {
+                    const res = await fetch(CONFIG.SERVER_URL + '/api/friends/' + STATE.sessionUser.id);
+                    const data = await res.json();
+                    STATE.friendList = data.friends || [];
+                } catch (e) { console.warn('Friends list error:', e); }
+            }
+
+            // ===== RENDER PROFILE =====
+            function renderProfile() {
+                const user = STATE.sessionUser;
+                if (!user) return;
+
+                // Avatar
+                const avatarUrl = getAvatarUrl(user);
+                if (avatarUrl) {
+                    DOM.profileAvatar.style.backgroundImage = `url('${avatarUrl}')`;
+                    DOM.profileAvatar.textContent = '';
+                } else {
+                    DOM.profileAvatar.style.backgroundImage = '';
+                    DOM.profileAvatar.textContent = getInitials(user.username);
+                }
+
+                // Name & Bio
+                DOM.profileName.textContent = user.username || 'User';
+                DOM.profileUsername.textContent = '@' + (user.username || 'user');
+                DOM.profileBio.textContent = user.bio || 'No bio yet';
+
+                // Stats
+                const myPosts = STATE.posts.filter(p => p.user_id === user.id);
+                const myGroups = STATE.groups.filter(g => g.created_by === user.id || (g.members && g.members.includes(user
+                    .id)));
+                DOM.statPosts.textContent = myPosts.length;
+                DOM.statGroups.textContent = myGroups.length;
+
+                // Followers: unique users who liked the user's posts
+                const likers = new Set();
+                myPosts.forEach(p => {
+                    if (p.likes) p.likes.forEach(uid => likers.add(uid));
+                });
+                DOM.statFollowers.textContent = likers.size;
+
+                // Render posts grid
+                renderPostGrid(myPosts);
+            }
+
+            function renderPostGrid(posts) {
+                const grid = DOM.profilePostGrid;
+                grid.innerHTML = '';
+                if (!posts.length) {
+                    grid.innerHTML =
+                        `<div class="grid-empty">No posts yet. <a href="feed.html" style="color:#4f46e5;text-decoration:none;font-weight:500;">Create one</a></div>`;
+                    return;
+                }
+                posts.forEach(post => {
+                    const item = document.createElement('div');
+                    item.className = 'grid-item';
+                    const likeCount = post.likes ? post.likes.length : 0;
+                    const commentCount = post.comments ? post.comments.length : 0;
+
+                    if (post.media_url && post.media_type === 'image') {
+                        item.innerHTML = `
+                            <img src="${post.media_url}" alt="Post" loading="lazy" />
+                            <div class="grid-overlay">
+                                <span><i class="fas fa-heart"></i> ${likeCount}</span>
+                                <span><i class="fas fa-comment"></i> ${commentCount}</span>
+                            </div>
+                        `;
+                    } else if (post.media_url && post.media_type === 'video') {
+                        item.innerHTML = `
+                            <video src="${post.media_url}" muted playsinline></video>
+                            <div class="grid-overlay">
+                                <span><i class="fas fa-play"></i></span>
+                                <span><i class="fas fa-heart"></i> ${likeCount}</span>
+                                <span><i class="fas fa-comment"></i> ${commentCount}</span>
+                            </div>
+                        `;
+                    } else {
+                        item.innerHTML = `
+                            <div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f1f3f5;color:#8e8e93;font-size:24px;flex-direction:column;gap:4px;">
+                                <i class="fas fa-file-alt"></i>
+                                <span style="font-size:10px;opacity:0.6;">${post.content ? post.content.substring(0,20) : 'Post'}</span>
+                            </div>
+                            <div class="grid-overlay">
+                                <span><i class="fas fa-heart"></i> ${likeCount}</span>
+                                <span><i class="fas fa-comment"></i> ${commentCount}</span>
+                            </div>
+                        `;
+                    }
+
+                    item.addEventListener('click', () => {
+                        // Navigate to feed and highlight this post
+                        window.location.href = 'feed.html?post=' + post.id;
+                    });
+
+                    grid.appendChild(item);
+                });
+            }
+
+            // ===== SOCKET =====
+            function connectSocket() {
+                STATE.socket = io(CONFIG.SERVER_URL, { transports: ['websocket', 'polling'] });
+                STATE.socket.on('connect', () => { DOM.connBadge.textContent = '';
+                    STATE.socket.emit('identify', STATE.sessionUser.id); });
+                STATE.socket.on('disconnect', () => { DOM.connBadge.textContent = 'Reconnecting…'; });
+                STATE.socket.on('connect_error', () => { DOM.connBadge.textContent = 'Connection issue'; });
+
+                STATE.socket.on('new_post', (post) => {
+                    if (post.user_id === STATE.sessionUser.id) {
+                        STATE.posts.unshift(post);
+                        renderProfile();
+                    }
+                });
+
+                STATE.socket.on('post_deleted', ({ post_id }) => {
+                    STATE.posts = STATE.posts.filter(p => p.id !== post_id);
+                    renderProfile();
+                });
+
+                STATE.socket.on('post_liked', (data) => {
+                    const post = STATE.posts.find(p => p.id === data.post_id);
+                    if (post) {
+                        if (!post.likes) post.likes = [];
+                        if (!post.likes.includes(data.user_id)) post.likes.push(data.user_id);
+                        renderProfile();
+                    }
+                });
+
+                STATE.socket.on('post_unliked', (data) => {
+                    const post = STATE.posts.find(p => p.id === data.post_id);
+                    if (post && post.likes) {
+                        post.likes = post.likes.filter(id => id !== data.user_id);
+                        renderProfile();
+                    }
+                });
+
+                STATE.socket.on('post_commented', (data) => {
+                    const post = STATE.posts.find(p => p.id === data.post_id);
+                    if (post) {
+                        if (!post.comments) post.comments = [];
+                        post.comments.push(data.comment);
+                        renderProfile();
+                    }
+                });
+
+                // Friend request events for badge
+                STATE.socket.on('friend_request', (data) => {
+                    if (data.to === STATE.sessionUser.id) {
+                        STATE.friendRequestCount += 1;
+                        updateBadge();
+                        showNotification(`📨 ${data.from_username || 'Someone'} sent you a friend request!`,
+                            'info');
+                        if (STATE.soundEnabled && !STATE.muted.has(STATE.sessionUser.id)) {
+                            DOM.notifySound.currentTime = 0;
+                            DOM.notifySound.play().catch(() => {});
+                        }
+                    }
+                });
+
+                STATE.socket.on('friend_request_responded', () => {
+                    fetchFriends().then(() => {
+                        STATE.friendRequestCount = 0;
+                        updateBadge();
+                    });
+                });
+            }
+
+            // ===== NAVIGATION =====
+            function switchTab(tabId) {
+                if (tabId === 'home') {
+                    window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+                    return;
+                }
+                if (tabId === 'chat') {
+                    window.location.href = 'vphone_chat.html';
+                    return;
+                }
+                if (tabId === 'feed') {
+                    window.location.href = 'feed.html';
+                    return;
+                }
+                if (tabId === 'groups') {
+                    window.location.href = 'groups.html';
+                    return;
+                }
+                // Profile is current
+                DOM.bottomNav.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.tab === tabId);
+                });
+            }
+
+            // ===== DRAGGABLE BELL =====
+            function initDraggableBell() {
+                const bell = DOM.draggableBell;
+                if (!bell) return;
+                const bellSize = 38;
+
+                function constrainPosition(x, y) {
+                    const screenWidth = DOM.screen.clientWidth;
+                    const screenHeight = DOM.screen.clientHeight;
+                    const margin = 4;
+                    return { x: Math.max(margin, Math.min(x, screenWidth - bellSize - margin)), y: Math.max(margin, Math
+                            .min(y, screenHeight - bellSize - margin)) };
+                }
+
+                function setBellPosition(x, y) {
+                    const pos = constrainPosition(x, y);
+                    bell.style.left = pos.x + 'px';
+                    bell.style.top = pos.y + 'px';
+                }
+
+                function showBell() {
+                    bell.style.display = 'flex';
+                    STATE.bellVisible = true;
+                    const screenWidth = DOM.screen.clientWidth;
+                    let x = screenWidth - bellSize - 12,
+                        y = 52;
+                    const header = document.querySelector('.profile-header');
+                    if (header) {
+                        const rect = header.getBoundingClientRect();
+                        const screenRect = DOM.screen.getBoundingClientRect();
+                        x = rect.right - screenRect.left - bellSize - 8;
+                        y = rect.top - screenRect.top + 4;
+                    }
+                    setBellPosition(x, y);
+                }
+
+                let isDragging = false,
+                    dragStartX = 0,
+                    dragStartY = 0;
+
+                bell.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    const rect = bell.getBoundingClientRect();
+                    dragStartX = e.clientX - rect.left;
+                    dragStartY = e.clientY - rect.top;
+                    isDragging = true;
+                    bell.style.cursor = 'grabbing';
+                    bell.style.transform = 'scale(0.92)';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const screenRect = DOM.screen.getBoundingClientRect();
+                    const relX = e.clientX - screenRect.left - dragStartX;
+                    const relY = e.clientY - screenRect.top - dragStartY;
+                    setBellPosition(relX, relY);
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        bell.style.cursor = 'grab';
+                        bell.style.transform = '';
+                    }
+                });
+
+                bell.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const rect = bell.getBoundingClientRect();
+                    dragStartX = touch.clientX - rect.left;
+                    dragStartY = touch.clientY - rect.top;
+                    isDragging = true;
+                    bell.style.transform = 'scale(0.92)';
+                }, { passive: true });
+
+                document.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const screenRect = DOM.screen.getBoundingClientRect();
+                    const relX = touch.clientX - screenRect.left - dragStartX;
+                    const relY = touch.clientY - screenRect.top - dragStartY;
+                    setBellPosition(relX, relY);
+                }, { passive: true });
+
+                document.addEventListener('touchend', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        bell.style.transform = '';
+                    }
+                }, { passive: true });
+
+                bell.addEventListener('click', (e) => {
+                    if (!isDragging) {
+                        e.stopPropagation();
+                        toggleNotifPanel();
+                    }
+                });
+
+                const splashObserver = new MutationObserver(() => {
+                    if (DOM.splashScreen.classList.contains('hidden')) { showBell();
+                        splashObserver.disconnect(); }
+                });
+                splashObserver.observe(DOM.splashScreen, { attributes: true, attributeFilter: ['class'] });
+                if (DOM.splashScreen.classList.contains('hidden')) { showBell(); }
+            }
+
+            // ===== INIT =====
+            function init() {
+                const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const user = JSON.parse(stored);
+                        if (user && user.id) {
+                            DOM.splashScreen.classList.remove('hidden');
+                            setTimeout(() => {
+                                STATE.sessionUser = user;
+                                STATE.isLoggedIn = true;
+                                DOM.splashScreen.classList.add('hidden');
+                                DOM.appContainer.classList.add('active');
+                                applyTheme();
+                                fetchUsers().then(() => {
+                                    fetchPosts();
+                                    fetchGroups();
+                                    loadNotifsFromStorage();
+                                    loadNotificationsFromAPI();
+                                    fetchFriends();
+                                    connectSocket();
+                                    updateClock();
+                                    setInterval(updateClock, 1000);
+                                    initDraggableBell();
+                                    renderNotificationPanel();
+                                    updateBadge();
+                                    renderProfile();
+                                    showNotification('Welcome ' + (user.username || 'User') + '! 👤',
+                                        'success');
+                                });
+                            }, CONFIG.SPLASH_DURATION);
+                            return;
+                        }
+                    } catch (error) { console.error(error); }
+                }
+                window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+            }
+
+            // ===== EVENT BINDINGS =====
+            document.addEventListener('DOMContentLoaded', () => {
+                init();
+
+                // Bottom nav
+                DOM.bottomNav.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => { switchTab(item.dataset.tab); });
+                });
+
+                // Theme
+                DOM.themeBtn.addEventListener('click', () => {
+                    STATE.darkMode = !STATE.darkMode;
+                    localStorage.setItem('vphone_theme', STATE.darkMode ? 'dark' : 'light');
+                    applyTheme();
+                });
+
+                // Logout
+                DOM.logoutBtn.addEventListener('click', async () => {
+                    const ok = await customConfirm('Logout', 'Are you sure you want to logout?');
+                    if (ok) {
+                        if (STATE.socket) STATE.socket.disconnect();
+                        localStorage.removeItem(CONFIG.STORAGE_KEY);
+                        window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+                    }
+                });
+
+                // Notification panel
+                DOM.clearNotifBtn.addEventListener('click', async () => {
+                    const ok = await customConfirm('Clear notifications', 'Remove all notifications?');
+                    if (ok) { await clearNotificationsAPI();
+                        loadNotificationsFromAPI(); }
+                });
+
+                DOM.panelHandle.addEventListener('mousedown', (e) => {
+                    let startY = e.clientY;
+                    const onMove = (ev) => {
+                        const diff = ev.clientY - startY;
+                        if (diff > 40) { toggleNotifPanel(false);
+                            document.removeEventListener('mousemove', onMove);
+                            document.removeEventListener('mouseup', onUp); }
+                    };
+                    const onUp = () => { document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp); };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+
+                DOM.notifOverlay.addEventListener('click', () => { if (STATE.isNotifPanelOpen) toggleNotifPanel(false); });
+
+                // ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        if (STATE.isNotifPanelOpen) toggleNotifPanel(false);
+                    }
+                });
+            });
+        })();
+    </script>
+
+</body>
+</html>

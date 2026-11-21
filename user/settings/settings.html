@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#4f83e5">
+    <title>Settings · Virtual Phone</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css">
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; margin: 0; padding: 18px 12px; background: var(--vphone-page); color: var(--vphone-text); font-family: Inter, "Segoe UI", Arial, sans-serif; }
+        button, a { font: inherit; }
+        .settings-app { width: min(520px, 100%); min-height: min(850px, calc(100vh - 36px)); margin: 0 auto; overflow: hidden; border: 1px solid var(--vphone-border); border-radius: 28px; background: var(--vphone-page); box-shadow: var(--vphone-shadow); }
+        .topbar { position: sticky; z-index: 3; top: 0; display: flex; min-height: 76px; align-items: center; gap: 11px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--vphone-border); background: var(--vphone-surface); }
+        .back-link {
+            display: grid; width: 38px; height: 38px; flex: none; place-items: center;
+            border: 0; border-radius: 50%; background: var(--vphone-accent-soft);
+            color: var(--vphone-accent-strong); cursor: pointer;
+        }
+        .back-link[hidden] { display: none; }
+        .brand-icon {
+            display: grid; width: 48px; height: 48px; place-items: center; border-radius: 16px;
+            background: linear-gradient(140deg, var(--vphone-accent), var(--vphone-accent-strong));
+            color: #fff; font-size: 20px; box-shadow: var(--vphone-shadow);
+        }
+        .topbar h1 { margin: 0; font-size: 19px; letter-spacing: -.4px; }
+        .topbar p { margin: 3px 0 0; color: var(--vphone-muted); font-size: 11px; }
+        .settings-layout { min-height: calc(100% - 76px); }
+        .content-card { min-height: 530px; padding: 20px; border: 0; border-radius: 0; background: transparent; }
+        .view[hidden] { display: none; }
+        .view-heading { margin: 0 0 6px; font-size: 19px; }
+        .view-description { margin: 0 0 18px; color: var(--vphone-muted); font-size: 12px; line-height: 1.6; }
+        .overview-heading { margin: 3px 0 4px; font-size: 22px; letter-spacing: -.5px; }
+        .overview-description { margin: 0 0 18px; color: var(--vphone-muted); font-size: 12px; line-height: 1.5; }
+        .settings-links { display: grid; gap: 10px; }
+        .settings-link {
+            display: flex; width: 100%; min-height: 68px; align-items: center; gap: 12px;
+            padding: 11px 12px; border: 1px solid var(--vphone-border); border-radius: 17px;
+            background: var(--vphone-surface); color: var(--vphone-text); text-align: left;
+            box-shadow: 0 4px 14px rgba(27, 44, 80, .045); cursor: pointer;
+        }
+        .settings-link:hover { border-color: var(--vphone-accent); transform: translateY(-1px); }
+        .settings-link-icon { display: grid; width: 42px; height: 42px; flex: none; place-items: center; border-radius: 13px; background: var(--vphone-accent-soft); color: var(--vphone-accent-strong); font-size: 17px; }
+        .settings-link-copy { min-width: 0; flex: 1; }
+        .settings-link-copy strong { display: block; font-size: 13px; }
+        .settings-link-copy small { display: block; margin-top: 3px; color: var(--vphone-muted); font-size: 10px; line-height: 1.4; }
+        .settings-link > .fa-chevron-right { color: var(--vphone-muted); font-size: 11px; }
+        .settings-note { margin: 16px 3px 0; color: var(--vphone-muted); font-size: 10px; line-height: 1.5; }
+        .security-card { margin: 14px 0; padding: 15px; border: 1px solid var(--vphone-border); border-radius: 15px; background: var(--vphone-surface); }
+        .security-card h3 { margin: 0 0 5px; font-size: 14px; }
+        .security-card p { margin: 0 0 12px; color: var(--vphone-muted); font-size: 11px; line-height: 1.55; }
+        .security-status { min-height: 18px; margin: 5px 0 10px; color: var(--vphone-muted); font-size: 11px; overflow-wrap: anywhere; }
+        .security-input { width: 100%; margin: 4px 0 10px; padding: 11px 12px; border: 1px solid var(--vphone-border); border-radius: 10px; background: var(--vphone-page); color: var(--vphone-text); font: inherit; }
+        .security-button { min-height: 38px; padding: 9px 13px; border: 0; border-radius: 10px; background: var(--vphone-accent); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .security-button:disabled { opacity: .6; cursor: wait; }
+        .wellbeing-grid { display: grid; gap: 12px; }
+        .wellbeing-card { padding: 15px; border: 1px solid var(--vphone-border); border-radius: 15px; background: var(--vphone-surface); }
+        .wellbeing-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+        .wellbeing-stat span { color: var(--vphone-muted); font-size: 11px; }
+        .wellbeing-stat strong { font-size: 20px; letter-spacing: -.3px; }
+        .wellbeing-goal-track, .wellbeing-app-track { height: 8px; overflow: hidden; border-radius: 10px; background: var(--vphone-accent-soft); }
+        .wellbeing-goal-track { margin: 12px 0 7px; }
+        .wellbeing-goal-fill, .wellbeing-app-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--vphone-accent), #8a71dc); transition: width .25s ease; }
+        .wellbeing-caption { margin: 0 0 12px; color: var(--vphone-muted); font-size: 10px; line-height: 1.5; }
+        .wellbeing-goal-form { display: flex; align-items: end; gap: 8px; }
+        .wellbeing-goal-field { flex: 1; }
+        .wellbeing-goal-field label { display: block; margin-bottom: 5px; color: var(--vphone-muted); font-size: 10px; }
+        .wellbeing-goal-field input { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--vphone-border); border-radius: 9px; background: var(--vphone-page); color: var(--vphone-text); font: inherit; }
+        .wellbeing-goal-form button, .wellbeing-refresh { min-height: 38px; padding: 8px 11px; border: 0; border-radius: 9px; background: var(--vphone-accent); color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+        .wellbeing-list { display: grid; gap: 9px; margin: 10px 0 0; padding: 0; list-style: none; }
+        .wellbeing-list li { display: grid; gap: 5px; }
+        .wellbeing-list-row { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; }
+        .wellbeing-list-row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wellbeing-list-row span:last-child { flex: none; color: var(--vphone-muted); }
+        .wellbeing-status { min-height: 18px; margin: 10px 2px 0; color: var(--vphone-muted); font-size: 10px; }
+        .wellbeing-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .wellbeing-header h3 { margin: 0; font-size: 14px; }
+        .wellbeing-refresh { min-height: 32px; padding: 6px 9px; }
+        .security-services { display: grid; gap: 10px; }
+        .detail-back {
+            display: inline-flex; align-items: center; gap: 7px; margin: 0 0 15px; padding: 0;
+            border: 0; background: transparent; color: var(--vphone-accent-strong); font-size: 12px;
+            font-weight: 700; cursor: pointer;
+        }
+        .theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+        .theme-card {
+            position: relative; overflow: hidden; padding: 0; border: 2px solid var(--vphone-border);
+            border-radius: 16px; background: var(--vphone-surface); color: var(--vphone-text);
+            text-align: left; cursor: pointer; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+        .theme-card:hover { transform: translateY(-2px); box-shadow: var(--vphone-shadow); }
+        .theme-card[aria-pressed="true"] { border-color: var(--vphone-accent); box-shadow: 0 0 0 3px var(--vphone-accent-soft); }
+        .theme-preview { display: block; width: 100%; height: 190px; object-fit: cover; object-position: center 38%; background: #e5e9f1; }
+        .theme-card-copy { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+        .theme-card-copy strong { display: block; font-size: 14px; }
+        .theme-card-copy small { display: block; margin-top: 3px; color: var(--vphone-muted); font-size: 11px; }
+        .theme-check {
+            display: grid; width: 25px; height: 25px; flex: none; place-items: center; border-radius: 50%;
+            background: var(--vphone-accent); color: #fff; opacity: 0;
+        }
+        .theme-card[aria-pressed="true"] .theme-check { opacity: 1; }
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .wallpaper-card { overflow: hidden; padding: 0; border: 2px solid var(--vphone-border); border-radius: 15px; background: var(--vphone-surface); cursor: pointer; }
+        .wallpaper-card[aria-pressed="true"] { border-color: var(--vphone-accent); box-shadow: 0 0 0 3px var(--vphone-accent-soft); }
+        .wallpaper-card img { display: block; width: 100%; height: 180px; object-fit: cover; object-position: center 38%; }
+        .wallpaper-card span { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; color: var(--vphone-text); font-size: 12px; font-weight: 700; }
+        .wallpaper-card i { color: var(--vphone-accent); }
+        .section-heading { margin: 28px 0 5px; font-size: 15px; }
+        .library-status { margin: 8px 0 12px; color: var(--vphone-muted); font-size: 12px; }
+        .app-lock-list { display: grid; gap: 10px; }
+        .app-lock-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 12px 14px; border: 1px solid var(--vphone-border); border-radius: 14px;
+            background: var(--vphone-surface);
+        }
+        .app-lock-name { min-width: 0; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+        .app-lock-state { display: block; margin-top: 3px; color: var(--vphone-muted); font-size: 11px; font-weight: 400; }
+        .app-lock-icon {
+            display: grid; width: 38px; height: 38px; flex: none; place-items: center;
+            overflow: hidden; border-radius: 12px; background: var(--vphone-accent-soft);
+            color: var(--vphone-accent-strong); font-size: 15px;
+        }
+        .app-lock-icon .icon { display: grid; width: 100%; height: 100%; place-items: center; margin: 0; border-radius: inherit; }
+        .app-lock-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .app-lock-actions { display: flex; flex: none; gap: 7px; }
+        .app-lock-actions button {
+            min-height: 34px; padding: 0 10px; border: 1px solid var(--vphone-border);
+            border-radius: 9px; background: var(--vphone-accent-soft); color: var(--vphone-accent-strong);
+            font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+        .app-lock-actions button.remove-lock { background: transparent; color: #b54150; }
+        .lock-setup-dialog { width: min(440px, 100%); max-height: min(760px, calc(100dvh - 32px)); overflow-y: auto; overscroll-behavior: contain; }
+        .lock-setup-dialog select, .lock-setup-dialog input {
+            width: 100%; min-height: 42px; margin: 6px 0 12px; padding: 9px 11px;
+            border: 1px solid var(--vphone-border); border-radius: 10px;
+            background: var(--vphone-page); color: var(--vphone-text); font: inherit;
+        }
+        .lock-pattern-label { margin: 7px 0 0; font-size: 12px; font-weight: 700; }
+        .lock-setup-error { min-height: 20px; color: #c0394a; font-size: 12px; }
+        .lock-dialog-icon {
+            display: grid; width: 48px; height: 48px; place-items: center; margin-bottom: 12px;
+            border-radius: 16px; background: var(--vphone-accent-soft); color: var(--vphone-accent-strong);
+            font-size: 20px;
+        }
+        .upload-wallpaper {
+            display: inline-flex; min-height: 42px; align-items: center; gap: 9px; margin-top: 15px;
+            padding: 0 15px; border: 1px solid var(--vphone-border); border-radius: 12px;
+            background: var(--vphone-accent-soft); color: var(--vphone-accent-strong); font-weight: 700; cursor: pointer;
+        }
+        .layout-list { display: grid; gap: 12px; }
+        .layout-option {
+            display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px;
+            border: 1px solid var(--vphone-border); border-radius: 15px; background: var(--vphone-surface);
+            color: var(--vphone-text); text-align: left; cursor: pointer;
+        }
+        .layout-option[aria-pressed="true"] { border-color: var(--vphone-accent); background: var(--vphone-accent-soft); }
+        .layout-art { display: grid; width: 72px; height: 56px; flex: none; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 7px; border-radius: 11px; background: rgba(100, 116, 139, .12); }
+        .layout-art[data-layout="compact"] { grid-template-columns: repeat(5, 1fr); }
+        .layout-art[data-layout="comfortable"] { grid-template-columns: repeat(3, 1fr); }
+        .layout-art i { border-radius: 5px; background: var(--vphone-accent); opacity: .8; }
+        .layout-option strong { display: block; font-size: 14px; }
+        .layout-option small { display: block; margin-top: 4px; color: var(--vphone-muted); font-size: 12px; line-height: 1.4; }
+        .feedback { min-height: 20px; margin-top: 12px; color: var(--vphone-accent-strong); font-size: 12px; }
+        .reset-button { margin-top: 18px; padding: 9px 12px; border: 1px solid var(--vphone-border); border-radius: 10px; background: transparent; color: var(--vphone-muted); cursor: pointer; }
+        html.embedded-app,
+        html.embedded-app body { width: 100%; min-height: 100%; height: 100%; }
+        html.embedded-app body { overflow: hidden; padding: 0; }
+        html.embedded-app .settings-app { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+        html.embedded-app .topbar { min-height: 62px; gap: 9px; padding: 9px 12px; }
+        html.embedded-app .brand-icon { width: 36px; height: 36px; border-radius: 12px; font-size: 15px; }
+        html.embedded-app .settings-layout { height: calc(100% - 62px); min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+        html.embedded-app .content-card { min-height: 100%; padding: 17px 14px calc(24px + env(safe-area-inset-bottom)); }
+        html.embedded-app .theme-grid,
+        html.embedded-app .wallpaper-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+        html.embedded-app .theme-preview,
+        html.embedded-app .wallpaper-card img { height: 118px; }
+        html.embedded-app .theme-card-copy { padding: 8px; }
+        html.embedded-app .theme-card-copy strong { font-size: 11px; }
+        html.embedded-app .theme-card-copy small { font-size: 9px; }
+        html.embedded-app .wallpaper-card span { padding: 8px; font-size: 10px; }
+        html.embedded-app .layout-option { gap: 9px; padding: 11px; }
+        html.embedded-app .layout-art { width: 58px; height: 50px; }
+        html.embedded-app .layout-option strong { font-size: 12px; }
+        html.embedded-app .layout-option small { font-size: 10px; }
+        html.embedded-app .app-lock-row { align-items: flex-start; padding: 10px; }
+        html.embedded-app .app-lock-actions { flex-direction: column; }
+        html.embedded-app .vphone-lock-overlay { padding: 10px; }
+        html.embedded-app .vphone-lock-dialog { width: min(360px, 100%); max-height: calc(100dvh - 20px); overflow-y: auto; padding: 18px; border-radius: 20px; }
+        html.embedded-app .lock-setup-dialog { padding: 18px; }
+        html.embedded-app .vphone-pattern-pad { width: min(190px, 100%); margin: 9px auto 3px; }
+        html.embedded-app .vphone-pattern-dot { width: 31px; height: 31px; border-width: 3px; }
+        html.embedded-app .lock-pattern-label { margin-top: 5px; }
+        html.embedded-app .lock-setup-dialog select,
+        html.embedded-app .lock-setup-dialog input { min-height: 40px; margin: 4px 0 8px; }
+        html.embedded-app .lock-setup-error { margin: 4px 0; }
+        @media (max-width: 390px) {
+            body { padding: 0; }
+            .settings-app { min-height: 100vh; border: 0; border-radius: 0; }
+            .content-card { padding: 16px 13px; }
+            .settings-link { min-height: 63px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="settings-app">
+        <header class="topbar">
+            <button class="back-link" id="closeSettings" type="button" aria-label="Back to phone" title="Back to phone"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="back-link" id="backOverview" type="button" aria-label="Back to Settings overview" title="Back to Settings overview" hidden><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="brand-icon"><i class="fa-solid fa-gear"></i></div>
+            <div><h1 id="settingsTitle">Settings</h1><p id="settingsSubtitle">Personalize your phone</p></div>
+        </header>
+        <div class="settings-layout">
+            <section class="content-card">
+                <section class="view" data-panel="home">
+                    <h2 class="overview-heading">Personalize your phone</h2>
+                    <p class="overview-description">Make your phone feel right for you. Choose a setting below.</p>
+                    <div class="settings-links">
+                        <button class="settings-link" type="button" data-open-view="themes">
+                            <span class="settings-link-icon"><i class="fa-solid fa-palette" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>Theme</strong><small id="themeSummary">Choose your phone's color style</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button class="settings-link" type="button" data-open-view="wallpaper">
+                            <span class="settings-link-icon"><i class="fa-regular fa-image" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>Wallpaper</strong><small id="wallpaperSummary">Choose a background for your phone</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button class="settings-link" type="button" data-open-view="layout">
+                            <span class="settings-link-icon"><i class="fa-solid fa-grip" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>App layout</strong><small id="layoutSummary">Change your home screen grid</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button class="settings-link" type="button" data-open-view="locks">
+                            <span class="settings-link-icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>App lock</strong><small id="lockSummary">Protect apps with a PIN or pattern</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button class="settings-link" type="button" data-open-view="wellbeing">
+                            <span class="settings-link-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>Digital wellbeing</strong><small>Review phone time and set a daily goal</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button class="settings-link" type="button" data-open-view="recovery">
+                            <span class="settings-link-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>Account recovery</strong><small>Link a verified Google account to reset your phone password</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button class="settings-link" type="button" data-open-view="google">
+                            <span class="settings-link-icon"><i class="fa-brands fa-google" aria-hidden="true"></i></span>
+                            <span class="settings-link-copy"><strong>Email setup &amp; Google services</strong><small>Connect Google access for Drive, Contacts, and Photos</small></span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <p class="settings-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Your choices are saved for this account in this browser.</p>
+                </section>
+                <section class="view" data-panel="themes" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <h2 class="view-heading">Choose a theme</h2>
+                    <p class="view-description">Themes update the phone's color palette across the dashboard and supported app pages.</p>
+                    <div class="theme-grid" id="themeGrid"></div>
+                    <p class="settings-note" id="premiumThemeNote">Unlock the Aurora theme in the Icon Rewards app.</p>
+                </section>
+                <section class="view" data-panel="wallpaper" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <h2 class="view-heading">Wallpaper</h2>
+                    <p class="view-description">Pick a wallpaper for your phone screen and app backgrounds, or upload your own image.</p>
+                    <label class="settings-link" for="liveWallpaperToggle" style="margin-bottom:14px;cursor:pointer;">
+                        <span class="settings-link-icon"><i class="fa-solid fa-shuffle" aria-hidden="true"></i></span>
+                        <span class="settings-link-copy"><strong>Live wallpaper</strong><small id="liveWallpaperStatus">Use a random image from the livewallpaper folder every minute.</small></span>
+                        <input id="liveWallpaperToggle" type="checkbox" aria-label="Enable live wallpaper rotation">
+                    </label>
+                    <label class="settings-link" for="liveWallpaperInterval" style="margin-bottom:14px;">
+                        <span class="settings-link-icon"><i class="fa-regular fa-clock" aria-hidden="true"></i></span>
+                        <span class="settings-link-copy"><strong>Change interval</strong><small>Choose how often the phone selects another image.</small></span>
+                        <select id="liveWallpaperInterval" aria-label="Live wallpaper change interval" style="min-width:105px;border:1px solid var(--vphone-border);border-radius:9px;padding:8px;background:var(--vphone-page);color:var(--vphone-text);">
+                            <option value="30">30 seconds</option>
+                            <option value="60">1 minute</option>
+                            <option value="120">2 minutes</option>
+                            <option value="300">5 minutes</option>
+                        </select>
+                    </label>
+                    <div class="wallpaper-grid" id="wallpaperGrid"></div>
+                    <h3 class="section-heading">Your File Manager photos</h3>
+                    <p class="view-description">Choose an image already stored in your phone. The original file stays in File Manager.</p>
+                    <p class="library-status" id="wallpaperLibraryStatus" role="status" aria-live="polite">Loading your photos…</p>
+                    <div class="wallpaper-grid" id="fileWallpaperGrid"></div>
+                    <label class="upload-wallpaper" for="customWallpaper"><i class="fa-solid fa-arrow-up-from-bracket"></i> Upload your wallpaper</label>
+                    <input id="customWallpaper" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+                    <button class="reset-button" id="resetWallpaper" type="button"><i class="fa-solid fa-rotate-left"></i> Use the default wallpaper</button>
+                </section>
+                <section class="view" data-panel="layout" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <h2 class="view-heading">App layout</h2>
+                    <p class="view-description">Change the number and size of app icons on your phone's home screen.</p>
+                    <div class="layout-list" id="layoutList"></div>
+                </section>
+                <section class="view" data-panel="wellbeing" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <div class="wellbeing-header">
+                        <div>
+                            <h2 class="view-heading">Digital wellbeing</h2>
+                            <p class="view-description">See your phone usage and choose a daily screen-time goal.</p>
+                        </div>
+                        <button class="wellbeing-refresh" id="refreshWellbeing" type="button" aria-label="Refresh usage"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                    <div class="wellbeing-grid">
+                        <article class="wellbeing-card">
+                            <div class="wellbeing-stat"><span>Today</span><strong id="wellbeingToday">Loading…</strong></div>
+                            <div class="wellbeing-goal-track" role="progressbar" id="wellbeingGoalProgress" aria-label="Daily phone usage goal" aria-valuemin="0" aria-valuemax="7200" aria-valuenow="0">
+                                <div class="wellbeing-goal-fill" id="wellbeingGoalFill"></div>
+                            </div>
+                            <p class="wellbeing-caption" id="wellbeingGoalStatus">Loading your daily goal…</p>
+                            <div class="wellbeing-goal-form">
+                                <div class="wellbeing-goal-field">
+                                    <label for="wellbeingGoalMinutes">Daily goal (15–720 minutes)</label>
+                                    <input id="wellbeingGoalMinutes" type="number" min="15" max="720" step="15" value="120">
+                                </div>
+                                <button id="saveWellbeingGoal" type="button">Save goal</button>
+                            </div>
+                        </article>
+                        <article class="wellbeing-card">
+                            <div class="wellbeing-stat"><span>Last 7 days</span><strong id="wellbeingWeek">Loading…</strong></div>
+                            <ul class="wellbeing-list" id="wellbeingDailyList"></ul>
+                        </article>
+                    </div>
+                    <h3 class="section-heading">Apps used today</h3>
+                    <ul class="wellbeing-list wellbeing-card" id="wellbeingApps"></ul>
+                    <p class="wellbeing-status" id="wellbeingStatus" role="status" aria-live="polite"></p>
+                    <p class="settings-note">Tracking starts now; older activity is unavailable. Only visible, signed-in phone time is counted, and history is stored with your phone account.</p>
+                </section>
+                <section class="view" data-panel="locks" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <h2 class="view-heading">App lock</h2>
+                    <p class="view-description">Add a PIN or pattern prompt when opening an app. This is a convenience lock stored in this browser, not a replacement for account or server-side security.</p>
+                    <p class="library-status" id="appLockStatus" role="status" aria-live="polite">Loading your apps…</p>
+                    <div class="app-lock-list" id="appLockList"></div>
+                </section>
+                <section class="view" data-panel="recovery" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <h2 class="view-heading">Account recovery</h2>
+                    <p class="view-description">Link a Google account you control. Google verifies you during sign-in, so you can reset your Virtual Phone password without an email or SMS recovery code.</p>
+                    <div class="security-card">
+                        <h3>Verified recovery account</h3>
+                        <p id="recoveryDescription">A Google account linked here can be used to securely reset your phone password.</p>
+                        <p class="security-status" id="recoveryStatus" role="status" aria-live="polite">Checking account…</p>
+                        <button class="security-button" id="linkRecoveryGoogle" type="button">Link Google account</button>
+                        <div id="confirmRecoveryLink" hidden>
+                            <label for="recoveryPassword">Confirm your current Virtual Phone password</label>
+                            <input class="security-input" id="recoveryPassword" type="password" autocomplete="current-password">
+                            <button class="security-button" id="confirmRecoveryButton" type="button">Confirm and save recovery account</button>
+                        </div>
+                    </div>
+                    <p class="settings-note">A phone number or unverified email cannot securely recover an account. Google recovery works only after you link and verify the account here.</p>
+                </section>
+                <section class="view" data-panel="google" hidden>
+                    <button class="detail-back" type="button" data-back-overview><i class="fa-solid fa-chevron-left"></i> Settings</button>
+                    <h2 class="view-heading">Email setup &amp; Google services</h2>
+                    <p class="view-description">Connect a Google account. If you linked a recovery account, use that same account here. Google will ask you to approve access; you can disconnect it later.</p>
+                    <p class="security-status" id="googleServicesAccount" role="status" aria-live="polite">Checking Google connection…</p>
+                    <div class="security-services">
+                        <div class="security-card">
+                            <h3>Google Contacts</h3>
+                            <p>Connect to view or choose contacts to import or sync.</p>
+                            <p class="security-status" id="googleContactsStatus">Checking access…</p>
+                            <button class="security-button" type="button" data-connect-google="contacts">Connect Contacts</button>
+                        </div>
+                        <div class="security-card">
+                            <h3>Google Drive</h3>
+                            <p>Connect to browse files or select items to import.</p>
+                            <p class="security-status" id="googleDriveStatus">Checking access…</p>
+                            <button class="security-button" type="button" data-connect-google="drive">Connect Drive</button>
+                        </div>
+                        <div class="security-card">
+                            <h3>Google Photos</h3>
+                            <p>Connect to choose photos in Google's secure photo picker.</p>
+                            <p class="security-status" id="googlePhotosStatus">Checking access…</p>
+                            <button class="security-button" type="button" data-connect-google="photos">Connect Photos</button>
+                        </div>
+                    </div>
+                    <button class="security-button" id="disconnectGoogleServices" type="button" hidden>Disconnect Google services</button>
+                    <p class="settings-note">Google content is not copied automatically. Use each Google app to choose what you want to import or sync.</p>
+                </section>
+                <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+            </section>
+        </div>
+    </main>
+    <script>
+        if (new URLSearchParams(window.location.search).get('embedded') === '1') {
+            document.documentElement.classList.add('embedded-app');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('closeSettings').addEventListener('click', () => {
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'vphone:close-app' }, window.location.origin);
+                return;
+            }
+            window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+          });
+
+          (() => {
+            const settings = window.VPhoneSettings;
+            const themes = [
+                { id: 'ocean', name: 'Ocean Blue', description: 'Cool blue · light and crisp' },
+                { id: 'forest', name: 'Forest Green', description: 'Fresh green · calm and natural' },
+                { id: 'midnight', name: 'Midnight', description: 'Deep charcoal · aqua accents' },
+                { id: 'sunrise', name: 'Soft Sunrise', description: 'Warm peach · soft coral' }
+            ];
+            const premiumThemes = [
+                { id: 'aurora', name: 'Aurora', description: 'Violet glow · premium theme' }
+            ];
+            let premiumThemeUnlocked = false;
+            const wallpapers = [
+                { id: 'theme.jpg', name: 'Blue Horizon' },
+                { id: 'theme1.jpg', name: 'Green Calendar' },
+                { id: 'theme2.jpg', name: 'Midnight Glow' },
+                { id: 'theme4.jpg', name: 'Soft Sunrise' }
+            ];
+            const layouts = [
+                { id: 'standard', name: 'Standard', note: 'Balanced icons in a four-column grid', count: 8 },
+                { id: 'compact', name: 'Compact', note: 'Smaller icons in a five-column grid', count: 10 },
+                { id: 'comfortable', name: 'Comfortable', note: 'Larger icons in a three-column grid', count: 6 }
+            ];
+            const feedback = document.getElementById('feedback');
+            let feedbackTimer;
+            let fileWallpapers = [];
+            let phoneApps = [];
+            let wellbeingData = null;
+            let wellbeingGoalMinutes = 120;
+            let wellbeingRefreshTimer = null;
+            const viewTitles = {
+                home: ['Settings', 'Personalize your phone'],
+                themes: ['Theme', 'Choose your phone style'],
+                wallpaper: ['Wallpaper', 'Choose a background'],
+                layout: ['App layout', 'Arrange your home screen'],
+                wellbeing: ['Digital wellbeing', 'Review your phone usage'],
+                locks: ['App lock', 'Keep selected apps private'],
+                recovery: ['Account recovery', 'Protect your account with Google'],
+                google: ['Email setup', 'Connect Google services']
+            };
+
+            function notify(message) {
+                feedback.textContent = message;
+                clearTimeout(feedbackTimer);
+                feedbackTimer = setTimeout(() => { feedback.textContent = ''; }, 3000);
+            }
+
+            function availableThemes() {
+                return premiumThemeUnlocked ? themes.concat(premiumThemes) : themes;
+            }
+
+            async function requestJson(url, options = {}) {
+                const response = await fetch(url, {
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    ...options
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'The request could not be completed.');
+                }
+                return result;
+            }
+
+            function wellbeingGoalStorageKey() {
+                return 'vphone_wellbeing_goal_' + settings.userKey();
+            }
+
+            function loadWellbeingGoal() {
+                try {
+                    const saved = Number(localStorage.getItem(wellbeingGoalStorageKey()));
+                    wellbeingGoalMinutes = Number.isInteger(saved) && saved >= 15 && saved <= 720 && saved % 15 === 0
+                        ? saved
+                        : 120;
+                } catch (error) {
+                    console.error('Digital wellbeing goal could not be loaded.', error);
+                    wellbeingGoalMinutes = 120;
+                    notify('Could not load your saved daily goal. Using 120 minutes.');
+                }
+                document.getElementById('wellbeingGoalMinutes').value = String(wellbeingGoalMinutes);
+            }
+
+            function formatUsageDuration(seconds) {
+                const minutes = Math.floor(Math.max(0, Number(seconds) || 0) / 60);
+                if (minutes < 60) return minutes + ' min';
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = minutes % 60;
+                return remainingMinutes ? hours + 'h ' + remainingMinutes + 'm' : hours + 'h';
+            }
+
+            function renderWellbeing(data) {
+                const todaySeconds = Math.max(0, Number(data.today_seconds) || 0);
+                const goalSeconds = wellbeingGoalMinutes * 60;
+                const progress = Math.min(100, (todaySeconds / goalSeconds) * 100);
+                document.getElementById('wellbeingToday').textContent = formatUsageDuration(todaySeconds);
+                const goalBar = document.getElementById('wellbeingGoalProgress');
+                goalBar.setAttribute('aria-valuemax', String(goalSeconds));
+                goalBar.setAttribute('aria-valuenow', String(Math.min(todaySeconds, goalSeconds)));
+                document.getElementById('wellbeingGoalFill').style.width = progress.toFixed(1) + '%';
+                document.getElementById('wellbeingGoalStatus').textContent = todaySeconds >= goalSeconds
+                    ? 'Daily goal reached. Your goal is ' + formatUsageDuration(goalSeconds) + '.'
+                    : formatUsageDuration(goalSeconds - todaySeconds) + ' remaining to your ' + formatUsageDuration(goalSeconds) + ' goal.';
+                document.getElementById('wellbeingWeek').textContent = formatUsageDuration(data.week_seconds);
+
+                const dailyList = document.getElementById('wellbeingDailyList');
+                const dailyEntries = Array.isArray(data.daily) ? data.daily : [];
+                if (!dailyEntries.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'wellbeing-caption';
+                    empty.textContent = 'No phone activity recorded in the last 7 days.';
+                    dailyList.replaceChildren(empty);
+                } else {
+                    dailyList.replaceChildren(...dailyEntries.map(item => {
+                        const row = document.createElement('li');
+                        const content = document.createElement('div');
+                        content.className = 'wellbeing-list-row';
+                        const date = document.createElement('span');
+                        const parsedDate = new Date(String(item.activity_date) + 'T00:00:00');
+                        date.textContent = Number.isNaN(parsedDate.getTime())
+                            ? String(item.activity_date)
+                            : parsedDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                        const duration = document.createElement('span');
+                        duration.textContent = formatUsageDuration(item.seconds);
+                        content.append(date, duration);
+                        row.appendChild(content);
+                        return row;
+                    }));
+                }
+
+                const appsList = document.getElementById('wellbeingApps');
+                const apps = Array.isArray(data.top_apps) ? data.top_apps : [];
+                if (!apps.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'wellbeing-caption';
+                    empty.textContent = 'Your app usage will appear after you use the phone.';
+                    appsList.replaceChildren(empty);
+                    return;
+                }
+                appsList.replaceChildren(...apps.map(app => {
+                    const item = document.createElement('li');
+                    const row = document.createElement('div');
+                    row.className = 'wellbeing-list-row';
+                    const name = document.createElement('span');
+                    name.textContent = String(app.app_name || 'Phone app');
+                    const duration = document.createElement('span');
+                    duration.textContent = formatUsageDuration(app.seconds);
+                    row.append(name, duration);
+                    const track = document.createElement('div');
+                    track.className = 'wellbeing-app-track';
+                    const fill = document.createElement('div');
+                    fill.className = 'wellbeing-app-fill';
+                    fill.style.width = todaySeconds > 0
+                        ? Math.min(100, (Number(app.seconds) / todaySeconds) * 100).toFixed(1) + '%'
+                        : '0%';
+                    track.appendChild(fill);
+                    item.append(row, track);
+                    return item;
+                }));
+            }
+
+            async function loadWellbeing() {
+                const status = document.getElementById('wellbeingStatus');
+                loadWellbeingGoal();
+                status.textContent = 'Loading recent phone activity…';
+                try {
+                    wellbeingData = await requestJson('/virtual-phone/user/api/app_activity.php?action=summary');
+                    renderWellbeing(wellbeingData);
+                    status.textContent = 'Usage updates while your signed-in phone is visible.';
+                } catch (error) {
+                    document.getElementById('wellbeingToday').textContent = '—';
+                    document.getElementById('wellbeingWeek').textContent = '—';
+                    document.getElementById('wellbeingGoalStatus').textContent = 'Sign in to view your usage against the daily goal.';
+                    const unavailable = document.createElement('li');
+                    unavailable.className = 'wellbeing-caption';
+                    unavailable.textContent = 'Sign in to load phone activity.';
+                    document.getElementById('wellbeingDailyList').replaceChildren(unavailable.cloneNode(true));
+                    document.getElementById('wellbeingApps').replaceChildren(unavailable);
+                    status.textContent = error.message || 'Phone usage could not be loaded.';
+                }
+            }
+
+            async function refreshPremiumTheme() {
+                const note = document.getElementById('premiumThemeNote');
+                try {
+                    const state = await requestJson('/virtual-phone/user/api/icon_rewards.php?action=state');
+                    premiumThemeUnlocked = Boolean(state.upgrades?.theme_pack);
+                    note.hidden = premiumThemeUnlocked;
+                    render();
+                } catch (error) {
+                    premiumThemeUnlocked = false;
+                    note.hidden = false;
+                    note.textContent = error.message || 'Sign in to check premium theme access.';
+                    render();
+                }
+            }
+
+            async function refreshRecoveryStatus() {
+                const status = document.getElementById('recoveryStatus');
+                const button = document.getElementById('linkRecoveryGoogle');
+                try {
+                    const account = await requestJson('/virtual-phone/user/api/google_auth.php?action=account');
+                    status.textContent = account.linked
+                        ? 'Recovery is ready: ' + account.email
+                        : 'No verified recovery account is linked yet.';
+                    button.hidden = account.linked;
+                } catch (error) {
+                    status.textContent = error.message;
+                    button.hidden = false;
+                }
+            }
+
+            async function refreshGoogleServices() {
+                const services = [
+                    { app: 'contacts', scope: 'https://www.googleapis.com/auth/contacts', status: 'googleContactsStatus' },
+                    { app: 'drive', scope: 'https://www.googleapis.com/auth/drive', status: 'googleDriveStatus' },
+                    { app: 'photos', scope: 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly', status: 'googlePhotosStatus' }
+                ];
+                let connectedEmail = '';
+                let anyConnected = false;
+                for (const service of services) {
+                    const element = document.getElementById(service.status);
+                    try {
+                        const result = await requestJson('/virtual-phone/user/api/google_workspace.php?action=status&app=' + service.app);
+                        const hasScope = result.connected && result.scopes.includes(service.scope);
+                        element.textContent = hasScope ? 'Connected' : 'Not connected';
+                        if (result.connected) connectedEmail = result.email || connectedEmail;
+                        anyConnected = anyConnected || hasScope;
+                    } catch (error) {
+                        element.textContent = error.message;
+                    }
+                }
+                document.getElementById('googleServicesAccount').textContent = connectedEmail
+                    ? 'Connected Google account: ' + connectedEmail
+                    : 'No Google services account connected.';
+                document.getElementById('disconnectGoogleServices').hidden = !anyConnected;
+            }
+
+            function openRecoveryGoogleLink() {
+                const popup = window.open(
+                    '/virtual-phone/user/api/google_auth.php?action=authorize&purpose=account_link',
+                    'vphoneRecoveryGoogle',
+                    'popup,width=520,height=720'
+                );
+                if (!popup) {
+                    notify('Allow pop-ups to link your Google account, then try again.');
+                    return;
+                }
+                notify('Complete Google verification in the pop-up.');
+            }
+
+            function openGoogleService(service) {
+                const popup = window.open(
+                    '/virtual-phone/user/api/google_workspace.php?action=connect&app=' + encodeURIComponent(service),
+                    'vphoneGoogleServices',
+                    'popup,width=520,height=720'
+                );
+                if (!popup) {
+                    notify('Allow pop-ups to connect Google services, then try again.');
+                    return;
+                }
+                let attempts = 0;
+                const timer = window.setInterval(async () => {
+                    attempts++;
+                    try {
+                        const result = await requestJson('/virtual-phone/user/api/google_workspace.php?action=status&app=' + service);
+                        if (result.connected && result.scopes.includes(result.requiredScope)) {
+                            window.clearInterval(timer);
+                            if (!popup.closed) popup.close();
+                            await refreshGoogleServices();
+                            notify('Google ' + service + ' connected.');
+                        } else if (popup.closed || attempts > 90) {
+                            window.clearInterval(timer);
+                            await refreshGoogleServices();
+                        }
+                    } catch (error) {
+                        if (popup.closed || attempts > 90) {
+                            window.clearInterval(timer);
+                            notify(error.message);
+                        }
+                    }
+                }, 1500);
+            }
+
+            function current() {
+                return settings.getPreferences();
+            }
+
+            function save(changes, message) {
+                try {
+                    settings.savePreferences(changes);
+                    render();
+                    notify(message);
+                } catch (error) {
+                    notify(error.message);
+                }
+            }
+
+            function themeCard(theme) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'theme-card';
+                button.dataset.theme = theme.id;
+                button.innerHTML = `<img class="theme-preview" src="/virtual-phone/theme/${theme.id === 'ocean' ? 'theme.jpg' : theme.id === 'forest' ? 'theme1.jpg' : theme.id === 'sunrise' ? 'theme4.jpg' : 'theme2.jpg'}" alt="${theme.name} theme preview" loading="lazy"><span class="theme-card-copy"><span><strong>${theme.name}</strong><small>${theme.description}</small></span><i class="theme-check fa-solid fa-check" aria-hidden="true"></i></span>`;
+                button.addEventListener('click', () => save({ theme: theme.id }, theme.name + ' theme applied.'));
+                return button;
+            }
+
+            function wallpaperCard(wallpaper) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'wallpaper-card';
+                button.dataset.wallpaper = wallpaper.url;
+                const image = document.createElement('img');
+                image.src = button.dataset.wallpaper;
+                image.alt = wallpaper.name + ' wallpaper preview';
+                image.loading = 'lazy';
+                const label = document.createElement('span');
+                label.textContent = wallpaper.name;
+                const check = document.createElement('i');
+                check.className = 'fa-solid fa-check';
+                check.setAttribute('aria-hidden', 'true');
+                label.appendChild(check);
+                button.append(image, label);
+                button.addEventListener('click', () => save({ wallpaper: button.dataset.wallpaper }, 'Wallpaper updated.'));
+                return button;
+            }
+
+            function layoutOption(layout) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'layout-option';
+                button.dataset.layout = layout.id;
+                const art = document.createElement('span');
+                art.className = 'layout-art';
+                art.dataset.layout = layout.id;
+                for (let index = 0; index < layout.count; index++) art.appendChild(document.createElement('i'));
+                const copy = document.createElement('span');
+                copy.innerHTML = `<strong>${layout.name}</strong><small>${layout.note}</small>`;
+                button.append(art, copy);
+                button.addEventListener('click', () => save({ layout: layout.id }, layout.name + ' app layout applied.'));
+                return button;
+            }
+
+            function render() {
+                const preferences = current();
+                document.querySelectorAll('#themeGrid').forEach(grid => {
+                    grid.replaceChildren(...availableThemes().map(themeCard));
+                });
+                document.getElementById('wallpaperGrid').replaceChildren(...wallpapers.map(wallpaper => wallpaperCard({
+                    url: '/virtual-phone/theme/' + wallpaper.id,
+                    name: wallpaper.name
+                })));
+                document.getElementById('fileWallpaperGrid').replaceChildren(...fileWallpapers.map(wallpaperCard));
+                document.getElementById('layoutList').replaceChildren(...layouts.map(layoutOption));
+                document.querySelectorAll('.theme-card').forEach(card => {
+                    card.setAttribute('aria-pressed', String(card.dataset.theme === preferences.theme));
+                });
+                document.querySelectorAll('.wallpaper-card').forEach(card => {
+                    card.setAttribute('aria-pressed', String(card.dataset.wallpaper === preferences.wallpaper));
+                });
+                document.querySelectorAll('.layout-option').forEach(card => {
+                    card.setAttribute('aria-pressed', String(card.dataset.layout === preferences.layout));
+                });
+                const theme = availableThemes().find(item => item.id === preferences.theme);
+                const layout = layouts.find(item => item.id === preferences.layout);
+                const wallpaper = [...wallpapers.map(item => ({
+                    name: item.name,
+                    url: '/virtual-phone/theme/' + item.id
+                })), ...fileWallpapers].find(item => item.url === preferences.wallpaper);
+                document.getElementById('themeSummary').textContent = theme ? theme.name : 'Choose your phone’s color style';
+                document.getElementById('wallpaperSummary').textContent = wallpaper
+                    ? wallpaper.name
+                    : preferences.wallpaper.startsWith('data:image/') ? 'Your custom photo' : 'Choose a background for your phone';
+                document.getElementById('layoutSummary').textContent = layout ? layout.name + ' home screen' : 'Change your home screen grid';
+                const lockedCount = Object.keys(window.VPhoneAppLock.getLocks()).length;
+                document.getElementById('lockSummary').textContent = lockedCount
+                    ? lockedCount + ' app' + (lockedCount === 1 ? '' : 's') + ' protected'
+                    : 'Protect apps with a PIN or pattern';
+            }
+
+            function openView(viewName) {
+                if (!Object.prototype.hasOwnProperty.call(viewTitles, viewName)) return;
+                if (wellbeingRefreshTimer) {
+                    clearInterval(wellbeingRefreshTimer);
+                    wellbeingRefreshTimer = null;
+                }
+                document.querySelectorAll('[data-panel]').forEach(panel => {
+                    panel.hidden = panel.dataset.panel !== viewName;
+                });
+                const [title, subtitle] = viewTitles[viewName];
+                document.getElementById('settingsTitle').textContent = title;
+                document.getElementById('settingsSubtitle').textContent = subtitle;
+                document.getElementById('backOverview').hidden = viewName === 'home';
+                document.getElementById('closeSettings').hidden = viewName !== 'home';
+                document.querySelector('.settings-layout').scrollTop = 0;
+                if (viewName === 'locks') loadPhoneApps();
+                if (viewName === 'themes') refreshPremiumTheme();
+                if (viewName === 'wellbeing') {
+                    loadWellbeing();
+                    wellbeingRefreshTimer = window.setInterval(() => {
+                        if (document.visibilityState === 'visible') loadWellbeing();
+                    }, 30000);
+                }
+                if (viewName === 'wallpaper') {
+                    loadFileWallpapers();
+                    loadLiveWallpaperAvailability();
+                }
+            }
+
+            async function loadLiveWallpaperAvailability() {
+                const toggle = document.getElementById('liveWallpaperToggle');
+                const interval = document.getElementById('liveWallpaperInterval');
+                const status = document.getElementById('liveWallpaperStatus');
+                toggle.checked = settings.isLiveWallpaperEnabled();
+                interval.value = String(settings.getLiveWallpaperInterval());
+                toggle.disabled = true;
+                interval.disabled = true;
+                try {
+                    const response = await fetch('/virtual-phone/user/api/live_wallpapers.php', { credentials: 'same-origin', cache: 'no-store' });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || 'Live wallpapers could not be loaded.');
+                    const count = Array.isArray(data.wallpapers) ? data.wallpapers.length : 0;
+                    toggle.disabled = count === 0;
+                    interval.disabled = count === 0;
+                    if (count === 0 && toggle.checked) {
+                        settings.setLiveWallpaperEnabled(false);
+                        toggle.checked = false;
+                    }
+                    status.textContent = count
+                        ? count + ' image' + (count === 1 ? '' : 's') + ' found. The phone picks another every minute.'
+                        : 'Add JPG, PNG, GIF, or WebP images to /virtual-phone/livewallpaper to enable rotation.';
+                } catch (error) {
+                    toggle.disabled = true;
+                    status.textContent = error.message || 'Live wallpapers could not be loaded.';
+                }
+            }
+
+            async function loadFileWallpapers() {
+                const status = document.getElementById('wallpaperLibraryStatus');
+                try {
+                    const response = await fetch('/virtual-phone/user/storage/api/list.php', {
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+                    if (!response.ok) {
+                        throw new Error(response.status === 401
+                            ? 'Sign in to browse images in your File Manager.'
+                            : 'Your File Manager images could not be loaded.');
+                    }
+                    const data = await response.json();
+                    if (!data.success || !Array.isArray(data.files)) {
+                        throw new Error(data.message || 'Your File Manager images could not be loaded.');
+                    }
+                    fileWallpapers = data.files.filter(file => file.type === 'image' && typeof file.id === 'string')
+                        .map(file => ({
+                            name: file.name || 'Photo',
+                            url: '/virtual-phone/user/storage/api/download.php?id=' + encodeURIComponent(file.id)
+                        }));
+                    status.textContent = fileWallpapers.length
+                        ? fileWallpapers.length + ' image' + (fileWallpapers.length === 1 ? '' : 's') + ' available from File Manager.'
+                        : 'No images found in File Manager yet. Upload a photo there, then refresh this page.';
+                    render();
+                } catch (error) {
+                    status.textContent = error.message || 'Your File Manager images could not be loaded.';
+                }
+            }
+
+            function appDisplayName(anchor) {
+                return (anchor.querySelector('span')?.textContent || anchor.getAttribute('aria-label') ||
+                    anchor.textContent || 'App').trim().replace(/\s+/g, ' ');
+            }
+
+            async function loadPhoneApps() {
+                const status = document.getElementById('appLockStatus');
+                const byKey = new Map();
+                try {
+                    let anchors = [];
+                    if (window.parent !== window) {
+                        anchors = Array.from(window.parent.document.querySelectorAll('.apps-grid a.app'));
+                    }
+                    if (!anchors.length) {
+                        const response = await fetch('/virtual-phone/user/user_phone_dashboard.html', {
+                            credentials: 'same-origin'
+                        });
+                        if (!response.ok) throw new Error('The phone app list could not be loaded.');
+                        const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+                        anchors = Array.from(page.querySelectorAll('.apps-grid a.app'));
+                    }
+                    for (const anchor of anchors) {
+                        const url = new URL(anchor.getAttribute('href'), window.location.origin);
+                        if (url.pathname.includes('logout') || url.pathname === '/virtual-phone/user/user_phone_dashboard.html') continue;
+                        const key = window.VPhoneAppLock.appKey(url);
+                        const name = appDisplayName(anchor);
+                        if (name.toLowerCase() === 'logout') continue;
+                        const launcherIcon = anchor.querySelector('.icon');
+                        byKey.set(key, {
+                            key,
+                            url: url.href,
+                            name,
+                            icon: launcherIcon ? launcherIcon.cloneNode(true) : null
+                        });
+                    }
+                } catch (error) {
+                    console.error('Could not read the phone app launcher list.', error);
+                }
+                try {
+                    const response = await fetch('/virtual-phone/user/apps/api/installed.php', {
+                        credentials: 'same-origin'
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        for (const app of data.apps || []) {
+                            const url = new URL('/virtual-phone/user/apps/runtime.php?id=' + encodeURIComponent(app.id), window.location.origin);
+                            const key = window.VPhoneAppLock.appKey(url);
+                            byKey.set(key, {
+                                key,
+                                url: url.href,
+                                name: app.name || 'Installed app',
+                                iconUrl: app.icon_path || ''
+                            });
+                        }
+                    } else if (response.status !== 401) {
+                        throw new Error('Installed apps could not be loaded.');
+                    }
+                } catch (error) {
+                    console.error('Could not load installed apps for app lock settings.', error);
+                    status.textContent = error.message || 'Installed apps could not be loaded.';
+                }
+                phoneApps = Array.from(byKey.values()).sort((first, second) => first.name.localeCompare(second.name));
+                if (!phoneApps.length && !status.textContent) status.textContent = 'No phone apps are available to lock.';
+                else if (phoneApps.length) status.textContent = phoneApps.length + ' phone apps available. Choose which ones to protect.';
+                renderAppLocks();
+                render();
+            }
+
+            function showLockSetup(app) {
+                const overlay = document.createElement('div');
+                overlay.className = 'vphone-lock-overlay';
+                const dialog = document.createElement('section');
+                dialog.className = 'vphone-lock-dialog lock-setup-dialog';
+                dialog.setAttribute('role', 'dialog');
+                dialog.setAttribute('aria-modal', 'true');
+                dialog.innerHTML = '<p>Set a PIN or pattern. Your credential is stored as a salted hash in this browser.</p>' +
+                    '<label for="lockMethod">Lock type</label><select id="lockMethod"><option value="pin">PIN</option><option value="pattern">Pattern</option></select>' +
+                    '<div id="lockCredentialFields"></div><p class="lock-setup-error" role="status"></p>' +
+                    '<button type="button" class="vphone-lock-submit">Save app lock</button>' +
+                    '<button type="button" class="vphone-pattern-reset" data-cancel>Cancel</button>';
+                const heading = document.createElement('h2');
+                heading.textContent = 'Lock ' + app.name;
+                const headingIcon = document.createElement('span');
+                headingIcon.className = 'lock-dialog-icon';
+                headingIcon.innerHTML = '<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>';
+                dialog.prepend(heading);
+                dialog.prepend(headingIcon);
+                overlay.appendChild(dialog);
+                document.body.appendChild(overlay);
+                const methodSelect = dialog.querySelector('#lockMethod');
+                const fields = dialog.querySelector('#lockCredentialFields');
+                const error = dialog.querySelector('.lock-setup-error');
+                const saveButton = dialog.querySelector('.vphone-lock-submit');
+                let firstPattern = '';
+                let secondPattern = '';
+                const paintFields = () => {
+                    fields.replaceChildren();
+                    firstPattern = '';
+                    secondPattern = '';
+                    if (methodSelect.value === 'pin') {
+                        fields.innerHTML = '<label>New PIN</label><input id="lockPin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{4,12}" minlength="4" maxlength="12" placeholder="4–12 digits" required>' +
+                            '<label>Confirm PIN</label><input id="lockPinConfirm" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{4,12}" minlength="4" maxlength="12" placeholder="Enter PIN again" required>';
+                    } else {
+                        const first = document.createElement('div');
+                        const firstLabel = document.createElement('p');
+                        firstLabel.className = 'lock-pattern-label';
+                        firstLabel.textContent = 'New pattern';
+                        const second = document.createElement('div');
+                        const secondLabel = document.createElement('p');
+                        secondLabel.className = 'lock-pattern-label';
+                        secondLabel.textContent = 'Confirm pattern';
+                        first.append(firstLabel, window.VPhoneAppLock.makePatternPad(value => { firstPattern = value; }));
+                        second.append(secondLabel, window.VPhoneAppLock.makePatternPad(value => { secondPattern = value; }));
+                        fields.append(first, second);
+                    }
+                };
+                methodSelect.addEventListener('change', paintFields);
+                paintFields();
+                dialog.querySelector('[data-cancel]').addEventListener('click', () => overlay.remove());
+                saveButton.addEventListener('click', async () => {
+                    error.textContent = '';
+                    const method = methodSelect.value;
+                    const credential = method === 'pin' ? dialog.querySelector('#lockPin').value : firstPattern;
+                    const confirmation = method === 'pin' ? dialog.querySelector('#lockPinConfirm').value : secondPattern;
+                    if (credential !== confirmation) {
+                        error.textContent = method === 'pin' ? 'The PIN entries do not match.' : 'The patterns do not match.';
+                        return;
+                    }
+                    saveButton.disabled = true;
+                    try {
+                        const lock = await window.VPhoneAppLock.makeLock(method, credential);
+                        lock.appName = app.name;
+                        window.VPhoneAppLock.setLock(app.url, lock);
+                        overlay.remove();
+                        notify(app.name + ' is now locked.');
+                        renderAppLocks();
+                        render();
+                    } catch (failure) {
+                        error.textContent = failure.message || 'The app lock could not be saved.';
+                        saveButton.disabled = false;
+                    }
+                });
+            }
+
+            function renderAppLocks() {
+                const list = document.getElementById('appLockList');
+                const locks = window.VPhoneAppLock.getLocks();
+                list.replaceChildren(...phoneApps.map(app => {
+                    const locked = Boolean(locks[app.key]);
+                    const row = document.createElement('div');
+                    row.className = 'app-lock-row';
+                    const icon = document.createElement('span');
+                    icon.className = 'app-lock-icon';
+                    if (app.icon) {
+                        icon.appendChild(app.icon.cloneNode(true));
+                    } else if (app.iconUrl) {
+                        const image = document.createElement('img');
+                        image.src = app.iconUrl;
+                        image.alt = '';
+                        image.loading = 'lazy';
+                        icon.appendChild(image);
+                    } else {
+                        const lockIcon = document.createElement('i');
+                        lockIcon.className = locked ? 'fa-solid fa-lock' : 'fa-solid fa-mobile-screen-button';
+                        lockIcon.setAttribute('aria-hidden', 'true');
+                        icon.appendChild(lockIcon);
+                    }
+                    const copy = document.createElement('div');
+                    copy.className = 'app-lock-name';
+                    copy.append(document.createTextNode(app.name));
+                    const state = document.createElement('small');
+                    state.className = 'app-lock-state';
+                    state.textContent = locked ? 'Locked with ' + (locks[app.key].method === 'pin' ? 'PIN' : 'pattern') : 'Not locked';
+                    copy.appendChild(state);
+                    const actions = document.createElement('div');
+                    actions.className = 'app-lock-actions';
+                    if (locked) {
+                        const change = document.createElement('button');
+                        change.type = 'button';
+                        change.textContent = 'Change lock';
+                        change.addEventListener('click', async () => {
+                            if (await window.VPhoneAppLock.requestUnlock(app.url, false)) showLockSetup(app);
+                        });
+                        const remove = document.createElement('button');
+                        remove.type = 'button';
+                        remove.className = 'remove-lock';
+                        remove.textContent = 'Remove';
+                        remove.addEventListener('click', async () => {
+                            if (!await window.VPhoneAppLock.requestUnlock(app.url, false)) return;
+                            window.VPhoneAppLock.removeLock(app.url);
+                            notify(app.name + ' app lock removed.');
+                            renderAppLocks();
+                            render();
+                        });
+                        actions.append(change, remove);
+                    } else {
+                        const set = document.createElement('button');
+                        set.type = 'button';
+                        set.textContent = 'Set lock';
+                        set.addEventListener('click', () => showLockSetup(app));
+                        actions.appendChild(set);
+                    }
+                    row.append(icon, copy, actions);
+                    return row;
+                }));
+            }
+
+            document.querySelectorAll('[data-open-view]').forEach(button => {
+                button.addEventListener('click', () => {
+                    openView(button.dataset.openView);
+                    if (button.dataset.openView === 'recovery') refreshRecoveryStatus();
+                    if (button.dataset.openView === 'google') refreshGoogleServices();
+                });
+            });
+            document.getElementById('refreshWellbeing').addEventListener('click', loadWellbeing);
+            document.getElementById('saveWellbeingGoal').addEventListener('click', () => {
+                const goalInput = document.getElementById('wellbeingGoalMinutes');
+                const goal = Number(goalInput.value);
+                if (!Number.isInteger(goal) || goal < 15 || goal > 720 || goal % 15 !== 0) {
+                    notify('Choose a daily goal from 15 to 720 minutes in 15-minute steps.');
+                    return;
+                }
+                try {
+                    localStorage.setItem(wellbeingGoalStorageKey(), String(goal));
+                    wellbeingGoalMinutes = goal;
+                    if (wellbeingData) renderWellbeing(wellbeingData);
+                    notify('Daily phone-time goal saved.');
+                } catch (error) {
+                    console.error('Digital wellbeing goal could not be saved.', error);
+                    notify('Your daily goal could not be saved on this device.');
+                }
+            });
+            document.querySelectorAll('[data-back-overview]').forEach(button => {
+                button.addEventListener('click', () => openView('home'));
+            });
+            document.getElementById('backOverview').addEventListener('click', () => openView('home'));
+
+            document.getElementById('linkRecoveryGoogle').addEventListener('click', openRecoveryGoogleLink);
+            document.getElementById('confirmRecoveryButton').addEventListener('click', async () => {
+                const button = document.getElementById('confirmRecoveryButton');
+                button.disabled = true;
+                try {
+                    const body = new URLSearchParams({
+                        action: 'link_account',
+                        password: document.getElementById('recoveryPassword').value
+                    });
+                    const result = await requestJson('/virtual-phone/user/api/google_auth.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                        body
+                    });
+                    document.getElementById('recoveryPassword').value = '';
+                    document.getElementById('confirmRecoveryLink').hidden = true;
+                    notify(result.message);
+                    await refreshRecoveryStatus();
+                } catch (error) {
+                    notify(error.message);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+            document.querySelectorAll('[data-connect-google]').forEach(button => {
+                button.addEventListener('click', () => openGoogleService(button.dataset.connectGoogle));
+            });
+            document.getElementById('disconnectGoogleServices').addEventListener('click', async event => {
+                if (!window.confirm('Disconnect Google services from this Virtual Phone?')) return;
+                const button = event.currentTarget;
+                button.disabled = true;
+                try {
+                    const result = await requestJson('/virtual-phone/user/api/google_workspace.php?action=disconnect', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    notify(result.message);
+                    await refreshGoogleServices();
+                } catch (error) {
+                    notify(error.message);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+            window.addEventListener('message', event => {
+                if (event.origin !== window.location.origin || !event.data) return;
+                if (event.data.type === 'vphone-google-link-ready') {
+                    document.getElementById('recoveryStatus').textContent = 'Google verified. Confirm your current phone password to save this recovery account.';
+                    document.getElementById('confirmRecoveryLink').hidden = false;
+                    document.getElementById('recoveryPassword').focus();
+                } else if (event.data.type === 'vphone-google-link-error') {
+                    notify(event.data.message || 'Google account linking failed.');
+                } else if (event.data.type === 'vphone-google-connected') {
+                    refreshGoogleServices();
+                    notify('Google authorization completed.');
+                }
+            });
+
+            document.getElementById('customWallpaper').addEventListener('change', event => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    notify('Choose an image file for your wallpaper.');
+                    event.target.value = '';
+                    return;
+                }
+                if (file.size > 12 * 1024 * 1024) {
+                    notify('Choose an image smaller than 12 MB.');
+                    event.target.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onerror = () => notify('The selected image could not be read.');
+                reader.onload = () => {
+                    if (typeof reader.result !== 'string') {
+                        notify('The selected image could not be read.');
+                        return;
+                    }
+                    const image = new Image();
+                    image.onerror = () => notify('The selected image could not be decoded.');
+                    image.onload = () => {
+                        const scale = Math.min(1, 1800 / Math.max(image.naturalWidth, image.naturalHeight));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+                        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+                        const context = canvas.getContext('2d');
+                        if (!context) {
+                            notify('Image processing is unavailable in this browser.');
+                            return;
+                        }
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        save({ wallpaper: canvas.toDataURL('image/jpeg', 0.82) }, 'Custom wallpaper saved.');
+                    };
+                    image.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+                event.target.value = '';
+            });
+
+            document.getElementById('resetWallpaper').addEventListener('click', () => {
+                save({ wallpaper: '' }, 'Default wallpaper restored.');
+            });
+
+            document.getElementById('liveWallpaperToggle').addEventListener('change', event => {
+                try {
+                    settings.setLiveWallpaperEnabled(event.target.checked);
+                    notify(event.target.checked ? 'Live wallpaper rotation enabled.' : 'Live wallpaper rotation paused.');
+                } catch (error) {
+                    event.target.checked = !event.target.checked;
+                    notify(error.message);
+                }
+            });
+
+            document.getElementById('liveWallpaperInterval').addEventListener('change', event => {
+                try {
+                    settings.setLiveWallpaperInterval(event.target.value);
+                    const intervalLabels = { 30: '30 seconds', 60: '1 minute', 120: '2 minutes', 300: '5 minutes' };
+                    document.getElementById('liveWallpaperStatus').textContent = settings.isLiveWallpaperEnabled()
+                        ? 'On. Changing every ' + intervalLabels[event.target.value] + '.'
+                        : 'Use a random image from the livewallpaper folder every ' + intervalLabels[event.target.value] + '.';
+                } catch (error) {
+                    notify(error.message);
+                }
+            });
+
+            document.addEventListener('vphone:preferences-changed', render);
+            render();
+          })();
+        }, { once: true });
+    </script>
+</body>
+</html>

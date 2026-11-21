@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Virtual Phone</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+    <style>
+        /* ─── RESET & BASE ─── */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+        }
+
+     .phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+        .phone::before {
+            content: "";
+            position: absolute;
+            left: -5px;
+            top: 130px;
+            width: 5px;
+            height: 50px;
+            background: #2c2c2c;
+            border-radius: 5px 0 0 5px;
+            box-shadow: inset -1px 0 2px rgba(255,255,255,0.2);
+        }
+        .phone-power-btn {
+            position: absolute;
+            right: -5px;
+            top: 170px;
+            width: 5px;
+            height: 75px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 1px 0 2px rgba(255,255,255,0.2);
+        }
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        .screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 32px;
+            pointer-events: none;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+
+        /* ─── DYNAMIC ISLAND ─── */
+        .dynamic-island {
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 25px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .dynamic-island.notify-error { width: 220px; height: 38px; background: #ff3b30; border-radius: 19px; box-shadow: 0 4px 15px rgba(255,59,48,0.4); padding: 0 15px; }
+        .dynamic-island.notify-success { width: 220px; height: 38px; background: #34c759; border-radius: 19px; box-shadow: 0 4px 15px rgba(52,199,89,0.4); padding: 0 15px; }
+
+        /* ─── STATUS BAR ─── */
+        .status {
+            position: absolute;
+            top: 14px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 90;
+            pointer-events: none;
+        }
+        .status .icons i { margin-left: 5px; font-size: 10px; }
+
+        /* ─── WALLPAPER ─── */
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #3b82f6, #1d4ed8, #0f172a);
+            background-size: cover;
+            background-position: center;
+            animation: bgMove 12s infinite alternate ease-in-out;
+            z-index: 1;
+            transition: background 1s ease, transform 1s ease;
+        }
+        @keyframes bgMove {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.15) rotate(2deg); }
+        }
+
+        /* ─── CLOCK ─── */
+        .clock {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            z-index: 5;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .clock h1 { font-size: 42px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+        .clock p { font-size: 12px; font-weight: 500; opacity: 0.9; margin-top: 4px; }
+
+        /* ─── SCROLL INDICATOR ─── */
+        .scroll-indicator {
+            position: absolute;
+            top: 155px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.85);
+            font-size: 10px;
+            font-weight: 500;
+            text-align: center;
+            animation: bounce 2s infinite;
+            z-index: 5;
+            cursor: pointer;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .scroll-indicator i { display: block; font-size: 14px; margin-top: 4px; }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translate(-50%, 0); }
+            40% { transform: translate(-50%, 6px); }
+            60% { transform: translate(-50%, 3px); }
+        }
+
+        /* ─── APPS GRID ─── */
+        .apps {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+            z-index: 5;
+        }
+        .app { text-align: center; cursor: pointer; transition: transform 0.2s; text-decoration: none;}
+        .app:active { transform: scale(0.9); }
+        .icon {
+            width: 44px;
+            height: 44px;
+            margin: auto;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        }
+        .app span { display: block; margin-top: 5px; font-size: 9px; font-weight: 500; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+        .instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+        .whatsapp { background: #25D366; }
+        .facebook { background: #1877F2; }
+        .camera { background: linear-gradient(45deg, #434343 0%, #000000 100%); }
+        .gallery { background: #ff9800; }
+        .settings { background: #555; }
+        .browser { background: #00BCD4; }
+        .phoneicon { background: #4CAF50; }
+        .logout-icon { background: #ff3b30; }
+
+        #logoutApp { display: none; }
+        #logoutApp.show { display: block; }
+
+        /* ─── DOCK ─── */
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 30px;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        /* ─── APP OVERLAY ─── */
+        .app-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .app-overlay.show { display: flex; }
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: linear-gradient(90deg, #fdf2f8, #f5f3ff);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            flex-shrink: 0;
+        }
+        .app-header .app-title { font-size: 14px; font-weight: 700; color: #111; flex: 1; text-align: center; }
+        .app-header button {
+            background: rgba(0,0,0,0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            color: #111;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .app-header .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-color: #ccc;
+            flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .app-body {
+            flex: 1;
+            position: relative;
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        /* ─── LOGIN PANEL ─── */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -430px;
+            height: 420px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 45px rgba(0,0,0,.35);
+            border: 1px solid rgba(255,255,255,0.45);
+            transition: bottom 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            padding: 18px 18px 22px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show { bottom: 0; }
+        .login-panel .handle {
+            width: 40px;
+            height: 5px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            cursor: pointer;
+        }
+        .login-panel h2 { text-align: center; margin-bottom: 2px; font-size: 20px; font-weight: 700; color: #111; }
+        .login-panel p { text-align: center; color: #666; font-size: 12px; margin-bottom: 18px; }
+        .login-panel input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(0,0,0,0.03);
+            color: #111;
+            transition: all 0.25s ease;
+        }
+        .login-panel input:focus {
+            border-color: #007AFF;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+        }
+        .login-panel button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            background: #007AFF;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-panel button:active { opacity: 0.9; transform: scale(0.98); }
+        .login-panel button.signup { background: #34C759; }
+        .login-panel button:disabled { opacity: 0.6; cursor: default; }
+        .spinner { animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* ─── KEYBOARD ─── */
+        .keyboard {
+            position: absolute;
+            bottom: -240px;
+            left: 0;
+            right: 0;
+            height: 210px;
+            background: rgba(220,224,230,0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 18px 18px 0 0;
+            padding: 8px 5px 24px;
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.2);
+            transition: bottom 0.35s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .keyboard.active { bottom: 0; }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .key {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            height: 38px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transition: background 0.1s, transform 0.05s;
+            user-select: none;
+        }
+        .key:active, .key.physical-active { background: #abb4be !important; transform: scale(0.92); }
+        .key.special { background: #acb5be; flex: 1.35; font-size: 13px; }
+        .key.space { flex: 5.2; }
+        .login-panel.keyboard-open { height: 460px; }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <div class="phone-power-btn"></div>
+    <div class="screen">
+
+        <div class="wallpaper" id="wallpaper"></div>
+
+        <div class="dynamic-island" id="dynamicIsland"></div>
+
+        <div class="status">
+            <div class="time" id="time">12:00</div>
+            <div class="icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-full"></i>
+            </div>
+        </div>
+
+        <div class="clock">
+            <h1 id="clock">12:00</h1>
+            <p id="date">Tuesday, July 14</p>
+        </div>
+
+        <div class="scroll-indicator" id="scrollIndicator">
+            Swipe up or Scroll for Login
+            <i class="fas fa-chevron-down"></i>
+        </div>
+
+        <div class="apps">
+            <a href="#" class="app"><div class="icon instagram"><i class="fab fa-instagram"></i></div><span>Instagram</span></a>
+            <a href="#" class="app"><div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div><span>WhatsApp</span></a>
+            <a href="#" class="app"><div class="icon facebook"><i class="fab fa-facebook-f"></i></div><span>Facebook</span></a>
+            <a href="#" class="app"><div class="icon browser"><i class="fas fa-globe"></i></div><span>Browser</span></a>
+            <a href="#" class="app"><div class="icon gallery"><i class="fas fa-image"></i></div><span>Gallery</span></a>
+            <a href="#" class="app"><div class="icon camera"><i class="fas fa-camera"></i></div><span>Camera</span></a>
+            <a href="#" class="app"><div class="icon settings"><i class="fas fa-cog"></i></div><span>Settings</span></a>
+
+            <div class="app" id="phoneApp">
+                <div class="icon phoneicon"><i class="fas fa-phone"></i></div>
+                <span>Phone</span>
+            </div>
+
+            <div class="app" id="logoutApp"><div class="icon logout-icon"><i class="fas fa-power-off"></i></div><span>Logout</span></div>
+        </div>
+
+        <div class="dock"></div>
+
+        <div id="loginPanel" class="login-panel">
+            <div class="handle"></div>
+            <h2>Welcome</h2>
+            <p>Sign in to your Virtual Phone</p>
+            <form id="loginForm" onsubmit="return false;">
+                <input type="text" id="usernameInput" placeholder="Username" autocomplete="off" required>
+                <input type="password" id="passwordInput" placeholder="Password" required>
+                <button type="submit" id="loginBtn">
+                    <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                    <span id="btnText">Login</span>
+                </button>
+                <button type="button" class="signup">Create Account</button>
+            </form>
+        </div>
+
+        <div id="keyboard" class="keyboard">
+            <div class="keyboard-row" id="row-1">
+                <button class="key" data-key="q">q</button><button class="key" data-key="w">w</button>
+                <button class="key" data-key="e">e</button><button class="key" data-key="r">r</button>
+                <button class="key" data-key="t">t</button><button class="key" data-key="y">y</button>
+                <button class="key" data-key="u">u</button><button class="key" data-key="i">i</button>
+                <button class="key" data-key="o">o</button><button class="key" data-key="p">p</button>
+            </div>
+            <div class="keyboard-row" id="row-2">
+                <button class="key" data-key="a">a</button><button class="key" data-key="s">s</button>
+                <button class="key" data-key="d">d</button><button class="key" data-key="f">f</button>
+                <button class="key" data-key="g">g</button><button class="key" data-key="h">h</button>
+                <button class="key" data-key="j">j</button><button class="key" data-key="k">k</button>
+                <button class="key" data-key="l">l</button>
+            </div>
+            <div class="keyboard-row" id="row-3">
+                <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                <button class="key" data-key="z">z</button><button class="key" data-key="x">x</button>
+                <button class="key" data-key="c">c</button><button class="key" data-key="v">v</button>
+                <button class="key" data-key="b">b</button><button class="key" data-key="n">n</button>
+                <button class="key" data-key="m">m</button>
+                <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key special" id="mode-btn" data-key="mode">123</button>
+                <button class="key space" id="space-btn" data-key=" ">space</button>
+                <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const DOM = {
+            clock: document.getElementById('clock'),
+            time: document.getElementById('time'),
+            date: document.getElementById('date'),
+            loginPanel: document.getElementById('loginPanel'),
+            scrollIndicator: document.getElementById('scrollIndicator'),
+            keyboard: document.getElementById('keyboard'),
+            usernameInput: document.getElementById('usernameInput'),
+            passwordInput: document.getElementById('passwordInput'),
+            allKeys: document.querySelectorAll('.key')
+        };
+
+        // Update Clock Functions
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timeStr = `${hours}:${minutes}`;
+            
+            if (DOM.clock) DOM.clock.textContent = timeStr;
+            if (DOM.time) DOM.time.textContent = timeStr;
+            if (DOM.date) {
+                DOM.date.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            }
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Slide Open Panel Events
+        if (DOM.scrollIndicator) {
+            DOM.scrollIndicator.addEventListener('click', function(e) {
+                DOM.loginPanel.classList.add('show');
+                DOM.scrollIndicator.style.display = 'none';
+            });
+        }
+
+        // Inside Keyboard Interactivity
+        let activeInput = null;
+        [DOM.usernameInput, DOM.passwordInput].forEach(input => {
+            if(input) {
+                input.addEventListener('focus', function() {
+                    activeInput = this;
+                    DOM.keyboard.classList.add('active');
+                    DOM.loginPanel.classList.add('keyboard-open');
+                });
+            }
+        });
+
+        // Key click actions
+        DOM.allKeys.forEach(key => {
+            key.addEventListener('click', function() {
+                const keyValue = this.getAttribute('data-key');
+                if (!activeInput) return;
+
+                if (keyValue === 'backspace') {
+                    activeInput.value = activeInput.value.slice(0, -1);
+                } else if (keyValue === 'close') {
+                    DOM.keyboard.classList.remove('active');
+                    DOM.loginPanel.classList.remove('keyboard-open');
+                    activeInput.blur();
+                } else if (keyValue !== 'shift' && keyValue !== 'mode') {
+                    activeInput.value += keyValue;
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

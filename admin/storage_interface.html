@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Accounts & Storage | Virtual Phone Admin</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        :root { font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif; color: #172033; background: #dce8e7; }
+        body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 8% 0%, #c7e9ec, transparent 30%), linear-gradient(130deg, #eaf3f0, #e0e9f4); }
+        .glass { border: 1px solid #fff9; background: #ffffffdf; box-shadow: 0 18px 48px #13223818; backdrop-filter: blur(18px); }
+        .status { color: #607087; font-size: 13px; }
+        .user-row[aria-expanded="true"] { background: #eef5fb; }
+        .account-card[aria-expanded="true"] { background: #eef5fb; }
+        .account-button { flex: none; }
+        .file-table th, .file-table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid #e6ebf0; font-size: 12px; }
+        .file-table th { color: #6b7789; font-size: 10px; text-transform: uppercase; }
+        @media (max-width: 700px) { .audit-layout { grid-template-columns: 1fr !important; } .scroll-table { max-height: 42vh !important; } }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800">
+    <section id="authPanel" class="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4 backdrop-blur-md">
+        <form id="authForm" class="glass w-full max-w-md rounded-3xl p-7">
+            <img src="/virtual-phone/vphone.png" alt="Virtual Phone" class="mb-4 h-12 w-12 rounded-2xl object-cover">
+            <h1 id="authTitle" class="text-xl font-bold">Admin sign in</h1>
+            <p id="authDescription" class="mb-5 mt-1 text-sm text-slate-500">Sign in to inspect user storage.</p>
+            <label for="adminUsername" class="mb-1 block text-sm font-semibold">Username</label>
+            <input id="adminUsername" autocomplete="username" required class="mb-4 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <label for="adminPassword" class="mb-1 block text-sm font-semibold">Password</label>
+            <input id="adminPassword" type="password" minlength="8" autocomplete="current-password" required class="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <p id="authMessage" class="status mb-3 min-h-5 text-red-600" role="status"></p>
+            <button id="authSubmit" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white hover:bg-blue-700" type="submit">Sign in</button>
+        </form>
+    </section>
+
+    <main id="adminPage" class="mx-auto hidden min-h-screen max-w-7xl p-4 md:p-8">
+        <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3"><img src="/virtual-phone/vphone.png" alt="" class="h-12 w-12 rounded-2xl object-cover"><div><h1 class="text-2xl font-bold">User accounts & storage</h1><p class="text-sm text-slate-600">Inspect storage and manage sign-in details for user accounts.</p></div></div>
+            <nav class="flex flex-wrap gap-2">
+                <a class="rounded-xl bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm" href="/virtual-phone/admin/admin_interface.html"><i class="fa-solid fa-chart-line mr-2"></i>Live dashboard</a>
+                <a class="rounded-xl bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm" href="/virtual-phone/admin/apps_interface.html"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>App publishing</a>
+                <button id="signOut" type="button" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>Sign out</button>
+            </nav>
+        </header>
+
+        <section class="glass rounded-3xl p-4 md:p-6">
+            <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_auto] md:items-end">
+                <div><label for="userSearch" class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Search users</label><input id="userSearch" type="search" placeholder="Username" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div class="rounded-xl bg-white/70 px-4 py-2"><span class="block text-[10px] font-bold uppercase text-slate-500">Files listed</span><strong id="fileTotal">—</strong></div>
+                <div class="rounded-xl bg-white/70 px-4 py-2"><span class="block text-[10px] font-bold uppercase text-slate-500">Storage on page</span><strong id="storageTotal">—</strong></div>
+            </div>
+            <div class="audit-layout grid grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)] gap-4">
+                <section class="min-h-0 overflow-hidden rounded-2xl border border-white bg-white/60">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3"><div><h2 class="text-sm font-bold">User accounts</h2><p class="mt-0.5 text-[10px] text-slate-500">Update a username or reset a password.</p></div><button id="refreshUsers" class="h-8 w-8 rounded-lg bg-white text-slate-700" type="button" title="Refresh"><i class="fa-solid fa-rotate"></i></button></div>
+                    <div id="userList" class="max-h-[65vh] overflow-y-auto p-2"><p class="status p-4">Loading user records…</p></div>
+                </section>
+                <section class="min-h-0 overflow-hidden rounded-2xl border border-white bg-white/60">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3"><div><h2 id="filesTitle" class="text-sm font-bold">Uploaded files</h2><p id="filesSubtitle" class="mt-0.5 text-xs text-slate-500">Choose a user to inspect their files.</p></div><span id="userStorage" class="text-sm font-bold"></span></div>
+                    <div class="scroll-table max-h-[65vh] overflow-auto">
+                        <table class="file-table w-full min-w-[430px]"><thead class="sticky top-0 bg-slate-50"><tr><th>File name</th><th>Type</th><th>Size</th><th>Modified</th></tr></thead><tbody id="fileList"><tr><td colspan="4" class="text-center text-slate-500">Choose a user to see uploaded files.</td></tr></tbody></table>
+                    </div>
+                </section>
+            </div>
+            <div class="mt-4 flex items-center justify-between gap-3"><p id="status" class="status" role="status"></p><div class="flex gap-2"><button id="previousPage" class="rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-700 disabled:opacity-40" type="button">Previous</button><span id="pageLabel" class="px-2 py-2 text-xs text-slate-500">Page 1</span><button id="nextPage" class="rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-700 disabled:opacity-40" type="button">Next</button></div></div>
+        </section>
+    </main>
+    <section id="credentialsModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm" aria-labelledby="credentialsTitle" aria-hidden="true">
+        <form id="credentialsForm" class="glass w-full max-w-md rounded-3xl p-6 text-slate-800 shadow-2xl">
+            <div class="mb-4 flex items-start justify-between gap-4">
+                <div>
+                    <p class="mb-1 text-xs font-bold uppercase tracking-wider text-blue-700">Account access</p>
+                    <h2 id="credentialsTitle" class="text-xl font-bold">Update login details</h2>
+                    <p id="credentialsUser" class="mt-1 text-sm text-slate-500"></p>
+                </div>
+                <button id="closeCredentials" type="button" class="grid h-9 w-9 flex-none place-items-center rounded-full bg-white/80 text-slate-600" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input id="credentialsUserId" type="hidden">
+            <label for="newUsername" class="mb-1 block text-sm font-semibold">Username</label>
+            <input id="newUsername" maxlength="50" autocomplete="off" required class="mb-4 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <label for="newPassword" class="mb-1 block text-sm font-semibold">New password</label>
+            <input id="newPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="Leave blank to keep the current password" class="mb-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <label for="confirmNewPassword" class="mb-1 block text-sm font-semibold">Confirm new password</label>
+            <input id="confirmNewPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="Re-enter the new password" class="mb-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="mb-4 text-xs leading-5 text-slate-500">Passwords must be 8–72 bytes and are stored as secure hashes. The current password cannot be viewed; enter a new one to reset it.</p>
+            <p id="credentialsMessage" class="mb-3 min-h-5 text-sm text-red-600" role="status" aria-live="polite"></p>
+            <button id="saveCredentials" type="submit" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white transition hover:bg-blue-700">Save login details</button>
+        </form>
+    </section>
+<script>
+(() => {
+    const API = '/virtual-phone/admin/api/';
+    const authPanel = document.getElementById('authPanel');
+    const adminPage = document.getElementById('adminPage');
+    let setupRequired = false;
+    let page = 1;
+    let pages = 1;
+    let users = [];
+    let selectedUserId = null;
+    let searchTimer;
+
+    async function request(url, options = {}) {
+        const response = await fetch(url, { credentials: 'same-origin', ...options });
+        const data = await response.json().catch(() => ({ success: false, message: 'Invalid server response.' }));
+        if (!response.ok || !data.success) throw new Error(data.message || `Request failed (${response.status}).`);
+        return data;
+    }
+
+    function formatBytes(bytes) {
+        const value = Number(bytes) || 0;
+        if (!value) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+        return `${(value / Math.pow(1024, index)).toFixed(index ? 1 : 0)} ${units[index]}`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    }
+
+    function renderUsers() {
+        const list = document.getElementById('userList');
+        if (!users.length) {
+            list.innerHTML = '<p class="status p-4">No matching users.</p>';
+            return;
+        }
+        list.innerHTML = users.map(user => `<div data-user-card="${Number(user.id)}" class="account-card mb-1 flex items-center gap-1 rounded-xl p-1" aria-expanded="${Number(user.id) === selectedUserId}">
+            <button type="button" data-select-user="${Number(user.id)}" class="user-row flex min-w-0 flex-1 items-center gap-3 rounded-xl p-2 text-left hover:bg-white">
+                <img src="${escapeHtml(user.profile_url || '/virtual-phone/vphone.png')}" onerror="this.onerror=null;this.src='/virtual-phone/vphone.png'" alt="" class="h-9 w-9 rounded-full object-cover">
+                <span class="min-w-0 flex-1"><strong class="block truncate text-sm">${escapeHtml(user.username)}</strong><small class="text-xs text-slate-500">${Number(user.file_count)} files</small></span>
+                <strong class="text-xs">${formatBytes(user.used_bytes)}</strong>
+            </button>
+            <button type="button" data-edit-user="${Number(user.id)}" class="account-button grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700" title="Update ${escapeHtml(user.username)} login" aria-label="Update ${escapeHtml(user.username)} login">
+                <i class="fa-solid fa-user-pen" aria-hidden="true"></i>
+            </button>
+        </div>`).join('');
+        list.querySelectorAll('[data-select-user]').forEach(button => button.addEventListener('click', () => {
+            selectedUserId = Number(button.dataset.selectUser);
+            list.querySelectorAll('.account-card').forEach(row => row.setAttribute('aria-expanded', String(Number(row.dataset.userCard) === selectedUserId)));
+            renderFiles(users.find(user => Number(user.id) === selectedUserId));
+        }));
+        list.querySelectorAll('[data-edit-user]').forEach(button => button.addEventListener('click', () => {
+            const user = users.find(item => Number(item.id) === Number(button.dataset.editUser));
+            if (user) openCredentials(user);
+        }));
+        if (selectedUserId && users.some(user => Number(user.id) === selectedUserId)) {
+            const selected = list.querySelector(`[data-user-card="${selectedUserId}"]`);
+            selected?.setAttribute('aria-expanded', 'true');
+            renderFiles(users.find(user => Number(user.id) === selectedUserId));
+        } else if (!selectedUserId) {
+            renderFiles(users[0]);
+        }
+    }
+
+    function openCredentials(user) {
+        const modal = document.getElementById('credentialsModal');
+        document.getElementById('credentialsUserId').value = String(user.id);
+        document.getElementById('credentialsUser').textContent = `Account: ${user.username} · ID ${user.id}`;
+        document.getElementById('newUsername').value = user.username;
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmNewPassword').value = '';
+        document.getElementById('credentialsMessage').textContent = '';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('newUsername').focus();
+    }
+
+    function closeCredentials() {
+        const modal = document.getElementById('credentialsModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
+        document.getElementById('credentialsForm').reset();
+    }
+
+    function renderFiles(user) {
+        const body = document.getElementById('fileList');
+        if (!user) {
+            body.innerHTML = '<tr><td colspan="4" class="text-center text-slate-500">Choose a user to see uploaded files.</td></tr>';
+            document.getElementById('filesTitle').textContent = 'Uploaded files';
+            document.getElementById('filesSubtitle').textContent = 'Choose a user to inspect their files.';
+            document.getElementById('userStorage').textContent = '';
+            return;
+        }
+        document.getElementById('filesTitle').textContent = `${user.username} · uploaded files`;
+        document.getElementById('filesSubtitle').textContent = `${Number(user.file_count)} files · ${formatBytes(user.used_bytes)} total`;
+        document.getElementById('userStorage').textContent = formatBytes(user.used_bytes);
+        if (!user.files.length) {
+            body.innerHTML = '<tr><td colspan="4" class="text-center text-slate-500">This user has no File Manager uploads.</td></tr>';
+            return;
+        }
+        body.innerHTML = user.files.map(file => `<tr><td class="max-w-[260px] truncate font-medium" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</td><td>${escapeHtml(file.type)}</td><td class="whitespace-nowrap">${formatBytes(file.size_bytes)}</td><td class="whitespace-nowrap text-slate-500">${new Date(file.modified_at).toLocaleDateString()}</td></tr>`).join('');
+    }
+
+    async function loadUsers() {
+        const query = document.getElementById('userSearch').value.trim();
+        const status = document.getElementById('status');
+        status.textContent = 'Loading storage details…';
+        try {
+            const data = await request(`${API}storage.php?page=${page}&limit=100&search=${encodeURIComponent(query)}`);
+            users = data.users || [];
+            pages = Math.max(1, Number(data.pagination?.pages || 1));
+            document.getElementById('fileTotal').textContent = String(data.totals?.files_on_page ?? 0);
+            document.getElementById('storageTotal').textContent = formatBytes(data.totals?.storage_bytes_on_page);
+            document.getElementById('pageLabel').textContent = `Page ${page} of ${pages}`;
+            document.getElementById('previousPage').disabled = page <= 1;
+            document.getElementById('nextPage').disabled = page >= pages;
+            renderUsers();
+            status.textContent = `Updated ${new Date(data.generated_at).toLocaleTimeString()}`;
+        } catch (error) {
+            status.textContent = error.message;
+            if (error.message.toLowerCase().includes('sign in')) {
+                authPanel.classList.remove('hidden');
+                adminPage.classList.add('hidden');
+            }
+        }
+    }
+
+    function showAdmin() {
+        authPanel.classList.add('hidden');
+        adminPage.classList.remove('hidden');
+        loadUsers();
+    }
+
+    async function init() {
+        try {
+            const data = await request(API + 'session.php');
+            setupRequired = Boolean(data.setup_required);
+            if (data.admin) showAdmin();
+            else {
+                document.getElementById('authTitle').textContent = setupRequired ? 'Create admin account' : 'Admin sign in';
+                document.getElementById('authDescription').textContent = setupRequired ? 'Create the first administrator account.' : 'Sign in to inspect user storage.';
+                document.getElementById('authSubmit').textContent = setupRequired ? 'Create admin account' : 'Sign in';
+                document.getElementById('adminPassword').autocomplete = setupRequired ? 'new-password' : 'current-password';
+            }
+        } catch (error) { document.getElementById('authMessage').textContent = error.message; }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const submit = document.getElementById('authSubmit');
+        submit.disabled = true;
+        try {
+            await request(API + 'session.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: setupRequired ? 'setup' : 'login', username: document.getElementById('adminUsername').value.trim(), password: document.getElementById('adminPassword').value }) });
+            showAdmin();
+        } catch (error) { document.getElementById('authMessage').textContent = error.message; }
+        finally { submit.disabled = false; }
+    });
+
+    document.getElementById('refreshUsers').addEventListener('click', loadUsers);
+    document.getElementById('closeCredentials').addEventListener('click', closeCredentials);
+    document.getElementById('credentialsModal').addEventListener('click', event => {
+        if (event.target === event.currentTarget) closeCredentials();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.getElementById('credentialsModal').classList.contains('hidden')) {
+            closeCredentials();
+        }
+    });
+    document.getElementById('credentialsForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const submit = document.getElementById('saveCredentials');
+        const message = document.getElementById('credentialsMessage');
+        const username = document.getElementById('newUsername').value.trim();
+        const password = document.getElementById('newPassword').value;
+        const confirmation = document.getElementById('confirmNewPassword').value;
+        message.textContent = '';
+        if (!password && confirmation) {
+            message.textContent = 'Enter the new password in both fields.';
+            document.getElementById('newPassword').focus();
+            return;
+        }
+        if (password && password !== confirmation) {
+            message.textContent = 'The new passwords do not match.';
+            document.getElementById('confirmNewPassword').focus();
+            return;
+        }
+        submit.disabled = true;
+        submit.textContent = 'Saving…';
+        try {
+            const result = await request(`${API}user_credentials.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: Number(document.getElementById('credentialsUserId').value),
+                    username,
+                    ...(password ? { new_password: password } : {}),
+                }),
+            });
+            const updatedUser = users.find(user => Number(user.id) === Number(result.user.id));
+            if (updatedUser) updatedUser.username = result.user.username;
+            message.classList.remove('text-red-600');
+            message.classList.add('text-emerald-700');
+            message.textContent = result.message;
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            renderUsers();
+            window.setTimeout(closeCredentials, 900);
+        } catch (error) {
+            message.classList.remove('text-emerald-700');
+            message.classList.add('text-red-600');
+            message.textContent = error.message;
+        } finally {
+            submit.disabled = false;
+            submit.textContent = 'Save login details';
+        }
+    });
+    document.getElementById('userSearch').addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => { page = 1; selectedUserId = null; loadUsers(); }, 250);
+    });
+    document.getElementById('previousPage').addEventListener('click', () => { if (page > 1) { page--; selectedUserId = null; loadUsers(); } });
+    document.getElementById('nextPage').addEventListener('click', () => { if (page < pages) { page++; selectedUserId = null; loadUsers(); } });
+    document.getElementById('signOut').addEventListener('click', async () => { await request(API + 'session.php', { method: 'DELETE' }); window.location.reload(); });
+    init();
+})();
+</script>
+</body>
+</html>

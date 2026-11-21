@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f8fc">
+    <title>Google Drive | Virtual Phone</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css">
+    <link rel="stylesheet" href="/virtual-phone/user/google_apps/google_apps.css">
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+    <script defer src="/virtual-phone/user/google_apps/google_apps.js"></script>
+</head>
+<body data-google-app="drive">
+    <div class="google-app">
+        <header class="app-header">
+            <div class="brand-mark" aria-hidden="true">D</div>
+            <div class="brand-copy"><strong>Google Drive</strong><span>Your files, in your phone</span></div>
+            <button class="close-app" type="button" aria-label="Close app" title="Back to phone"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <section class="account-card">
+            <div class="account-status-icon"><i class="fa-brands fa-google"></i></div>
+            <div class="account-copy"><strong id="accountTitle">Connect Google</strong><span id="accountEmail">Private to your Virtual Phone account</span></div>
+            <button id="accountButton" class="button button-primary" type="button">Connect</button>
+        </section>
+        <main class="app-main">
+            <div id="notice" class="notice" role="status" hidden></div>
+            <section id="appContent" hidden>
+                <div class="welcome-card">
+                    <span class="eyebrow">YOUR DRIVE</span>
+                    <h1>Everything in its place.</h1>
+                    <p>Browse your files, upload something new, or save a copy for later.</p>
+                </div>
+                <div class="toolbar">
+                    <label class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="driveSearch" type="search" placeholder="Search Drive" autocomplete="off"></label>
+                    <label class="button button-light upload-button"><i class="fa-solid fa-arrow-up-from-bracket"></i><span>Upload</span><input id="driveUpload" type="file" hidden></label>
+                </div>
+                <div class="section-heading"><div><h2 id="folderTitle">My Drive</h2><p id="fileCount">Your files will appear here</p></div><button id="driveBack" class="icon-button" type="button" aria-label="Go back" hidden><i class="fa-solid fa-arrow-left"></i></button></div>
+                <div id="driveFiles" class="file-list" aria-live="polite"></div>
+                <button id="driveMore" class="button button-light load-more" type="button" hidden>Load more</button>
+            </section>
+            <section id="connectPrompt" class="empty-card">
+                <div class="empty-art"><i class="fa-brands fa-google-drive"></i></div>
+                <h2>Your Drive, close at hand</h2>
+                <p>Connect your Google account to browse Drive. Your authorization is private to this signed-in phone account.</p>
+                <button class="button button-primary connect-cta" type="button">Connect Google Drive</button>
+            </section>
+            <p class="privacy-note"><i class="fa-solid fa-lock"></i> Google access can be disconnected at any time.</p>
+        </main>
+    </div>
+</body>
+</html>

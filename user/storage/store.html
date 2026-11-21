@@ -1,0 +1,3914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Virtual Phone – File Manager</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+    <style>
+        /* ============================================================
+           GLOBAL RESET & PHONE SHELL
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at 30% 10%, #dce2f0 0%, #7b8c9e 100%);
+            overflow: hidden;
+            padding: 12px;
+        }
+        html.embedded-app,
+        html.embedded-app body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            overflow: hidden;
+            background: #f5f7fc;
+        }
+        html.embedded-app .phone {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        html.embedded-app .screen {
+            border-radius: 0;
+            background: #f5f8fc;
+        }
+        html.embedded-app .screen::after,
+        html.embedded-app .phone-power-btn,
+        html.embedded-app .wallpaper,
+        html.embedded-app .dynamic-island,
+        html.embedded-app .status,
+        html.embedded-app .clock,
+        html.embedded-app .scroll-indicator,
+        html.embedded-app .apps,
+        html.embedded-app .dock {
+            display: none !important;
+        }
+        html.embedded-app .login-panel {
+            right: 0;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+            justify-content: center;
+        }
+        html.embedded-app .login-panel.show {
+            bottom: 0;
+        }
+        html.embedded-app .app-overlay {
+            inset: 0;
+            z-index: 1100;
+            border-radius: 0;
+        }
+        html.embedded-app .app-shell {
+            border-radius: 0;
+        }
+        html.embedded-app .app-header {
+            padding-top: 8px;
+        }
+.phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .phone::before {
+            content: "";
+            position: absolute;
+            left: -5px;
+            top: 130px;
+            width: 5px;
+            height: 50px;
+            background: #2c2c2c;
+            border-radius: 5px 0 0 5px;
+            box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.15);
+        }
+
+        .phone-power-btn {
+            position: absolute;
+            right: -5px;
+            top: 170px;
+            width: 5px;
+            height: 75px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 1px 0 2px rgba(255, 255, 255, 0.15);
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 32px;
+            pointer-events: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+
+        /* ============================================================
+           DYNAMIC ISLAND
+           ============================================================ */
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 24px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .4s cubic-bezier(.175, .885, .32, 1.275);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 600;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 0 10px;
+        }
+        .dynamic-island.notify-error {
+            width: 200px;
+            height: 34px;
+            background: #ff3b30;
+            border-radius: 17px;
+            box-shadow: 0 4px 20px rgba(255, 59, 48, 0.5);
+            font-size: 10px;
+        }
+        .dynamic-island.notify-success {
+            width: 200px;
+            height: 34px;
+            background: #34c759;
+            border-radius: 17px;
+            box-shadow: 0 4px 20px rgba(52, 199, 89, 0.5);
+            font-size: 10px;
+        }
+        .dynamic-island.notify-info {
+            width: 190px;
+            height: 34px;
+            background: #007aff;
+            border-radius: 17px;
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.5);
+            font-size: 10px;
+        }
+
+        /* ============================================================
+           STATUS BAR
+           ============================================================ */
+        .status {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            z-index: 90;
+            pointer-events: none;
+        }
+        .status .icons i {
+            margin-left: 4px;
+            font-size: 9px;
+        }
+
+        /* ============================================================
+           WALLPAPER
+           ============================================================ */
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #3b82f6, #1d4ed8, #0f172a);
+            background-size: cover;
+            background-position: center;
+            animation: bgMove 14s infinite alternate ease-in-out;
+            z-index: 1;
+            transition: background 1.2s ease, transform 1.2s ease;
+        }
+        @keyframes bgMove {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            100% {
+                transform: scale(1.10) rotate(1.2deg);
+            }
+        }
+
+        /* ============================================================
+           CLOCK
+           ============================================================ */
+        .clock {
+            position: absolute;
+            top: 60px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            z-index: 5;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+        }
+        .clock h1 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            line-height: 1;
+            background: linear-gradient(180deg, #fff 30%, rgba(255, 255, 255, 0.7));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .clock p {
+            font-size: 11px;
+            font-weight: 500;
+            opacity: .85;
+            margin-top: 2px;
+            letter-spacing: .5px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* ============================================================
+           SCROLL INDICATOR
+           ============================================================ */
+        .scroll-indicator {
+            position: absolute;
+            top: 128px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 9px;
+            font-weight: 500;
+            text-align: center;
+            animation: bounce 2.2s infinite;
+            z-index: 5;
+            cursor: pointer;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.15);
+            padding: 4px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .scroll-indicator i {
+            display: block;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        @keyframes bounce {
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translate(-50%, 0);
+            }
+            40% {
+                transform: translate(-50%, 6px);
+            }
+            60% {
+                transform: translate(-50%, 3px);
+            }
+        }
+
+        /* ============================================================
+           APPS GRID
+           ============================================================ */
+        .apps {
+            position: absolute;
+            bottom: 48px;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 8px 12px 6px;
+            z-index: 5;
+        }
+        .app {
+            text-align: center;
+            cursor: pointer;
+            transition: transform .2s cubic-bezier(.175, .885, .32, 1.275);
+        }
+        .app:active {
+            transform: scale(0.88);
+        }
+        .app .icon {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 3px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            transition: transform .2s, box-shadow .2s;
+            position: relative;
+        }
+        .app .icon:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        }
+        .app .icon .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ff3b30;
+            color: #fff;
+            font-size: 7px;
+            font-weight: 700;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #1a1a1a;
+        }
+        .app span {
+            display: block;
+            font-size: 8px;
+            font-weight: 500;
+            color: #fff;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+            letter-spacing: .2px;
+        }
+
+        .instagram {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+        .whatsapp {
+            background: #25D366;
+        }
+        .facebook {
+            background: #1877F2;
+        }
+        .camera {
+            background: linear-gradient(45deg, #434343 0%, #000 100%);
+        }
+        .gallery {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+        }
+        .settings {
+            background: linear-gradient(135deg, #4a4a4a, #2d2d2d);
+        }
+        .browser {
+            background: linear-gradient(135deg, #00BCD4, #3f51b5);
+        }
+        .phoneicon {
+            background: linear-gradient(135deg, #43a047, #1b5e20);
+        }
+        .logout-icon {
+            background: linear-gradient(135deg, #ff3b30, #c0392b);
+        }
+        .storage-icon {
+            background: linear-gradient(135deg, #6c5ce7, #0984e3);
+        }
+
+        /* ============================================================
+           DOCK
+           ============================================================ */
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            z-index: 101;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+        }
+
+        /* ============================================================
+           APP OVERLAY
+           ============================================================ */
+        .app-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.60);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+        }
+        .app-overlay.show {
+            display: flex;
+        }
+
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #f8faff 0%, #eef2f7 100%);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+            min-height: 40px;
+        }
+        .app-header .app-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #111;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .app-header .app-title i {
+            color: #6c5ce7;
+            font-size: 14px;
+        }
+        .app-header button {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            color: #333;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .app-header button:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .app-body {
+            flex: 1;
+            position: relative;
+            background: #f5f8fc;
+            overflow: hidden;
+        }
+        .app-body.drag-active {
+            outline: 2px dashed rgba(37, 99, 235, 0.45);
+            outline-offset: -6px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(16, 185, 129, 0.06));
+        }
+
+        /* ============================================================
+           STORAGE APP – PRO VERSION
+           ============================================================ */
+        .storage-loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f5f8fc;
+            z-index: 10;
+            transition: opacity .4s, transform .4s;
+        }
+        .storage-loading.hidden {
+            opacity: 0;
+            transform: scale(1.04);
+            pointer-events: none;
+        }
+        .storage-loading .loader-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #6c5ce7, #0984e3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #fff;
+            box-shadow: 0 10px 32px rgba(108, 92, 231, 0.4);
+            animation: loaderPulse 1.6s ease-in-out infinite;
+            position: relative;
+        }
+        .storage-loading .loader-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #6c5ce7, #0984e3);
+            opacity: .2;
+            filter: blur(10px);
+            z-index: -1;
+            animation: loaderGlow 1.6s ease-in-out infinite alternate;
+        }
+        @keyframes loaderPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        @keyframes loaderGlow {
+            0% {
+                opacity: .2;
+                transform: scale(1);
+            }
+            100% {
+                opacity: .4;
+                transform: scale(1.15);
+            }
+        }
+        .storage-loading .loader-icon .spinner-ring {
+            position: absolute;
+            inset: -6px;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            border-top-color: rgba(255, 255, 255, 0.5);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .storage-loading .loader-text {
+            margin-top: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2d3436;
+            letter-spacing: .4px;
+            animation: textPulse 1.2s ease-in-out infinite alternate;
+        }
+        .storage-loading .loader-sub {
+            font-size: 10px;
+            font-weight: 400;
+            color: #636e72;
+            margin-top: 2px;
+            opacity: .5;
+        }
+        @keyframes textPulse {
+            0% {
+                opacity: .4;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ============================================================
+           STORAGE CONTENT
+           ============================================================ */
+        .storage-content {
+            position: absolute;
+            inset: 0;
+            padding: 6px 8px 10px;
+            overflow-y: auto;
+            background: #f5f8fc;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity .4s, transform .4s;
+            pointer-events: none;
+        }
+        .storage-content.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .storage-content[data-theme="violet"] { background: linear-gradient(145deg, #f3edff, #f7f8ff 55%, #eceaff); }
+        .storage-content[data-theme="sunset"] { background: linear-gradient(145deg, #fff1e9, #fff8f1 55%, #fff0f2); }
+        .storage-content[data-theme="mint"] { background: linear-gradient(145deg, #e8fbf4, #f5fffb 55%, #e8f7ff); }
+        .storage-content[data-theme="ocean"] { background: linear-gradient(145deg, #e8f4ff, #f5f9ff 55%, #e7f2ff); }
+        .storage-content.custom-wallpaper { background-size: cover; background-position: center; }
+        .storage-content::-webkit-scrollbar {
+            width: 2px;
+        }
+        .storage-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .storage-content::-webkit-scrollbar-thumb {
+            background: rgba(108, 92, 231, 0.25);
+            border-radius: 10px;
+        }
+
+        .fm-search {
+            display: flex;
+            align-items: center;
+            background: #eef1f5;
+            border-radius: 10px;
+            padding: 0 12px;
+            margin-bottom: 8px;
+            height: 34px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .fm-search:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.10);
+        }
+        .fm-search i {
+            color: #999;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        .fm-search input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: 400;
+            color: #1a1a1a;
+            outline: none;
+            height: 100%;
+            padding: 0;
+        }
+        .fm-search input::placeholder {
+            color: #aaa;
+        }
+
+        /* ─── TOOLBAR ─── */
+        .fm-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .fm-toolbar .view-btns {
+            display: flex;
+            gap: 4px;
+        }
+        .fm-toolbar button {
+            background: rgba(0, 0, 0, 0.05);
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            color: #666;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .fm-toolbar button.active {
+            background: #3b82f6;
+            color: #fff;
+        }
+        .fm-toolbar button:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        /* ─── UPLOAD BUTTON (inside phone) ─── */
+        .fm-toolbar .upload-btn-inline {
+            background: #3b82f6;
+            color: #fff;
+            border-radius: 8px;
+            padding: 4px 14px;
+            font-weight: 600;
+            font-size: 11px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background .2s, transform .1s, box-shadow .2s;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+        }
+        .fm-toolbar .upload-btn-inline:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+        }
+        .fm-toolbar .upload-btn-inline:active {
+            transform: scale(0.96);
+        }
+        .fm-toolbar .upload-btn-inline i {
+            font-size: 13px;
+        }
+
+        .fm-toolbar .settings-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .storage-plan-card {
+            margin: 0 0 10px;
+            padding: 10px 11px;
+            border: 1px solid #e8ebf3;
+            border-radius: 13px;
+            background: linear-gradient(135deg, #fff, #f8f9ff);
+            box-shadow: 0 5px 16px rgba(34, 50, 90, 0.05);
+        }
+        .storage-plan-head,
+        .storage-plan-foot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .storage-plan-icon {
+            width: 28px;
+            height: 28px;
+            display: grid;
+            flex: none;
+            place-items: center;
+            border-radius: 9px;
+            color: #fff;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            font-size: 12px;
+        }
+        .storage-plan-info {
+            display: grid;
+            flex: 1;
+            gap: 2px;
+        }
+        .storage-plan-info strong,
+        .storage-plan-amount {
+            color: #20243a;
+            font-size: 10px;
+        }
+        .storage-plan-info span,
+        .storage-plan-foot span {
+            color: #7d8498;
+            font-size: 9px;
+        }
+        .storage-plan-track {
+            height: 5px;
+            margin: 8px 0 6px;
+            overflow: hidden;
+            border-radius: 99px;
+            background: #e9ebf5;
+        }
+        .storage-plan-fill {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #5865f2, #a855f7);
+            transition: width .3s ease;
+        }
+        .storage-plan-foot {
+            justify-content: space-between;
+        }
+        .storage-plan-foot button {
+            padding: 4px 8px;
+            border: 0;
+            border-radius: 7px;
+            color: #4b58df;
+            background: #eef0ff;
+            font: inherit;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .theme-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 7px;
+            margin: 6px 0 12px;
+        }
+        .theme-option {
+            height: 45px;
+            position: relative;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .theme-option[aria-pressed="true"] { border-color: #20243a; box-shadow: 0 0 0 2px #fff inset; }
+        .theme-option[data-theme="ocean"] { background: linear-gradient(135deg,#62a8f4,#d8eeff); }
+        .theme-option[data-theme="violet"] { background: linear-gradient(135deg,#9b73e8,#efe8ff); }
+        .theme-option[data-theme="sunset"] { background: linear-gradient(135deg,#f58b68,#ffe4c7); }
+        .theme-option[data-theme="mint"] { background: linear-gradient(135deg,#47bf9c,#d8fff1); }
+        .wallpaper-upload {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            padding: 9px 10px;
+            border: 1px dashed #cbd2e4;
+            border-radius: 10px;
+            color: #4b58df;
+            background: #f7f8ff;
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .theme-note { margin: 5px 0 10px; color: #81889a; font-size: 9px; line-height: 1.4; }
+        .installed-app-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 62px;
+            margin: 0 0 7px;
+            padding: 9px;
+            overflow: hidden;
+            border: 1px solid #e8ebf3;
+            border-radius: 12px;
+            background: #fff;
+        }
+        .installed-app-card img,
+        .installed-app-card .installed-app-icon {
+            width: 38px;
+            height: 38px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            object-fit: cover;
+            color: #fff;
+            background: linear-gradient(140deg,#5865f2,#a855f7);
+        }
+        .installed-app-details { flex: 1; min-width: 0; }
+        .installed-app-details strong,
+        .installed-app-details span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .installed-app-details strong { color: #252a40; font-size: 10px; }
+        .installed-app-details span { margin-top: 3px; color: #858b9d; font-size: 8px; }
+        .installed-app-actions { display: flex; flex: none; gap: 4px; }
+        .installed-app-actions button {
+            border: 0;
+            border-radius: 8px;
+            padding: 7px 8px;
+            color: #fff;
+            background: #5865f2;
+            font: inherit;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .installed-app-actions .uninstall { color: #c54631; background: #fff0ed; }
+        .installed-app-actions button:disabled { opacity: .6; cursor: wait; }
+        .upgrade-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 45;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(15, 20, 38, .56);
+            backdrop-filter: blur(7px);
+        }
+        .upgrade-overlay.show { display: flex; }
+        .upgrade-card {
+            position: relative;
+            width: 100%;
+            padding: 20px 17px 16px;
+            border: 1px solid #fff;
+            border-radius: 20px;
+            background: linear-gradient(160deg, #fff, #f3f5ff);
+            box-shadow: 0 20px 55px rgba(6, 12, 31, .3);
+            text-align: center;
+            animation: modalIn .22s ease-out;
+        }
+        .upgrade-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            border: 0;
+            border-radius: 50%;
+            color: #70768b;
+            background: #e9ebf4;
+            cursor: pointer;
+        }
+        .upgrade-mark {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 10px;
+            border-radius: 16px;
+            color: #fff;
+            background: linear-gradient(140deg, #5865f2, #a855f7);
+            box-shadow: 0 8px 20px #5865f244;
+            font-size: 19px;
+        }
+        .upgrade-card h3 { margin: 0 0 6px; color: #20243a; font-size: 15px; }
+        .upgrade-card p { margin: 0; color: #737b91; font-size: 10px; line-height: 1.55; }
+        .upgrade-plan {
+            margin: 14px 0;
+            padding: 11px;
+            border: 1px solid #e6e9f4;
+            border-radius: 13px;
+            color: #303750;
+            background: #fff;
+            font-size: 10px;
+            text-align: left;
+        }
+        .upgrade-plan strong { display: block; margin-bottom: 3px; font-size: 11px; }
+        .upgrade-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 9px;
+            padding: 5px 8px;
+            border-radius: 99px;
+            color: #6552c9;
+            background: #efedff;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .upgrade-confirm {
+            width: 100%;
+            padding: 10px;
+            border: 0;
+            border-radius: 11px;
+            color: #fff;
+            background: #5865f2;
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ─── CATEGORIES ─── */
+        .fm-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2px 0 5px;
+            letter-spacing: .3px;
+        }
+        .fm-categories {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        .fm-cat {
+            background: #fff;
+            border-radius: 10px;
+            padding: 6px 8px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+            transition: transform .12s, box-shadow .12s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 3px;
+        }
+        .fm-cat:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .fm-cat:active {
+            transform: scale(0.96);
+        }
+        .fm-cat .cat-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .fm-cat .cat-icon.downloads {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        .fm-cat .cat-icon.images {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+        .fm-cat .cat-icon.videos {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .fm-cat .cat-icon.audio {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+        .fm-cat .cat-icon.documents {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        .fm-cat .cat-icon.apps {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .fm-cat .cat-info .cat-name {
+            font-size: 10px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .fm-cat .cat-info .cat-size {
+            font-size: 8px;
+            color: #999;
+        }
+
+        /* ─── COLLECTIONS ─── */
+        .fm-collections {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        .fm-collections .col-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 4px 10px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #1a1a1a;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            transition: transform .12s;
+        }
+        .fm-collections .col-item:hover {
+            transform: translateY(-1px);
+        }
+        .fm-collections .col-item .col-count {
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* ============================================================
+           FILE GRID – GALLERY STYLE
+           ============================================================ */
+        .fm-filelist {
+            position: absolute;
+            inset: 0;
+            background: #f5f8fc;
+            padding: 6px 8px 10px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateX(24px);
+            pointer-events: none;
+            transition: opacity .25s, transform .25s;
+            z-index: 5;
+        }
+        .fm-filelist.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+        .fm-filelist::-webkit-scrollbar {
+            width: 2px;
+        }
+        .fm-filelist::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .fm-filelist::-webkit-scrollbar-thumb {
+            background: rgba(108, 92, 231, 0.25);
+            border-radius: 10px;
+        }
+
+        .fm-filelist .fl-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            flex-wrap: wrap;
+        }
+        .fm-filelist .fl-header .fl-back {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            color: #333;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .fm-filelist .fl-header .fl-back:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+        .fm-filelist .fl-header .fl-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a1a;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 60px;
+        }
+        .fm-filelist .fl-header .fl-title i {
+            color: #3b82f6;
+            font-size: 13px;
+        }
+        .fm-filelist .fl-header .fl-upload-icon {
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .2s, transform .1s;
+            flex-shrink: 0;
+        }
+        .fm-filelist .fl-header .fl-upload-icon:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+
+        /* ============================================================
+           FILE GRID – PHOTO WALL
+           ============================================================ */
+        #flItems {
+            display: grid;
+            gap: 4px;
+        }
+        #flItems.grid-view {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        #flItems.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        .fl-item {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            transition: transform .12s, box-shadow .15s;
+            cursor: pointer;
+            position: relative;
+            aspect-ratio: 1 / 1;
+        }
+        .fl-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+            z-index: 2;
+        }
+        .fl-item:active {
+            transform: scale(0.97);
+        }
+
+        .fl-item .fl-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: #eef1f5;
+        }
+        .fl-item .fl-thumb-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef1f5;
+            color: #bbb;
+            font-size: 28px;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .fl-item .fl-thumb-placeholder .sub {
+            font-size: 8px;
+            color: #ccc;
+            font-weight: 400;
+        }
+        .fl-item .fl-thumb-video {
+            position: relative;
+        }
+        .fl-item .fl-thumb-video .play-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .fl-item .fl-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.55) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity .25s;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 6px 8px;
+        }
+        .fl-item:hover .fl-overlay {
+            opacity: 1;
+        }
+
+        .fl-item .fl-overlay .fl-name {
+            font-size: 9px;
+            font-weight: 500;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90%;
+        }
+        .fl-item .fl-overlay .fl-meta {
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.75);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .fl-item .fl-overlay .fl-meta .tag {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0 5px;
+            border-radius: 3px;
+            font-size: 7px;
+            font-weight: 600;
+        }
+
+        .fl-item .fl-menu-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            color: #fff;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .2s, background .2s;
+            z-index: 3;
+        }
+        .fl-item:hover .fl-menu-btn {
+            opacity: 1;
+        }
+        .fl-item .fl-menu-btn:hover {
+            background: rgba(0, 0, 0, 0.75);
+        }
+
+        .fl-item .fl-dropdown {
+            position: absolute;
+            top: 28px;
+            right: 4px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 4px 0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            min-width: 120px;
+            z-index: 10;
+            display: none;
+            overflow: hidden;
+            animation: dropIn .15s cubic-bezier(.175, .885, .32, 1.275);
+        }
+        .fl-item .fl-dropdown.open {
+            display: block;
+        }
+        @keyframes dropIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.92) translateY(-4px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .fl-item .fl-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            font-size: 10px;
+            font-weight: 500;
+            color: #1a1a1a;
+            cursor: pointer;
+            transition: background .12s;
+            text-align: left;
+        }
+        .fl-item .fl-dropdown button:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .fl-item .fl-dropdown button i {
+            width: 14px;
+            font-size: 11px;
+            color: #666;
+        }
+        .fl-item .fl-dropdown button.danger {
+            color: #ef4444;
+        }
+        .fl-item .fl-dropdown button.danger i {
+            color: #ef4444;
+        }
+        .fl-item .fl-dropdown button.primary i {
+            color: #3b82f6;
+        }
+        .fl-item .fl-dropdown button.send i {
+            color: #10b981;
+        }
+
+        #flItems.list-view .fl-item {
+            aspect-ratio: auto;
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            gap: 10px;
+            border-radius: 8px;
+            min-height: 44px;
+        }
+        #flItems.list-view .fl-item .fl-thumb,
+        #flItems.list-view .fl-item .fl-thumb-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            object-fit: cover;
+            font-size: 16px;
+        }
+        #flItems.list-view .fl-item .fl-thumb-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #flItems.list-view .fl-item .fl-thumb-placeholder .sub {
+            display: none;
+        }
+        #flItems.list-view .fl-item .fl-overlay {
+            position: static;
+            background: none;
+            opacity: 1;
+            padding: 0;
+            flex: 1;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #flItems.list-view .fl-item .fl-overlay .fl-name {
+            color: #1a1a1a;
+            font-size: 11px;
+            text-shadow: none;
+            flex: 1;
+        }
+        #flItems.list-view .fl-item .fl-overlay .fl-meta {
+            color: #999;
+            text-shadow: none;
+            font-size: 9px;
+            flex-shrink: 0;
+        }
+        #flItems.list-view .fl-item .fl-menu-btn {
+            position: static;
+            opacity: 1;
+            background: none;
+            color: #999;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        #flItems.list-view .fl-item .fl-menu-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+        #flItems.list-view .fl-item .fl-dropdown {
+            top: 100%;
+            right: 0;
+        }
+
+        .fl-empty {
+            text-align: center;
+            padding: 40px 16px;
+            color: #b2bec3;
+        }
+        .fl-empty i {
+            font-size: 36px;
+            opacity: .3;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .fl-empty p {
+            font-size: 12px;
+        }
+
+        /* ============================================================
+           PREVIEW OVERLAY
+           ============================================================ */
+        .preview-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 30;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 24px;
+            flex-direction: column;
+        }
+        .preview-overlay.show {
+            display: flex;
+        }
+        .preview-overlay .preview-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.12);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .2s;
+            z-index: 5;
+        }
+        .preview-overlay .preview-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .preview-overlay .preview-content {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            object-fit: contain;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+            background: #000;
+        }
+        .preview-overlay .preview-content video,
+        .preview-overlay .preview-content audio {
+            width: 100%;
+            max-height: 60vh;
+            border-radius: 12px;
+            background: #000;
+        }
+        .preview-overlay .preview-content img {
+            width: 100%;
+            max-height: 60vh;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+        .preview-overlay .preview-content .placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .preview-overlay .preview-content .placeholder .sub {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.2);
+        }
+        .preview-overlay .preview-name {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 10px;
+            text-align: center;
+            max-width: 80%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .preview-overlay .preview-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .preview-overlay .preview-actions button {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background .15s;
+        }
+        .preview-overlay .preview-actions button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .preview-overlay .preview-actions button.danger {
+            color: #ef4444;
+        }
+        .preview-overlay .preview-actions button.danger:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        /* ============================================================
+           SETTINGS PANEL
+           ============================================================ */
+        .settings-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.50);
+            backdrop-filter: blur(6px);
+            z-index: 25;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            border-radius: 24px;
+        }
+        .settings-overlay.show {
+            display: flex;
+        }
+        .settings-modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 20px 20px;
+            max-width: 260px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: modalIn .25s cubic-bezier(.175, .885, .32, 1.275);
+        }
+        @keyframes modalIn {
+            0% {
+                transform: scale(0.92) translateY(12px);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        .settings-modal .set-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .settings-modal .set-header .set-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-modal .set-header .set-title i {
+            color: #6c5ce7;
+        }
+        .settings-modal .set-header .set-close {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s;
+        }
+        .settings-modal .set-header .set-close:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+        .settings-modal .set-body .set-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        }
+        .settings-modal .set-body .set-row .set-label {
+            color: #888;
+            font-weight: 500;
+        }
+        .settings-modal .set-body .set-row .set-value {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        .settings-modal .set-body .storage-bar {
+            margin: 8px 0 4px;
+            height: 6px;
+            background: #eef1f5;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .settings-modal .set-body .storage-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #34c759, #3b82f6, #8b5cf6);
+            transition: width .6s ease;
+        }
+        .settings-modal .set-body .storage-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #999;
+            margin-top: 2px;
+        }
+        .settings-modal .set-body .set-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding-top: 12px;
+        }
+        .settings-modal .set-body .set-actions button {
+            background: rgba(0, 0, 0, 0.05);
+            border: none;
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background .15s;
+        }
+        .settings-modal .set-body .set-actions button:hover {
+            background: rgba(0, 0, 0, 0.10);
+        }
+        .settings-modal .set-body .set-actions button.danger {
+            color: #ef4444;
+        }
+        .settings-modal .set-body .set-actions button.danger:hover {
+            background: rgba(239, 68, 68, 0.10);
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(70px);
+            background: #1a1a1a;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            transition: all .4s cubic-bezier(.175, .885, .32, 1.275);
+            pointer-events: none;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90%;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            background: #10b981;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        .toast.info {
+            background: #3b82f6;
+        }
+
+        /* ============================================================
+           LOGIN PANEL
+           ============================================================ */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(24px);
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: bottom .45s cubic-bezier(.1, .76, .55, .94);
+            padding: 14px 18px 18px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show {
+            bottom: 0;
+        }
+        .login-panel .handle {
+            width: 36px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            margin: 0 auto 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .login-panel h2 {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #111;
+            letter-spacing: -.3px;
+        }
+        .login-panel p {
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+        .login-panel input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            outline: none;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.03);
+            color: #111;
+            transition: all .25s ease;
+        }
+        .login-panel input:focus {
+            border-color: #007AFF;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.10);
+        }
+        .login-panel button {
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            background: #007AFF;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: opacity .2s, transform .1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .login-panel button:active {
+            opacity: .9;
+            transform: scale(.98);
+        }
+        .login-panel button.signup {
+            background: #34C759;
+        }
+        .login-panel button:disabled {
+            opacity: .6;
+            cursor: default;
+        }
+        .login-panel .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        .login-panel.keyboard-open {
+            height: 430px;
+        }
+
+        /* ============================================================
+           KEYBOARD
+           ============================================================ */
+        .keyboard {
+            position: absolute;
+            bottom: -215px;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: rgba(210, 215, 222, 0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 16px 16px 0 0;
+            padding: 6px 4px 14px;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
+            transition: bottom .35s cubic-bezier(.1, .76, .55, .94);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .keyboard.active {
+            bottom: 0;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+        }
+        .key {
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            height: 34px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+            transition: background .08s, transform .05s;
+            user-select: none;
+        }
+        .key:active,
+        .key.physical-active {
+            background: #abb4be !important;
+            transform: scale(.92);
+        }
+        .key.special {
+            background: #acb5be;
+            flex: 1.3;
+            font-size: 11px;
+        }
+        .key.space {
+            flex: 5;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 380px) {
+            .phone {
+                width: 290px;
+                height: 490px;
+                padding: 10px;
+                border-radius: 38px;
+            }
+            .clock h1 {
+                font-size: 34px;
+            }
+            .apps {
+                gap: 4px;
+                padding: 6px 8px;
+            }
+            .app .icon {
+                width: 38px;
+                height: 38px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+            .app span {
+                font-size: 7px;
+            }
+            .fm-categories {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 4px;
+            }
+            .fm-cat {
+                padding: 4px 6px;
+            }
+            .fm-cat .cat-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 10px;
+            }
+            .fm-cat .cat-info .cat-name {
+                font-size: 9px;
+            }
+            .fm-cat .cat-info .cat-size {
+                font-size: 7px;
+            }
+            #flItems.grid-view {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .settings-modal {
+                max-width: 220px;
+                padding: 14px 16px;
+            }
+            .preview-overlay .preview-content {
+                max-height: 55vh;
+            }
+        }
+
+        @media (max-width: 340px) {
+            .phone {
+                width: 270px;
+                height: 460px;
+                padding: 8px;
+                border-radius: 34px;
+            }
+            .clock h1 {
+                font-size: 28px;
+            }
+            .clock {
+                top: 50px;
+            }
+            .scroll-indicator {
+                top: 110px;
+                font-size: 8px;
+                padding: 3px 10px;
+            }
+            .apps {
+                gap: 3px;
+                padding: 4px 6px;
+                bottom: 40px;
+            }
+            .app .icon {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+                border-radius: 8px;
+            }
+            .app span {
+                font-size: 6px;
+            }
+            .fm-categories {
+                grid-template-columns: 1fr 1fr;
+                gap: 3px;
+            }
+            .fm-cat {
+                padding: 3px 5px;
+            }
+            .fm-cat .cat-icon {
+                width: 20px;
+                height: 20px;
+                font-size: 9px;
+            }
+            .fm-cat .cat-info .cat-name {
+                font-size: 8px;
+            }
+            .fm-cat .cat-info .cat-size {
+                font-size: 6px;
+            }
+            #flItems.grid-view {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 3px;
+            }
+            .settings-modal {
+                max-width: 190px;
+                padding: 12px 14px;
+            }
+            .settings-modal .set-body .set-row {
+                font-size: 10px;
+                padding: 4px 0;
+            }
+            .preview-overlay .preview-content {
+                max-height: 50vh;
+            }
+        }
+    </style>
+    <script>
+        if (new URLSearchParams(window.location.search).get('embedded') === '1') {
+            document.documentElement.classList.add('embedded-app');
+        }
+    </script>
+</head>
+<body>
+
+    <div class="phone">
+        <div class="phone-power-btn"></div>
+        <div class="screen">
+            <!-- Wallpaper -->
+            <div class="wallpaper" id="wallpaper"></div>
+
+            <!-- Dynamic Island -->
+            <div class="dynamic-island" id="dynamicIsland"></div>
+
+            <!-- Status bar -->
+            <div class="status">
+                <div class="time" id="time">12:00</div>
+                <div class="icons">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <!-- Clock -->
+            <div class="clock">
+                <h1 id="clock">12:00</h1>
+                <p id="date">Tuesday, July 14</p>
+            </div>
+
+            <!-- Scroll indicator -->
+            <div class="scroll-indicator" id="scrollIndicator">
+                Swipe up or Scroll for Login
+                <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <!-- Apps -->
+            <div class="apps">
+                <div class="app" data-app="instagram"><div class="icon instagram"><i class="fab fa-instagram"></i></div><span>Instagram</span></div>
+                <div class="app" data-app="whatsapp"><div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div><span>WhatsApp</span></div>
+                <div class="app" data-app="facebook"><div class="icon facebook"><i class="fab fa-facebook-f"></i></div><span>Facebook</span></div>
+                <div class="app" data-app="browser"><div class="icon browser"><i class="fas fa-globe"></i></div><span>Browser</span></div>
+                <div class="app" data-app="gallery"><div class="icon gallery"><i class="fas fa-image"></i></div><span>Gallery</span></div>
+                <div class="app" data-app="camera"><div class="icon camera"><i class="fas fa-camera"></i></div><span>Camera</span></div>
+                <div class="app" data-app="settings"><div class="icon settings"><i class="fas fa-cog"></i></div><span>Settings</span></div>
+                <div class="app" id="profileApp"><div class="icon phoneicon"><i class="fas fa-user"></i></div><span>Profile</span></div>
+                <!-- Storage App -->
+                <div class="app" id="storageApp" data-app="storage"><div class="icon storage-icon"><i class="fas fa-folder-open"></i><span class="badge">+</span></div><span>Storage</span></div>
+                <!-- Logout -->
+                <div class="app" id="logoutApp"><div class="icon logout-icon"><i class="fas fa-power-off"></i></div><span>Logout</span></div>
+            </div>
+            <div class="dock"></div>
+
+            <!-- App Overlay -->
+            <div class="app-overlay" id="appOverlay">
+                <div class="app-shell">
+                    <div class="app-header">
+                        <button id="appCloseBtn"><i class="fas fa-times"></i></button>
+                        <div class="app-title" id="appTitle"><i class="fas fa-folder-open"></i> Files</div>
+                        <div style="width:28px;"></div>
+                    </div>
+                    <div class="app-body" id="appBody">
+                        <!-- Rendered by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Panel -->
+            <div id="loginPanel" class="login-panel">
+                <div class="handle"></div>
+                <h2>Welcome</h2>
+                <p>Sign in to your Virtual Phone</p>
+                <form id="loginForm" onsubmit="return false;">
+                    <input type="text" id="usernameInput" placeholder="Username" inputmode="none" autocomplete="off" required />
+                    <input type="password" id="passwordInput" placeholder="Password" inputmode="none" required />
+                    <button type="submit" id="loginBtn">
+                        <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                        <span id="btnText">Login</span>
+                    </button>
+                    <button type="button" class="signup">Create Account</button>
+                </form>
+            </div>
+
+            <!-- Keyboard -->
+            <div id="keyboard" class="keyboard">
+                <div class="keyboard-row" id="row-1">
+                    <button class="key" data-key="q">q</button><button class="key" data-key="w">w</button>
+                    <button class="key" data-key="e">e</button><button class="key" data-key="r">r</button>
+                    <button class="key" data-key="t">t</button><button class="key" data-key="y">y</button>
+                    <button class="key" data-key="u">u</button><button class="key" data-key="i">i</button>
+                    <button class="key" data-key="o">o</button><button class="key" data-key="p">p</button>
+                </div>
+                <div class="keyboard-row" id="row-2">
+                    <button class="key" data-key="a">a</button><button class="key" data-key="s">s</button>
+                    <button class="key" data-key="d">d</button><button class="key" data-key="f">f</button>
+                    <button class="key" data-key="g">g</button><button class="key" data-key="h">h</button>
+                    <button class="key" data-key="j">j</button><button class="key" data-key="k">k</button>
+                    <button class="key" data-key="l">l</button>
+                </div>
+                <div class="keyboard-row" id="row-3">
+                    <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                    <button class="key" data-key="z">z</button><button class="key" data-key="x">x</button>
+                    <button class="key" data-key="c">c</button><button class="key" data-key="v">v</button>
+                    <button class="key" data-key="b">b</button><button class="key" data-key="n">n</button>
+                    <button class="key" data-key="m">m</button>
+                    <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key special" id="mode-btn" data-key="mode">123</button>
+                    <button class="key space" id="space-btn" data-key=" ">space</button>
+                    <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.apk,.aab,.apks,.xapk,.ipa,.zip,.rar,.7z,.odt,.ods,.odp,.rtf" hidden>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"><i class="fas fa-check-circle" id="toastIcon"></i><span id="toastMessage">Success</span></div>
+
+    <script>
+        /**
+         * ============================================================
+         * VIRTUAL PHONE – API‑DRIVEN FILE MANAGER
+         * ============================================================
+         * Uses the PHP API endpoints:
+         *   GET  /api/list.php     → fetch files
+         *   POST /api/upload.php   → upload files (multipart/form-data)
+         *   POST /api/delete.php   → delete file (id)
+         *   GET  /api/download.php → preview/download (id)
+         *   POST /api/logout.php   → logout
+         * ============================================================
+         */
+        (function() {
+            'use strict';
+
+            // ─── API BASE ────────────────────────────────────────────────
+            const API_BASE = 'api/';
+
+            // ─── DOM REFS ────────────────────────────────────────────────
+            const $ = sel => document.querySelector(sel);
+            const $$ = sel => document.querySelectorAll(sel);
+
+            const DOM = {
+                clock: $('#clock'),
+                time: $('#time'),
+                date: $('#date'),
+                wallpaper: $('#wallpaper'),
+                loginPanel: $('#loginPanel'),
+                scrollIndicator: $('#scrollIndicator'),
+                keyboard: $('#keyboard'),
+                usernameInput: $('#usernameInput'),
+                passwordInput: $('#passwordInput'),
+                loginForm: $('#loginForm'),
+                loginBtn: $('#loginBtn'),
+                btnText: $('#btnText'),
+                loginSpinner: $('#loginSpinner'),
+                dynamicIsland: $('#dynamicIsland'),
+                profileApp: $('#profileApp'),
+                profileIcon: $('#profileApp .icon'),
+                profileName: $('#profileApp span'),
+                logoutApp: $('#logoutApp'),
+                storageApp: $('#storageApp'),
+                appOverlay: $('#appOverlay'),
+                appBody: $('#appBody'),
+                appTitle: $('#appTitle'),
+                appCloseBtn: $('#appCloseBtn'),
+                allKeys: $$('.key'),
+                row1: $('#row-1'),
+                row2: $('#row-2'),
+                row3: $('#row-3'),
+                shiftBtn: $('#shift-btn'),
+                backspaceBtn: $('#backspace-btn'),
+                spaceBtn: $('#space-btn'),
+                modeBtn: $('#mode-btn'),
+                closeKeyboardBtn: $('#close-keyboard-btn'),
+                fileInput: $('#fileInput'),
+                toast: $('#toast'),
+                toastIcon: $('#toastIcon'),
+                toastMessage: $('#toastMessage'),
+            };
+
+            // ─── STATE ──────────────────────────────────────────────────
+            const STATE = {
+                isShifted: false,
+                isNumMode: false,
+                activeInput: null,
+                isLoggedIn: false,
+                isLoginPending: false,
+                isLoggingOut: false,
+                wallpaperIndex: 0,
+                sessionUser: null,
+                currentCategory: null,
+                allFiles: [],
+                storageUsedBytes: 0,
+                storageQuotaBytes: 5 * 1024 * 1024 * 1024,
+                viewMode: 'grid',
+                selectedFile: null,
+                previewOpen: false,
+                settingsOpen: false,
+                currentFilter: null,
+                installedApps: [],
+                storageTheme: 'ocean',
+            };
+
+            // ─── CONSTANTS ──────────────────────────────────────────────
+            const CONFIG = {
+                WALLPAPER_INTERVAL: 9000,
+                CLOCK_INTERVAL: 1000,
+                NOTIFICATION_DURATION: 2800,
+                SWIPE_THRESHOLD: 50,
+                SCROLL_THRESHOLD: 15,
+                TOTAL_STORAGE_GB: 5,
+            };
+
+            const WALLPAPERS = [
+                "linear-gradient(135deg, rgba(3,37,65,0.92), rgba(10,78,120,0.88)), url('https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(35,23,68,0.92), rgba(98,0,234,0.85)), url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(7,46,74,0.92), rgba(6,101,166,0.88)), url('https://images.unsplash.com/photo-1499696017737-6d9c6015f3ea?auto=format&fit=crop&w=900&q=80')"
+            ];
+
+            const KEYS_ALPHABET = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
+                'z', 'x', 'c', 'v', 'b', 'n', 'm'
+            ];
+            const KEYS_NUMBERS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/', ':', ';', '(', '7', '&', '@', '"',
+                '.', ',', '?', '!', "'", '_'
+            ];
+
+            // ─── UTILITY ────────────────────────────────────────────────
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            function getCategoryLabel(type) {
+                const labels = { image: 'Images', video: 'Videos', audio: 'Audio', document: 'Documents', app: 'Apps' };
+                return labels[type] || type.charAt(0).toUpperCase() + type.slice(1);
+            }
+
+            function getCategoryIcon(type) {
+                const icons = { image: 'fa-image', video: 'fa-video', audio: 'fa-music', document: 'fa-file-alt',
+                    app: 'fa-th' };
+                return icons[type] || 'fa-file';
+            }
+
+            function formatDate(ts) {
+                const d = new Date(ts);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+
+            function getFileType(filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                const map = {
+                    image: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'heic', 'heif', 'ico', 'tiff', 'tif'],
+                    video: ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', '3gp', 'm4v', 'mpg', 'mpeg'],
+                    audio: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'opus', 'alac'],
+                    document: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'odt', 'csv', 'json', 'xml',
+                        'md', 'html', 'css', 'js'
+                    ],
+                    app: ['apk', 'ipa', 'exe', 'msi', 'dmg', 'pkg', 'deb', 'rpm', 'appimage', 'zip', 'rar', '7z', 'tar',
+                        'gz'
+                    ]
+                };
+                for (const [type, exts] of Object.entries(map)) {
+                    if (exts.includes(ext)) return type;
+                }
+                return 'document';
+            }
+
+            // ─── TOAST ──────────────────────────────────────────────────
+            let toastTimer = null;
+
+            function showToast(message, type = 'success') {
+                const toast = DOM.toast;
+                const icon = DOM.toastIcon;
+                const msg = DOM.toastMessage;
+                const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+                icon.className = 'fas ' + (icons[type] || icons.info);
+                msg.textContent = message;
+                toast.className = 'toast ' + type;
+                clearTimeout(toastTimer);
+                void toast.offsetWidth;
+                toast.classList.add('show');
+                toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+            }
+
+            // ─── NOTIFICATION ───────────────────────────────────────────
+            function showNotification(message, type = 'info') {
+                const island = DOM.dynamicIsland;
+                if (!island) return;
+                island.textContent = message;
+                island.className = 'dynamic-island notify-' + type;
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => {
+                    island.className = 'dynamic-island';
+                    island.textContent = '';
+                }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            // ─── CLOCK & WALLPAPER ──────────────────────────────────────
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const t = h + ':' + m;
+                if (DOM.clock) DOM.clock.textContent = t;
+                if (DOM.time) DOM.time.textContent = t;
+                if (DOM.date) {
+                    DOM.date.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long',
+                        day: 'numeric' });
+                }
+            }
+
+            function rotateWallpaper() {
+                const el = DOM.wallpaper;
+                if (!el) return;
+                el.style.background = WALLPAPERS[STATE.wallpaperIndex];
+                el.style.transform = 'scale(1)';
+                requestAnimationFrame(() => el.style.transform = 'scale(1.02)');
+                STATE.wallpaperIndex = (STATE.wallpaperIndex + 1) % WALLPAPERS.length;
+            }
+
+            // ─── LOGIN ──────────────────────────────────────────────────
+            function showLoginPanel() {
+                if (STATE.isLoggedIn) return;
+                DOM.loginPanel.classList.add('show');
+                if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'none';
+            }
+
+            function hideLoginPanel() {
+                DOM.loginPanel.classList.remove('show');
+                hideKeyboard();
+                if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'block';
+            }
+
+            let touchStartY = 0;
+
+            function onTouchStart(e) { touchStartY = e.touches[0].clientY; }
+
+            function onTouchMove(e) {
+                if (touchStartY - e.touches[0].clientY > CONFIG.SWIPE_THRESHOLD) showLoginPanel();
+            }
+
+            function onWheel(e) { if (e.deltaY > CONFIG.SCROLL_THRESHOLD) showLoginPanel(); }
+
+            function onDocumentClick(e) {
+                const panel = DOM.loginPanel;
+                const indicator = DOM.scrollIndicator;
+                if (panel && !panel.contains(e.target) && indicator !== e.target) hideLoginPanel();
+            }
+
+            // ─── KEYBOARD ──────────────────────────────────────────────
+            function showKeyboard(inputTarget) {
+                if (!inputTarget) return;
+                STATE.activeInput = inputTarget;
+                DOM.keyboard.classList.add('active');
+                DOM.loginPanel.classList.add('keyboard-open');
+                inputTarget.focus();
+            }
+
+            function hideKeyboard() {
+                DOM.keyboard.classList.remove('active');
+                DOM.loginPanel.classList.remove('keyboard-open');
+                if (STATE.activeInput) { STATE.activeInput.blur();
+                    STATE.activeInput = null; }
+            }
+
+            function handleKeyInput(char) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                switch (char) {
+                    case 'space':
+                        input.value += ' ';
+                        break;
+                    case '⌫':
+                    case 'backspace':
+                        input.value = input.value.slice(0, -1);
+                        break;
+                    case '⇧':
+                        toggleShift();
+                        break;
+                    case '123':
+                    case 'ABC':
+                        toggleMode();
+                        break;
+                    case '▼':
+                        hideKeyboard();
+                        break;
+                    default:
+                        input.value += char;
+                        if (STATE.isShifted) toggleShift();
+                        break;
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            function toggleShift() {
+                STATE.isShifted = !STATE.isShifted;
+                if (DOM.shiftBtn) DOM.shiftBtn.style.background = STATE.isShifted ? '#fff' : '#acb5be';
+                DOM.allKeys.forEach(key => {
+                    const val = key.getAttribute('data-key');
+                    if (val && val.length === 1 && /^[a-zA-Z]$/.test(val)) {
+                        key.textContent = STATE.isShifted ? val.toUpperCase() : val.toLowerCase();
+                    }
+                });
+            }
+
+            function toggleMode() {
+                STATE.isNumMode = !STATE.isNumMode;
+                if (DOM.modeBtn) DOM.modeBtn.textContent = STATE.isNumMode ? 'ABC' : '123';
+                if (DOM.shiftBtn) DOM.shiftBtn.textContent = STATE.isNumMode ? '#+=' : '⇧';
+                const currentSet = STATE.isNumMode ? KEYS_NUMBERS : KEYS_ALPHABET;
+                const rows = [DOM.row1, DOM.row2, DOM.row3];
+                let idx = 0;
+                rows.forEach(row => {
+                    if (!row) return;
+                    row.querySelectorAll('.key').forEach(key => {
+                        if (key.id === 'shift-btn' || key.id === 'backspace-btn' || key.id === 'mode-btn')
+                            return;
+                        if (idx < currentSet.length) {
+                            key.textContent = currentSet[idx];
+                            key.setAttribute('data-key', currentSet[idx]);
+                            idx++;
+                        }
+                    });
+                });
+            }
+
+            function onKeyClick(e) {
+                const key = e.currentTarget;
+                if (!key || !STATE.activeInput) return;
+                const text = key.textContent.trim();
+                let char = text;
+                if (key.id === 'shift-btn') char = '⇧';
+                else if (key.id === 'backspace-btn') char = '⌫';
+                else if (key.id === 'mode-btn') char = STATE.isNumMode ? 'ABC' : '123';
+                else if (key.id === 'space-btn') char = 'space';
+                else if (key.id === 'close-keyboard-btn') char = '▼';
+                handleKeyInput(char);
+            }
+
+            function onPhysicalKeyDown(e) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                const key = e.key;
+                if (key === 'Backspace') { handleKeyInput('⌫');
+                    e.preventDefault();
+                    highlightPhysicalKey(DOM.backspaceBtn); return; }
+                if (key === ' ') { handleKeyInput('space');
+                    e.preventDefault();
+                    highlightPhysicalKey(DOM.spaceBtn); return; }
+                if (key === 'Shift') { toggleShift();
+                    e.preventDefault();
+                    highlightPhysicalKey(DOM.shiftBtn); return; }
+                if (key === 'Enter') {
+                    if (input === DOM.usernameInput) { DOM.passwordInput.focus();
+                        showKeyboard(DOM.passwordInput); } else { hideKeyboard();
+                        DOM.loginForm.dispatchEvent(new Event('submit', { bubbles: true })); }
+                    e.preventDefault();
+                    return;
+                }
+                if (key.length === 1) {
+                    const targetKey = Array.from(DOM.allKeys).find(k => k.getAttribute('data-key') === key.toLowerCase());
+                    if (targetKey) {
+                        const char = STATE.isShifted ? key.toUpperCase() : key.toLowerCase();
+                        handleKeyInput(char);
+                        e.preventDefault();
+                        highlightPhysicalKey(targetKey);
+                    }
+                }
+            }
+
+            function highlightPhysicalKey(el) {
+                if (!el) return;
+                el.classList.add('physical-active');
+                clearTimeout(el._phyTimer);
+                el._phyTimer = setTimeout(() => el.classList.remove('physical-active'), 100);
+            }
+
+            // ─── LOGIN HANDLER ──────────────────────────────────────────
+            async function handleLogin(e) {
+                e.preventDefault();
+                if (STATE.isLoginPending) return;
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                if (!username || !password) { showNotification('⚠ Username and password required.', 'error'); return; }
+
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Signing in…';
+                DOM.loginSpinner.style.display = 'inline-block';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    formData.append('password', password);
+                    const resp = await fetch('/virtual-phone/user/api/login_api.php', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    const data = await resp.json();
+                    if (resp.ok && data.success) {
+                        STATE.isLoggedIn = true;
+                        STATE.sessionUser = data.user || { username: username };
+                        localStorage.setItem('vphone_user', JSON.stringify(STATE.sessionUser));
+                        showNotification('✓ Welcome, ' + STATE.sessionUser.username + '!', 'success');
+                        updateProfileUI(STATE.sessionUser);
+                        hideLoginPanel();
+                        toggleLogoutButton(true);
+                        renderStorageApp();
+                    } else {
+                        showNotification('✗ ' + (data.message || 'Login failed'), 'error');
+                    }
+                } catch (err) {
+                    showNotification('✗ Network error: ' + err.message, 'error');
+                }
+
+                STATE.isLoginPending = false;
+                DOM.loginBtn.disabled = false;
+                DOM.btnText.textContent = 'Login';
+                DOM.loginSpinner.style.display = 'none';
+            }
+
+            // ─── SESSION ────────────────────────────────────────────────
+            function loadCurrentUser() {
+                try {
+                    const stored = localStorage.getItem('vphone_user');
+                    if (!stored) return null;
+                    const user = JSON.parse(stored);
+                    if (user && user.username) {
+                        STATE.sessionUser = user;
+                        STATE.isLoggedIn = true;
+                        return user;
+                    }
+                    return null;
+                } catch (_) { return null; }
+            }
+
+            function updateProfileUI(user) {
+                if (!user) return;
+                if (DOM.profileIcon) {
+                    DOM.profileIcon.style.backgroundImage = '';
+                    DOM.profileIcon.textContent = user.username.charAt(0).toUpperCase();
+                    DOM.profileIcon.style.display = 'flex';
+                    DOM.profileIcon.style.alignItems = 'center';
+                    DOM.profileIcon.style.justifyContent = 'center';
+                    DOM.profileIcon.style.fontWeight = '700';
+                    DOM.profileIcon.style.fontSize = '18px';
+                }
+                if (DOM.profileName) DOM.profileName.textContent = user.username;
+            }
+
+            function toggleLogoutButton(show) {
+                if (DOM.logoutApp) DOM.logoutApp.style.display = show ? 'block' : 'none';
+            }
+
+            function checkSession() {
+                const user = loadCurrentUser();
+                if (user) {
+                    updateProfileUI(user);
+                    hideLoginPanel();
+                    toggleLogoutButton(true);
+                    return true;
+                } else {
+                    toggleLogoutButton(false);
+                    return false;
+                }
+            }
+
+            function resetUIAfterLogout() {
+                localStorage.removeItem('vphone_user');
+                STATE.isLoggedIn = false;
+                STATE.sessionUser = null;
+                if (DOM.profileIcon) {
+                    DOM.profileIcon.style.backgroundImage = '';
+                    DOM.profileIcon.textContent = '👤';
+                    DOM.profileIcon.style.display = 'flex';
+                    DOM.profileIcon.style.alignItems = 'center';
+                    DOM.profileIcon.style.justifyContent = 'center';
+                    DOM.profileIcon.style.fontSize = '18px';
+                }
+                if (DOM.profileName) DOM.profileName.textContent = 'Profile';
+                DOM.usernameInput.value = '';
+                DOM.passwordInput.value = '';
+                toggleLogoutButton(false);
+                closeAppOverlay();
+            }
+
+            async function logout() {
+                if (STATE.isLoggingOut) return;
+                STATE.isLoggingOut = true;
+                showNotification('⏳ Logging out…', 'info');
+                try {
+                    const response = await fetch('/virtual-phone/user/api/logout_api.php', { method: 'POST' });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || 'Could not log out.');
+                } catch (error) {
+                    STATE.isLoggingOut = false;
+                    showNotification('✗ ' + (error.message || 'Could not log out.'), 'error');
+                    return;
+                }
+                resetUIAfterLogout();
+                STATE.isLoggingOut = false;
+                showNotification('✓ Logged out.', 'success');
+                showLoginPanel();
+            }
+
+            // ─── APP OVERLAY ────────────────────────────────────────────
+            function openAppOverlay(title, htmlContent) {
+                if (!DOM.appOverlay || !DOM.appBody) return;
+                DOM.appTitle.innerHTML = title;
+                DOM.appBody.innerHTML = htmlContent;
+                DOM.appOverlay.classList.add('show');
+            }
+
+            function closeAppOverlay() {
+                if (!DOM.appOverlay) return;
+                if (document.documentElement.classList.contains('embedded-app')) {
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ type: 'vphone:close-app' }, window.location.origin);
+                    } else {
+                        window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+                    }
+                    return;
+                }
+                window.location.href = '/virtual-phone/user/user_phone_dashboard.html';
+            }
+
+            // ─── API CALLS ──────────────────────────────────────────────
+            async function apiFetchFiles() {
+                const resp = await fetch(API_BASE + 'list.php');
+                const data = await resp.json();
+                if (data.success) {
+                    STATE.allFiles = data.files || [];
+                    STATE.storageUsedBytes = Number(data.used_bytes) || STATE.allFiles.reduce((sum, file) => sum + (Number(file.size) || 0), 0);
+                    STATE.storageQuotaBytes = Number(data.quota_bytes) || CONFIG.TOTAL_STORAGE_GB * 1024 * 1024 * 1024;
+                    return STATE.allFiles;
+                }
+                throw new Error(data.message || 'Failed to fetch files');
+            }
+
+            async function apiFetchInstalledApps() {
+                const response = await fetch('/virtual-phone/user/apps/api/installed.php', { credentials: 'same-origin' });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Could not load installed apps.');
+                }
+                STATE.installedApps = Array.isArray(data.apps) ? data.apps : [];
+                return STATE.installedApps;
+            }
+
+            async function apiUninstallApp(appId) {
+                const response = await fetch('/virtual-phone/user/apps/api/installed.php', {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ app_id: appId }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Could not uninstall this app.');
+                }
+            }
+
+            async function apiUploadFiles(fileList) {
+                const formData = new FormData();
+                for (const file of fileList) {
+                    formData.append('files[]', file);
+                }
+                const resp = await fetch(API_BASE + 'upload.php', {
+                    method: 'POST',
+                    body: formData,
+                });
+                return await resp.json();
+            }
+
+            async function apiDeleteFile(id) {
+                const formData = new FormData();
+                formData.append('id', id);
+                const resp = await fetch(API_BASE + 'delete.php', {
+                    method: 'POST',
+                    body: formData,
+                });
+                return await resp.json();
+            }
+
+            function getDownloadUrl(id) {
+                return API_BASE + 'download.php?id=' + encodeURIComponent(id);
+            }
+
+            // ─── STORAGE APP ────────────────────────────────────────────
+            async function renderStorageApp() {
+                if (!STATE.isLoggedIn) {
+                    showNotification('🔒 Please login first.', 'error');
+                    closeAppOverlay();
+                    showLoginPanel();
+                    return;
+                }
+
+                try {
+                    await apiFetchFiles();
+                } catch (e) {
+                    showNotification('⚠ ' + e.message, 'error');
+                    STATE.allFiles = [];
+                }
+
+                const html = `
+                    <div class="storage-loading" id="storageLoading">
+                        <div class="loader-icon"><i class="fas fa-folder-open"></i><div class="spinner-ring"></div></div>
+                        <div class="loader-text">Loading Storage…</div>
+                        <div class="loader-sub">Your files are ready</div>
+                    </div>
+                    <div class="storage-content" id="storageContent">
+                        <!-- Search -->
+                        <div class="fm-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="fmSearchInput" placeholder="Search files…" />
+                            <i class="fas fa-microphone mic-icon"></i>
+                        </div>
+
+                        <!-- Toolbar -->
+                        <div class="fm-toolbar">
+                            <div class="view-btns">
+                                <button id="viewGridBtn" class="active"><i class="fas fa-th"></i></button>
+                                <button id="viewListBtn"><i class="fas fa-list"></i></button>
+                            </div>
+                            <div style="display:flex;gap:4px;align-items:center;">
+                                <!-- ✅ UPLOAD BUTTON – inside the phone -->
+                                <button class="upload-btn-inline" id="uploadMainBtn">
+                                    <i class="fas fa-cloud-arrow-up"></i> Upload
+                                </button>
+                                <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+                            </div>
+                        </div>
+
+                        <section class="storage-plan-card" aria-label="Storage usage">
+                            <div class="storage-plan-head">
+                                <span class="storage-plan-icon"><i class="fas fa-cloud"></i></span>
+                                <div class="storage-plan-info"><strong>Storage quota</strong><span id="storageQuotaPlan">Loading quota…</span></div>
+                                <strong class="storage-plan-amount" id="storageQuotaAmount">0 B</strong>
+                            </div>
+                            <div class="storage-plan-track"><div class="storage-plan-fill" id="storageQuotaFill"></div></div>
+                            <div class="storage-plan-foot"><span id="storageQuotaFree">Storage quota loading…</span><button type="button" id="storageUpgradeBtn">More space</button></div>
+                        </section>
+
+                        <!-- Categories -->
+                        <div class="fm-section-label">Categories</div>
+                        <div class="fm-categories" id="categoriesGrid"></div>
+
+                        <!-- Collections -->
+                        <div class="fm-section-label" style="margin-top:4px;">Collections</div>
+                        <div class="fm-collections">
+                            <div class="col-item" id="starredBtn"><i class="fas fa-star" style="color:#f59e0b;"></i> Starred <span class="col-count" id="starredCount">0</span></div>
+                            <div class="col-item" id="safeBtn"><i class="fas fa-shield-alt" style="color:#10b981;"></i> Safe <span class="col-count" id="safeCount">0</span></div>
+                            <div class="col-item" id="allFilesBtn"><i class="fas fa-folder-open" style="color:#3b82f6;"></i> All <span class="col-count" id="allCount">0</span></div>
+                        </div>
+
+                        <!-- Storage info -->
+                        <div style="border-top:1px solid rgba(0,0,0,0.05);padding-top:6px;margin-top:2px;">
+                            <div style="display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:8px;cursor:pointer;" id="storageInfoBtn">
+                                <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;flex-shrink:0;"><i class="fas fa-hdd"></i></div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-size:10px;font-weight:600;color:#1a1a1a;">Storage</div>
+                                    <div style="font-size:8px;color:#999;" id="storageUsage">0 GB used</div>
+                                </div>
+                                <i class="fas fa-chevron-right" style="color:#ccc;font-size:9px;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File List View -->
+                    <div class="fm-filelist" id="fileListView">
+                        <div class="fl-header">
+                            <button class="fl-back" id="flBack"><i class="fas fa-arrow-left"></i></button>
+                            <div class="fl-title" id="flTitle"><i class="fas fa-folder"></i> Category</div>
+                            <button class="fl-upload-icon" id="flUploadBtn" title="Upload files"><i class="fas fa-upload"></i></button>
+                        </div>
+                        <div id="flItems" class="grid-view"></div>
+                    </div>
+
+                    <!-- Preview Overlay -->
+                    <div class="preview-overlay" id="previewOverlay">
+                        <button class="preview-close" id="previewClose"><i class="fas fa-times"></i></button>
+                        <div class="preview-content" id="previewContent"></div>
+                        <div class="preview-name" id="previewName"></div>
+                        <div class="preview-actions" id="previewActions"></div>
+                    </div>
+
+                    <!-- Settings Overlay -->
+                    <div class="settings-overlay" id="settingsOverlay">
+                        <div class="settings-modal">
+                            <div class="set-header">
+                                <div class="set-title"><i class="fas fa-cog"></i> Storage Settings</div>
+                                <button class="set-close" id="settingsClose"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="set-body" id="settingsBody">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="upgrade-overlay" id="upgradeOverlay" aria-hidden="true">
+                        <section class="upgrade-card" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle">
+                            <button class="upgrade-close" type="button" id="upgradeCloseBtn" aria-label="Close storage plans"><i class="fas fa-times"></i></button>
+                            <div class="upgrade-mark"><i class="fas fa-cloud-arrow-up"></i></div>
+                            <h3 id="upgradeTitle">More room for your memories</h3>
+                            <p>Earn Icons by signing in and spending active time in Icon Rewards. Spend 100 Icons to add 1 GB of storage, up to five upgrades.</p>
+                            <div class="upgrade-plan"><strong>Icon Rewards storage upgrade</strong>Each upgrade permanently increases your File Manager quota by 1 GB.</div>
+                            <button class="upgrade-confirm" type="button" id="openIconRewards">Open Icon Rewards</button>
+                            <button class="upgrade-confirm" type="button" id="upgradeDoneBtn">Sounds good</button>
+                        </section>
+                    </div>
+                `;
+
+                openAppOverlay('<i class="fas fa-folder-open"></i> Files', html);
+
+                // ─── Post‑render ──────────────────────────────────────────
+                const loadingEl = document.getElementById('storageLoading');
+                const contentEl = document.getElementById('storageContent');
+                const searchInput = document.getElementById('fmSearchInput');
+                const categoriesGrid = document.getElementById('categoriesGrid');
+                const fileListView = document.getElementById('fileListView');
+                const flItems = document.getElementById('flItems');
+                const flTitle = document.getElementById('flTitle');
+                const flBack = document.getElementById('flBack');
+                const flUploadBtn = document.getElementById('flUploadBtn');
+                const uploadMainBtn = document.getElementById('uploadMainBtn');
+                const viewGridBtn = document.getElementById('viewGridBtn');
+                const viewListBtn = document.getElementById('viewListBtn');
+                const starredBtn = document.getElementById('starredBtn');
+                const safeBtn = document.getElementById('safeBtn');
+                const allFilesBtn = document.getElementById('allFilesBtn');
+                const storageInfoBtn = document.getElementById('storageInfoBtn');
+                const starredCount = document.getElementById('starredCount');
+                const safeCount = document.getElementById('safeCount');
+                const allCount = document.getElementById('allCount');
+                const storageUsage = document.getElementById('storageUsage');
+                const storageQuotaAmount = document.getElementById('storageQuotaAmount');
+                const storageQuotaFill = document.getElementById('storageQuotaFill');
+                const storageQuotaFree = document.getElementById('storageQuotaFree');
+                const previewOverlay = document.getElementById('previewOverlay');
+                const previewContent = document.getElementById('previewContent');
+                const previewName = document.getElementById('previewName');
+                const previewActions = document.getElementById('previewActions');
+                const previewClose = document.getElementById('previewClose');
+                const settingsOverlay = document.getElementById('settingsOverlay');
+                const settingsClose = document.getElementById('settingsClose');
+                const settingsBody = document.getElementById('settingsBody');
+
+                let currentCategory = null;
+                let filteredFiles = [];
+                const appearanceKey = 'vphone_storage_appearance_' + encodeURIComponent(
+                    STATE.sessionUser?.id || STATE.sessionUser?.username || 'default'
+                );
+
+                function saveStorageAppearance() {
+                    try {
+                        localStorage.setItem(appearanceKey, JSON.stringify({
+                            theme: STATE.storageTheme,
+                            wallpaper: STATE.storageWallpaper || ''
+                        }));
+                        return true;
+                    } catch (error) {
+                        showNotification('Could not save your appearance settings. Try a smaller image.', 'error');
+                        return false;
+                    }
+                }
+
+                function applyStorageAppearance() {
+                    contentEl.dataset.theme = STATE.storageTheme;
+                    contentEl.classList.toggle('custom-wallpaper', Boolean(STATE.storageWallpaper));
+                    contentEl.style.backgroundImage = STATE.storageWallpaper
+                        ? `linear-gradient(rgba(245,248,252,.76), rgba(245,248,252,.86)), url("${STATE.storageWallpaper}")`
+                        : '';
+                    contentEl.style.backgroundSize = STATE.storageWallpaper ? 'cover' : '';
+                    contentEl.style.backgroundPosition = STATE.storageWallpaper ? 'center' : '';
+                }
+
+                function loadStorageAppearance() {
+                    try {
+                        const saved = JSON.parse(localStorage.getItem(appearanceKey) || '{}');
+                        const allowedThemes = ['ocean', 'violet', 'sunset', 'mint'];
+                        STATE.storageTheme = allowedThemes.includes(saved.theme) ? saved.theme : 'ocean';
+                        STATE.storageWallpaper = typeof saved.wallpaper === 'string' && saved.wallpaper.startsWith('data:image/jpeg;base64,')
+                            ? saved.wallpaper
+                            : '';
+                    } catch (error) {
+                        STATE.storageTheme = 'ocean';
+                        STATE.storageWallpaper = '';
+                        showNotification('Saved appearance settings could not be read; using the default theme.', 'error');
+                    }
+                    applyStorageAppearance();
+                }
+
+                // ─── Helpers ──────────────────────────────────────────────
+                function getCategoryStats(files) {
+                    const stats = {
+                        image: { count: 0, bytes: 0 },
+                        video: { count: 0, bytes: 0 },
+                        audio: { count: 0, bytes: 0 },
+                        document: { count: 0, bytes: 0 },
+                        app: { count: 0, bytes: 0 }
+                    };
+                    files.forEach(f => {
+                        const type = f.type || 'document';
+                        if (stats[type]) {
+                            stats[type].count++;
+                            stats[type].bytes += Math.max(0, Number(f.size) || 0);
+                        }
+                    });
+                    return stats;
+                }
+
+                function updateCounts() {
+                    const total = STATE.allFiles.length;
+                    const starred = STATE.allFiles.filter(f => f.starred).length;
+                    const safe = STATE.allFiles.filter(f => f.safe).length;
+                    if (starredCount) starredCount.textContent = starred;
+                    if (safeCount) safeCount.textContent = safe;
+                    if (allCount) allCount.textContent = total;
+                    const totalUsed = STATE.storageUsedBytes;
+                    const quotaBytes = STATE.storageQuotaBytes;
+                    const remainingBytes = Math.max(quotaBytes - totalUsed, 0);
+                    const percent = Math.min((totalUsed / quotaBytes) * 100, 100);
+                    if (storageUsage) storageUsage.textContent = formatBytes(totalUsed) + ' used · ' + formatBytes(remainingBytes) + ' free';
+                    if (storageQuotaAmount) storageQuotaAmount.textContent = formatBytes(totalUsed) + ' / ' + formatBytes(quotaBytes);
+                    const storageQuotaPlan = document.getElementById('storageQuotaPlan');
+                    if (storageQuotaPlan) storageQuotaPlan.textContent = formatBytes(quotaBytes) + ' total';
+                    if (storageQuotaFill) storageQuotaFill.style.width = percent.toFixed(2) + '%';
+                    if (storageQuotaFree) storageQuotaFree.textContent = formatBytes(remainingBytes) + ' free · ' + percent.toFixed(1) + '% used';
+                }
+
+                function renderCategories() {
+                    const stats = getCategoryStats(STATE.allFiles);
+                    const categories = [
+                        { id: 'image', label: 'Images', icon: 'fa-image', color: 'images', ...stats.image },
+                        { id: 'video', label: 'Videos', icon: 'fa-video', color: 'videos', ...stats.video },
+                        { id: 'audio', label: 'Audio', icon: 'fa-music', color: 'audio', ...stats.audio },
+                        { id: 'document', label: 'Docs', icon: 'fa-file-alt', color: 'documents', ...stats.document },
+                        { id: 'app', label: 'Apps', icon: 'fa-th', color: 'apps',
+                            count: STATE.installedApps.length + stats.app.count, bytes: stats.app.bytes },
+                    ];
+                    categoriesGrid.innerHTML = categories.map(cat => `
+                            <div class="fm-cat" data-id="${cat.id}">
+                                <div class="cat-icon ${cat.color}"><i class="fas ${cat.icon}"></i></div>
+                                <div class="cat-info">
+                                    <div class="cat-name">${cat.label}</div>
+                                    <div class="cat-size">${cat.count} ${cat.id === 'app' ? 'apps' : 'files'} · ${formatBytes(cat.bytes)}</div>
+                                </div>
+                            </div>
+                        `).join('');
+
+                    categoriesGrid.querySelectorAll('.fm-cat').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const id = el.dataset.id;
+                            if (id === 'app') {
+                                openInstalledApps();
+                                currentCategory = 'app';
+                                STATE.currentFilter = null;
+                                return;
+                            }
+                            const files = STATE.allFiles.filter(f => f.type === id);
+                            const label = getCategoryLabel(id);
+                            const icon = getCategoryIcon(id);
+                            showFileList(label, files, icon);
+                            currentCategory = id;
+                            STATE.currentFilter = null;
+                        });
+                    });
+
+                    updateCounts();
+                }
+
+                async function openInstalledApps() {
+                    const category = categoriesGrid.querySelector('.fm-cat[data-id="app"] .cat-size');
+                    if (category) category.textContent = '…';
+                    showFileList('Installed Apps', [], 'fa-th');
+                    flItems.innerHTML = '<div class="fl-empty"><i class="fas fa-spinner fa-spin"></i><p>Loading your installed apps…</p></div>';
+                    try {
+                        const installedApps = await apiFetchInstalledApps();
+                        const count = installedApps.length + STATE.allFiles.filter(file => file.type === 'app').length;
+                        if (category) category.textContent = count;
+                        renderInstalledApps(installedApps);
+                    } catch (error) {
+                        if (category) category.textContent = STATE.installedApps.length + STATE.allFiles.filter(file => file.type === 'app').length;
+                        flItems.innerHTML = '';
+                        const status = document.createElement('div');
+                        status.className = 'fl-empty';
+                        status.textContent = error.message || 'Could not load your installed apps.';
+                        flItems.appendChild(status);
+                        showNotification('⚠ ' + status.textContent, 'error');
+                    }
+                }
+
+                function renderInstalledApps(apps) {
+                    flItems.replaceChildren();
+                    const packageFiles = STATE.allFiles.filter(file => file.type === 'app');
+                    if (apps.length === 0 && packageFiles.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.className = 'fl-empty';
+                        const icon = document.createElement('i');
+                        icon.className = 'fas fa-grid-2';
+                        const message = document.createElement('p');
+                        message.textContent = 'No installed apps yet';
+                        const hint = document.createElement('div');
+                        hint.className = 'theme-note';
+                        hint.textContent = 'Install apps from Play Store. Your installed apps will appear here.';
+                        empty.append(icon, message, hint);
+                        flItems.appendChild(empty);
+                        return;
+                    }
+
+                    for (const app of apps) {
+                        const card = document.createElement('article');
+                        card.className = 'installed-app-card';
+                        const icon = document.createElement('img');
+                        icon.src = app.icon_path || '';
+                        icon.alt = '';
+                        icon.onerror = () => {
+                            icon.replaceWith(Object.assign(document.createElement('span'), {
+                                className: 'installed-app-icon',
+                                innerHTML: '<i class="fas fa-cube"></i>'
+                            }));
+                        };
+                        const details = document.createElement('div');
+                        details.className = 'installed-app-details';
+                        const name = document.createElement('strong');
+                        name.textContent = app.name || 'Installed app';
+                        const description = document.createElement('span');
+                        description.textContent = app.description || app.slug || 'Ready to use';
+                        details.append(name, description);
+                        const actions = document.createElement('div');
+                        actions.className = 'installed-app-actions';
+                        const open = document.createElement('button');
+                        open.type = 'button';
+                        open.textContent = 'Open';
+                        open.addEventListener('click', () => {
+                            window.location.href = '/virtual-phone/user/apps/runtime.php?id=' + encodeURIComponent(app.id);
+                        });
+                        const uninstall = document.createElement('button');
+                        uninstall.type = 'button';
+                        uninstall.className = 'uninstall';
+                        uninstall.textContent = 'Remove';
+                        uninstall.addEventListener('click', async () => {
+                            if (!window.confirm('Uninstall ' + (app.name || 'this app') + '?')) return;
+                            uninstall.disabled = true;
+                            try {
+                                await apiUninstallApp(app.id);
+                                STATE.installedApps = STATE.installedApps.filter(item => String(item.id) !== String(app.id));
+                                renderCategories();
+                                renderInstalledApps(STATE.installedApps);
+                                showNotification('✓ App uninstalled.', 'success');
+                            } catch (error) {
+                                uninstall.disabled = false;
+                                showNotification('⚠ ' + error.message, 'error');
+                            }
+                        });
+                        actions.append(open, uninstall);
+                        card.append(icon, details, actions);
+                        flItems.appendChild(card);
+                    }
+
+                    if (packageFiles.length) {
+                        const packagesLabel = document.createElement('div');
+                        packagesLabel.className = 'fm-section-label';
+                        packagesLabel.style.margin = '10px 0 7px';
+                        packagesLabel.textContent = 'Uploaded app packages';
+                        flItems.appendChild(packagesLabel);
+                        for (const file of packageFiles) {
+                            const packageRow = document.createElement('article');
+                            packageRow.className = 'installed-app-card';
+                            const icon = document.createElement('span');
+                            icon.className = 'installed-app-icon';
+                            icon.innerHTML = '<i class="fas fa-box-archive"></i>';
+                            const details = document.createElement('div');
+                            details.className = 'installed-app-details';
+                            const name = document.createElement('strong');
+                            name.textContent = file.name;
+                            const info = document.createElement('span');
+                            info.textContent = formatBytes(file.size || 0) + ' · package file';
+                            details.append(name, info);
+                            packageRow.append(icon, details);
+                            flItems.appendChild(packageRow);
+                        }
+                    }
+                }
+
+                function getThumbnailHTML(file) {
+                    const type = file.type || 'document';
+                    if (type === 'image') {
+                        return `<img class="fl-thumb" src="${getDownloadUrl(file.id)}" alt="" loading="lazy">`;
+                    } else if (type === 'video') {
+                        return `<div class="fl-thumb-placeholder fl-thumb-video" style="background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;">
+                                <i class="fas fa-play-circle" style="font-size:28px;color:#3b82f6;"></i>
+                                <span class="sub">${formatBytes(file.size || 0)}</span>
+                            </div>`;
+                    } else if (type === 'audio') {
+                        return `<div class="fl-thumb-placeholder" style="background:linear-gradient(135deg,#2d1b69,#4a2c8a);color:#fff;"><i class="fas fa-music" style="font-size:24px;color:#8b5cf6;"></i></div>`;
+                    } else if (type === 'document') {
+                        return `<div class="fl-thumb-placeholder" style="background:linear-gradient(135deg,#f0f4ff,#dce3f0);"><i class="fas fa-file-alt" style="font-size:24px;color:#3b82f6;"></i></div>`;
+                    } else {
+                        return `<div class="fl-thumb-placeholder" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);"><i class="fas fa-th" style="font-size:24px;color:#10b981;"></i></div>`;
+                    }
+                }
+
+                function renderFileItems(files) {
+                    if (!files || files.length === 0) {
+                        flItems.innerHTML = `
+                                <div class="fl-empty">
+                                    <i class="fas fa-folder-open"></i>
+                                    <p>No files in this folder</p>
+                                    <div style="font-size:10px;color:#ccc;margin-top:2px;">Upload files to get started</div>
+                                </div>
+                            `;
+                        return;
+                    }
+
+                    const viewClass = STATE.viewMode === 'grid' ? 'grid-view' : 'list-view';
+                    flItems.className = viewClass;
+
+                    let html = '';
+                    for (const f of files) {
+                        const type = f.type || 'document';
+                        const isStarred = f.starred ? '⭐' : '';
+                        const isSafe = f.safe ? '🔒' : '';
+                        const thumbHtml = getThumbnailHTML(f);
+
+                        html += `
+                                <div class="fl-item" data-id="${f.id}">
+                                    <div class="fl-thumb-wrapper" style="width:100%;height:100%;position:relative;">
+                                        ${thumbHtml}
+                                        ${type === 'video' || type === 'audio' ? '<div class="play-badge"><i class="fas fa-play"></i></div>' : ''}
+                                    </div>
+                                    <div class="fl-overlay">
+                                        <div class="fl-name">${f.name}</div>
+                                        <div class="fl-meta">
+                                            <span>${formatBytes(f.size || 0)}</span>
+                                            ${isStarred ? '<span class="tag">⭐</span>' : ''}
+                                            ${isSafe ? '<span class="tag">🔒</span>' : ''}
+                                        </div>
+                                    </div>
+                                    <button class="fl-menu-btn" data-id="${f.id}"><i class="fas fa-ellipsis-v"></i></button>
+                                    <div class="fl-dropdown" data-id="${f.id}">
+                                        ${type === 'image' || type === 'video' || type === 'audio' ? '<button data-action="preview"><i class="fas fa-eye"></i> Preview / Play</button>' : ''}
+                                        <button data-action="detail"><i class="fas fa-info-circle"></i> Details</button>
+                                        <button data-action="rename"><i class="fas fa-pen"></i> Rename</button>
+                                        <button data-action="copy"><i class="fas fa-copy"></i> Copy</button>
+                                        <button data-action="send"><i class="fas fa-share-alt"></i> Send</button>
+                                        <button data-action="star"><i class="fas fa-star"></i> ${f.starred ? 'Unstar' : 'Star'}</button>
+                                        <button data-action="safe"><i class="fas fa-shield-alt"></i> ${f.safe ? 'Unsafe' : 'Safe'}</button>
+                                        <button data-action="delete" class="danger"><i class="fas fa-trash-alt"></i> Delete</button>
+                                    </div>
+                                </div>
+                            `;
+                    }
+                    flItems.innerHTML = html;
+
+                    // ─── Events ────────────────────────────────────────────
+                    flItems.querySelectorAll('.fl-item').forEach(item => {
+                        const id = item.dataset.id;
+                        const menuBtn = item.querySelector('.fl-menu-btn');
+                        const dropdown = item.querySelector('.fl-dropdown');
+
+                        item.addEventListener('click', (e) => {
+                            if (e.target.closest('.fl-menu-btn') || e.target.closest('.fl-dropdown'))
+                                return;
+                            const file = STATE.allFiles.find(f => f.id === id);
+                            if (file) {
+                                if (file.type === 'image' || file.type === 'video' || file.type === 'audio') {
+                                    openPreview(file);
+                                } else {
+                                    showFileDetail(file);
+                                }
+                            }
+                        });
+
+                        menuBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            document.querySelectorAll('.fl-dropdown.open').forEach(d => {
+                                if (d.dataset.id !== id) d.classList.remove('open');
+                            });
+                            dropdown.classList.toggle('open');
+                        });
+
+                        dropdown.querySelectorAll('button').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                const action = btn.dataset.action;
+                                const file = STATE.allFiles.find(f => f.id === id);
+                                if (!file) return;
+                                dropdown.classList.remove('open');
+                                await handleFileAction(action, file);
+                            });
+                        });
+                    });
+
+                    document.addEventListener('click', () => {
+                        document.querySelectorAll('.fl-dropdown.open').forEach(d => d.classList.remove('open'));
+                    });
+                }
+
+                function showFileList(title, files, icon = 'fa-folder') {
+                    flTitle.innerHTML = `<i class="fas ${icon}"></i> ${title}`;
+                    filteredFiles = files || [];
+                    renderFileItems(filteredFiles);
+                    contentEl.classList.remove('active');
+                    fileListView.classList.add('active');
+                }
+
+                function hideFileList() {
+                    fileListView.classList.remove('active');
+                    contentEl.classList.add('active');
+                    currentCategory = null;
+                    STATE.currentFilter = null;
+                }
+
+                // ─── File Actions ─────────────────────────────────────────
+                async function handleFileAction(action, file) {
+                    switch (action) {
+                        case 'preview':
+                            if (file.type === 'image' || file.type === 'video' || file.type === 'audio') {
+                                openPreview(file);
+                            } else {
+                                showFileDetail(file);
+                            }
+                            break;
+                        case 'rename':
+                            const newName = prompt('Rename file:', file.name);
+                            if (newName && newName.trim() !== '' && newName !== file.name) {
+                                showToast('Rename requires server support. (Not implemented in API)', 'info');
+                            }
+                            break;
+                        case 'copy':
+                            showToast('Copy requires server support. (Not implemented in API)', 'info');
+                            break;
+                        case 'delete':
+                            if (confirm('Delete "' + file.name + '"?')) {
+                                try {
+                                    const result = await apiDeleteFile(file.id);
+                                    if (result.success) {
+                                        showToast('Deleted "' + file.name + '"', 'info');
+                                        await refreshView();
+                                        if (STATE.previewOpen) closePreview();
+                                    } else {
+                                        showToast('Delete failed: ' + (result.message || 'Unknown error'), 'error');
+                                    }
+                                } catch (e) {
+                                    showToast('Network error: ' + e.message, 'error');
+                                }
+                            }
+                            break;
+                        case 'send':
+                            showSendOptions(file);
+                            break;
+                        case 'star':
+                            showToast('Star/unstar requires server support. (Not implemented in API)', 'info');
+                            break;
+                        case 'safe':
+                            showToast('Safe toggle requires server support. (Not implemented in API)', 'info');
+                            break;
+                        case 'detail':
+                            showFileDetail(file);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                // ─── Send ──────────────────────────────────────────────────
+                function showSendOptions(file) {
+                    const modal = document.createElement('div');
+                    modal.className = 'send-modal';
+                    modal.style.cssText =
+                        'position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px;border-radius:24px;';
+                    modal.innerHTML = `
+                            <div style="background:#fff;border-radius:16px;padding:20px 24px;max-width:220px;width:100%;text-align:center;animation:modalIn .25s cubic-bezier(.175,.885,.32,1.275);">
+                                <div style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:4px;">Share</div>
+                                <div style="font-size:11px;color:#888;margin-bottom:14px;word-break:break-all;">${file.name}</div>
+                                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                                    <button class="send-option" data-method="bluetooth" style="background:#3b82f6;border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .1s;"><i class="fab fa-bluetooth-b"></i> Bluetooth</button>
+                                    <button class="send-option" data-method="xender" style="background:#10b981;border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .1s;"><i class="fas fa-share-alt"></i> Xender</button>
+                                    <button class="send-option" data-method="cancel" style="background:#ef4444;border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .1s;"><i class="fas fa-times"></i> Cancel</button>
+                                </div>
+                            </div>
+                        `;
+                    document.getElementById('appBody').appendChild(modal);
+
+                    modal.querySelectorAll('.send-option').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const method = btn.dataset.method;
+                            if (method === 'cancel') { modal.remove(); return; }
+                            const label = method === 'bluetooth' ? 'Bluetooth' : 'Xender';
+                            showToast('📤 Sending "' + file.name + '" via ' + label + '…', 'info');
+                            setTimeout(() => {
+                                showToast('✅ Sent via ' + label + '!', 'success');
+                            }, 1200);
+                            setTimeout(() => modal.remove(), 300);
+                        });
+                    });
+                }
+
+                // ─── Preview ──────────────────────────────────────────────
+                function openPreview(file) {
+                    STATE.previewOpen = true;
+                    previewName.textContent = file.name;
+
+                    const url = getDownloadUrl(file.id);
+                    let html = '';
+                    if (file.type === 'image') {
+                        html = `<img src="${url}" alt="${file.name}" />`;
+                    } else if (file.type === 'video') {
+                        html =
+                            `<video src="${url}" controls autoplay style="width:100%;max-height:60vh;border-radius:12px;background:#000;"></video>`;
+                    } else if (file.type === 'audio') {
+                        html =
+                            `<audio src="${url}" controls autoplay style="width:100%;border-radius:12px;background:#000;padding:20px;"></audio>`;
+                    } else {
+                        html = `
+                                <div class="placeholder">
+                                    <i class="fas ${getCategoryIcon(file.type)}"></i>
+                                    <div class="sub">${file.name}</div>
+                                    <div class="sub" style="font-size:12px;">${formatBytes(file.size || 0)}</div>
+                                </div>
+                            `;
+                    }
+                    previewContent.innerHTML = html;
+
+                    previewActions.innerHTML = `
+                            <button data-action="detail"><i class="fas fa-info-circle"></i> Details</button>
+                            <button data-action="send"><i class="fas fa-share-alt"></i> Send</button>
+                            <button data-action="delete" class="danger"><i class="fas fa-trash-alt"></i> Delete</button>
+                        `;
+                    previewActions.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const action = btn.dataset.action;
+                            await handleFileAction(action, file);
+                            if (action === 'delete') closePreview();
+                        });
+                    });
+
+                    previewOverlay.classList.add('show');
+                }
+
+                function closePreview() {
+                    previewOverlay.classList.remove('show');
+                    STATE.previewOpen = false;
+                    previewContent.innerHTML = '';
+                    previewActions.innerHTML = '';
+                }
+
+                // ─── File Detail ──────────────────────────────────────────
+                function showFileDetail(file) {
+                    STATE.selectedFile = file;
+                    const modal = document.createElement('div');
+                    modal.className = 'detail-modal';
+                    modal.style.cssText =
+                        'position:absolute;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);z-index:25;display:flex;align-items:center;justify-content:center;padding:16px;border-radius:24px;';
+                    const type = file.type || 'document';
+                    const iconName = getCategoryIcon(type);
+                    modal.innerHTML = `
+                            <div style="background:#fff;border-radius:16px;padding:18px 20px 20px;max-width:260px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4);animation:modalIn .25s cubic-bezier(.175,.885,.32,1.275);">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
+                                    <div style="font-size:14px;font-weight:700;color:#1a1a1a;display:flex;align-items:center;gap:8px;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <i class="fas ${iconName}" style="color:#3b82f6;"></i> ${file.name}
+                                    </div>
+                                    <button class="detail-close" style="background:rgba(0,0,0,0.06);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:12px;color:#666;display:flex;align-items:center;justify-content:center;transition:background .15s;"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;">
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:#888;font-weight:500;">Type</span><span style="color:#1a1a1a;font-weight:500;">${getCategoryLabel(type)}</span></div>
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:#888;font-weight:500;">Size</span><span style="color:#1a1a1a;font-weight:500;">${formatBytes(file.size || 0)}</span></div>
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:#888;font-weight:500;">Added</span><span style="color:#1a1a1a;font-weight:500;">${formatDate(file.date_added)}</span></div>
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:#888;font-weight:500;">Starred</span><span style="color:#1a1a1a;font-weight:500;">${file.starred ? '⭐ Yes' : 'No'}</span></div>
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span style="color:#888;font-weight:500;">Safe</span><span style="color:#1a1a1a;font-weight:500;">${file.safe ? '🔒 Yes' : 'No'}</span></div>
+                                </div>
+                                <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(0,0,0,0.06);padding-top:12px;">
+                                    ${file.type === 'image' || file.type === 'video' ? `<button class="detail-action" data-action="preview" style="background:#3b82f6;border:none;border-radius:8px;padding:5px 12px;color:#fff;font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="fas fa-eye"></i> Preview</button>` : ''}
+                                    <button class="detail-action" data-action="send" style="background:rgba(0,0,0,0.05);border:none;border-radius:8px;padding:5px 12px;font-size:10px;font-weight:500;color:#444;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="fas fa-share-alt"></i> Send</button>
+                                    <button class="detail-action" data-action="delete" style="background:rgba(239,68,68,0.08);border:none;border-radius:8px;padding:5px 12px;font-size:10px;font-weight:500;color:#ef4444;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="fas fa-trash-alt"></i> Delete</button>
+                                </div>
+                            </div>
+                        `;
+                    document.getElementById('appBody').appendChild(modal);
+
+                    modal.querySelector('.detail-close').addEventListener('click', () => modal.remove());
+                    modal.querySelectorAll('.detail-action').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const action = btn.dataset.action;
+                            modal.remove();
+                            await handleFileAction(action, file);
+                        });
+                    });
+                }
+
+                // ─── Settings ─────────────────────────────────────────────
+                function openSettings() {
+                    STATE.settingsOpen = true;
+                    const totalUsed = STATE.storageUsedBytes;
+                    const quotaBytes = STATE.storageQuotaBytes;
+                    const percent = Math.min((totalUsed / quotaBytes) * 100, 100);
+                    const freeBytes = Math.max(quotaBytes - totalUsed, 0);
+                    const categoryStats = getCategoryStats(STATE.allFiles);
+
+                    settingsBody.innerHTML = `
+                            <div class="set-row"><span class="set-label">Appearance</span><span class="set-value">Personalize</span></div>
+                            <div class="theme-options" role="group" aria-label="File Manager theme">
+                                <button type="button" class="theme-option" data-theme="ocean" aria-label="Ocean theme"></button>
+                                <button type="button" class="theme-option" data-theme="violet" aria-label="Violet theme"></button>
+                                <button type="button" class="theme-option" data-theme="sunset" aria-label="Sunset theme"></button>
+                                <button type="button" class="theme-option" data-theme="mint" aria-label="Mint theme"></button>
+                            </div>
+                            <input type="file" id="wallpaperInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+                            <button type="button" class="wallpaper-upload" id="wallpaperUploadBtn"><i class="fas fa-image"></i> Choose background image</button>
+                            <p class="theme-note">The theme is saved on this device. Background images are resized before saving.</p>
+                            ${STATE.storageWallpaper ? '<button type="button" class="wallpaper-upload" id="removeWallpaperBtn"><i class="fas fa-rotate-left"></i> Remove custom background</button>' : ''}
+                            <div style="margin-bottom:4px;">
+                                <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:500;color:#1a1a1a;">
+                                    <span>Storage</span>
+                                    <span>${formatBytes(totalUsed)} / ${formatBytes(quotaBytes)}</span>
+                                </div>
+                                <div class="storage-bar"><div class="fill" style="width:${percent}%;"></div></div>
+                                <div class="storage-stats">
+                                    <span>${formatBytes(freeBytes)} free</span>
+                                    <span>${percent.toFixed(0)}% used</span>
+                                </div>
+                            </div>
+                            <div class="set-row"><span class="set-label">Total files</span><span class="set-value">${STATE.allFiles.length}</span></div>
+                            <div class="set-row"><span class="set-label">Images</span><span class="set-value">${categoryStats.image.count} · ${formatBytes(categoryStats.image.bytes)}</span></div>
+                            <div class="set-row"><span class="set-label">Videos</span><span class="set-value">${categoryStats.video.count} · ${formatBytes(categoryStats.video.bytes)}</span></div>
+                            <div class="set-row"><span class="set-label">Audio</span><span class="set-value">${categoryStats.audio.count} · ${formatBytes(categoryStats.audio.bytes)}</span></div>
+                            <div class="set-row"><span class="set-label">Documents</span><span class="set-value">${categoryStats.document.count} · ${formatBytes(categoryStats.document.bytes)}</span></div>
+                            <div class="set-row"><span class="set-label">App packages</span><span class="set-value">${categoryStats.app.count} · ${formatBytes(categoryStats.app.bytes)}</span></div>
+                            <div class="set-actions">
+                                <button id="refreshStorageBtn"><i class="fas fa-sync"></i> Refresh</button>
+                            </div>
+                        `;
+
+                    settingsOverlay.classList.add('show');
+                    const themeButtons = settingsBody.querySelectorAll('.theme-option');
+                    themeButtons.forEach(button => {
+                        button.setAttribute('aria-pressed', String(button.dataset.theme === STATE.storageTheme && !STATE.storageWallpaper));
+                        button.addEventListener('click', () => {
+                            STATE.storageTheme = button.dataset.theme;
+                            STATE.storageWallpaper = '';
+                            applyStorageAppearance();
+                            saveStorageAppearance();
+                            openSettings();
+                        });
+                    });
+                    const wallpaperInput = document.getElementById('wallpaperInput');
+                    document.getElementById('wallpaperUploadBtn').addEventListener('click', () => wallpaperInput.click());
+                    wallpaperInput.addEventListener('change', async () => {
+                        const image = wallpaperInput.files?.[0];
+                        if (!image) return;
+                        if (!image.type.startsWith('image/')) {
+                            showNotification('Choose a supported image file for your background.', 'error');
+                            wallpaperInput.value = '';
+                            return;
+                        }
+                        try {
+                            const wallpaper = await resizeWallpaper(image);
+                            STATE.storageWallpaper = wallpaper;
+                            applyStorageAppearance();
+                            saveStorageAppearance();
+                            showNotification('✓ Background updated.', 'success');
+                            openSettings();
+                        } catch (error) {
+                            showNotification('Could not apply that image: ' + error.message, 'error');
+                        } finally {
+                            wallpaperInput.value = '';
+                        }
+                    });
+                    document.getElementById('removeWallpaperBtn')?.addEventListener('click', () => {
+                        STATE.storageWallpaper = '';
+                        applyStorageAppearance();
+                        saveStorageAppearance();
+                        openSettings();
+                    });
+
+                    document.getElementById('refreshStorageBtn').addEventListener('click', async () => {
+                        await refreshView();
+                        openSettings();
+                        showToast('Refreshed.', 'success');
+                    });
+                }
+
+                function resizeWallpaper(file) {
+                    return new Promise((resolve, reject) => {
+                        const image = new Image();
+                        const objectUrl = URL.createObjectURL(file);
+                        image.onload = () => {
+                            URL.revokeObjectURL(objectUrl);
+                            const scale = Math.min(1, 1200 / Math.max(image.naturalWidth, image.naturalHeight));
+                            const canvas = document.createElement('canvas');
+                            canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+                            canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+                            const context = canvas.getContext('2d');
+                            if (!context) {
+                                reject(new Error('Image processing is unavailable in this browser.'));
+                                return;
+                            }
+                            context.fillStyle = '#f5f8fc';
+                            context.fillRect(0, 0, canvas.width, canvas.height);
+                            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.72));
+                        };
+                        image.onerror = () => {
+                            URL.revokeObjectURL(objectUrl);
+                            reject(new Error('The selected image could not be opened.'));
+                        };
+                        image.src = objectUrl;
+                    });
+                }
+
+                function closeSettings() {
+                    settingsOverlay.classList.remove('show');
+                    STATE.settingsOpen = false;
+                }
+
+                // ─── UPLOAD ──────────────────────────────────────────────
+                async function handleUpload(fileList) {
+                    if (!fileList || fileList.length === 0) return;
+
+                    // Show uploading state
+                    showNotification('⏳ Uploading ' + fileList.length + ' file(s)…', 'info');
+
+                    try {
+                        const result = await apiUploadFiles(fileList);
+                        if (result.success) {
+                            const msg = 'Uploaded ' + result.uploaded + ' file(s).' + (result.errors > 0 ? ' ' + result
+                                .errors + ' failed.' : '');
+                            showToast(msg, result.errors > 0 ? 'info' : 'success');
+                            showNotification('✅ ' + msg, 'success');
+                            await refreshView();
+                            if (fileListView.classList.contains('active')) {
+                                hideFileList();
+                            }
+                        } else {
+                            showToast('Upload failed: ' + (result.message || 'Unknown error'), 'error');
+                            showNotification('❌ Upload failed', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Network error: ' + e.message, 'error');
+                        showNotification('❌ Network error', 'error');
+                    }
+                }
+
+                // ─── Refresh ──────────────────────────────────────────────
+                async function refreshView() {
+                    try {
+                        await apiFetchFiles();
+                        renderCategories();
+                        if (fileListView.classList.contains('active')) {
+                            if (STATE.currentFilter === 'starred') {
+                                const st = STATE.allFiles.filter(f => f.starred);
+                                showFileList('Starred', st, 'fa-star');
+                            } else if (STATE.currentFilter === 'safe') {
+                                const sf = STATE.allFiles.filter(f => f.safe);
+                                showFileList('Safe folder', sf, 'fa-shield-alt');
+                            } else if (currentCategory && currentCategory !== 'all') {
+                                const files = STATE.allFiles.filter(f => f.type === currentCategory);
+                                const label = getCategoryLabel(currentCategory);
+                                const icon = getCategoryIcon(currentCategory);
+                                showFileList(label, files, icon);
+                            } else {
+                                showFileList('All Files', STATE.allFiles, 'fa-folder-open');
+                            }
+                        }
+                        updateCounts();
+                    } catch (e) {
+                        showNotification('⚠ ' + e.message, 'error');
+                    }
+                }
+
+                // ─── Event Listeners ─────────────────────────────────────
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase().trim();
+                    if (currentCategory === 'app') {
+                        flItems.querySelectorAll('.installed-app-card').forEach(item => {
+                            const text = item.querySelector('.installed-app-details')?.textContent?.toLowerCase() || '';
+                            item.style.display = text.includes(query) ? '' : 'none';
+                        });
+                        return;
+                    }
+                    if (fileListView.classList.contains('active')) {
+                        const items = flItems.querySelectorAll('.fl-item');
+                        items.forEach(item => {
+                            const name = item.querySelector('.fl-name')?.textContent?.toLowerCase() || '';
+                            item.style.display = name.includes(query) ? '' : 'none';
+                        });
+                    }
+                });
+
+                flBack.addEventListener('click', hideFileList);
+
+                // ─── UPLOAD BUTTON HANDLERS ──────────────────────────────
+                // Both buttons trigger the hidden file input
+                const uploadButtons = [flUploadBtn, uploadMainBtn];
+                uploadButtons.forEach(btn => {
+                    if (btn) {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            DOM.fileInput.click();
+                        });
+                    }
+                });
+
+                // File input change → upload
+                DOM.fileInput.addEventListener('change', async (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        await handleUpload(e.target.files);
+                        DOM.fileInput.value = '';
+                    }
+                });
+
+                // ─── View toggle ──────────────────────────────────────────
+                viewGridBtn.addEventListener('click', () => {
+                    STATE.viewMode = 'grid';
+                    viewGridBtn.classList.add('active');
+                    viewListBtn.classList.remove('active');
+                    if (fileListView.classList.contains('active')) renderFileItems(filteredFiles);
+                });
+                viewListBtn.addEventListener('click', () => {
+                    STATE.viewMode = 'list';
+                    viewListBtn.classList.add('active');
+                    viewGridBtn.classList.remove('active');
+                    if (fileListView.classList.contains('active')) renderFileItems(filteredFiles);
+                });
+
+                // ─── Collections ──────────────────────────────────────────
+                starredBtn.addEventListener('click', () => {
+                    const st = STATE.allFiles.filter(f => f.starred);
+                    showFileList('Starred', st, 'fa-star');
+                    currentCategory = null;
+                    STATE.currentFilter = 'starred';
+                });
+                safeBtn.addEventListener('click', () => {
+                    const sf = STATE.allFiles.filter(f => f.safe);
+                    showFileList('Safe folder', sf, 'fa-shield-alt');
+                    currentCategory = null;
+                    STATE.currentFilter = 'safe';
+                });
+                allFilesBtn.addEventListener('click', () => {
+                    showFileList('All Files', STATE.allFiles, 'fa-folder-open');
+                    currentCategory = 'all';
+                    STATE.currentFilter = null;
+                });
+
+                storageInfoBtn.addEventListener('click', openSettings);
+                document.getElementById('storageUpgradeBtn').addEventListener('click', () => {
+                    const upgradeOverlay = document.getElementById('upgradeOverlay');
+                    upgradeOverlay.classList.add('show');
+                    upgradeOverlay.setAttribute('aria-hidden', 'false');
+                });
+                document.getElementById('openIconRewards').addEventListener('click', () => {
+                    window.location.href = '/virtual-phone/user/icon_rewards/index.php';
+                });
+                const upgradeOverlay = document.getElementById('upgradeOverlay');
+                const closeUpgrade = () => {
+                    upgradeOverlay.classList.remove('show');
+                    upgradeOverlay.setAttribute('aria-hidden', 'true');
+                };
+                document.getElementById('upgradeCloseBtn').addEventListener('click', closeUpgrade);
+                document.getElementById('upgradeDoneBtn').addEventListener('click', closeUpgrade);
+                upgradeOverlay.addEventListener('click', event => {
+                    if (event.target === upgradeOverlay) closeUpgrade();
+                });
+
+                previewClose.addEventListener('click', closePreview);
+                previewOverlay.addEventListener('click', (e) => {
+                    if (e.target === previewOverlay) closePreview();
+                });
+
+                settingsClose.addEventListener('click', closeSettings);
+                settingsOverlay.addEventListener('click', (e) => {
+                    if (e.target === settingsOverlay) closeSettings();
+                });
+
+                // ─── Drag & Drop ──────────────────────────────────────────
+                const appBody = document.getElementById('appBody');
+                appBody.addEventListener('dragover', (e) => { e.preventDefault();
+                    appBody.classList.add('drag-active'); });
+                appBody.addEventListener('dragleave', (e) => {
+                    if (!appBody.contains(e.relatedTarget)) appBody.classList.remove('drag-active');
+                });
+                appBody.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    appBody.classList.remove('drag-active');
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        await handleUpload(e.dataTransfer.files);
+                    }
+                });
+
+                // ─── Initial Render ──────────────────────────────────────
+                loadStorageAppearance();
+                renderCategories();
+                contentEl.classList.add('active');
+
+                setTimeout(() => {
+                    loadingEl.classList.add('hidden');
+                }, 600);
+
+                window._refreshStorage = refreshView;
+            }
+
+            // ─── APP LAUNCHER ────────────────────────────────────────────
+            function handleAppLaunch(appName) {
+                if (appName === 'storage') {
+                    renderStorageApp();
+                    return;
+                }
+                if (!STATE.isLoggedIn) {
+                    showNotification('🔒 Please login first.', 'error');
+                    showLoginPanel();
+                    return;
+                }
+                const appNames = { instagram: 'Instagram', whatsapp: 'WhatsApp', facebook: 'Facebook', browser: 'Browser',
+                    gallery: 'Gallery', camera: 'Camera', settings: 'Settings' };
+                const label = appNames[appName] || appName;
+                const iconMap = { instagram: 'fab fa-instagram', whatsapp: 'fab fa-whatsapp', facebook: 'fab fa-facebook-f',
+                    browser: 'fas fa-globe', gallery: 'fas fa-image', camera: 'fas fa-camera',
+                    settings: 'fas fa-cog' };
+                const icon = iconMap[appName] || 'fas fa-apple-alt';
+                openAppOverlay(
+                    `<i class="${icon}"></i> ${label}`,
+                    `<div style="padding:30px 20px;text-align:center;color:#888;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
+                            <i class="${icon}" style="font-size:40px;color:#ccc;margin-bottom:14px;"></i>
+                            <div style="font-weight:600;color:#444;font-size:15px;">${label}</div>
+                            <div style="font-size:11px;margin-top:4px;color:#aaa;">App is under development</div>
+                        </div>`
+                );
+            }
+
+            // ─── INIT ────────────────────────────────────────────────────
+            async function init() {
+                updateClock();
+                setInterval(updateClock, CONFIG.CLOCK_INTERVAL);
+                rotateWallpaper();
+                setInterval(rotateWallpaper, CONFIG.WALLPAPER_INTERVAL);
+                window.addEventListener('focus', () => {
+                    if (typeof window._refreshStorage === 'function') window._refreshStorage();
+                });
+
+                // Check session
+                const user = loadCurrentUser();
+                if (user) {
+                    updateProfileUI(user);
+                    hideLoginPanel();
+                    toggleLogoutButton(true);
+                    setTimeout(() => renderStorageApp(), 400);
+                } else {
+                    toggleLogoutButton(false);
+                    setTimeout(() => {
+                        fetch(API_BASE + 'list.php')
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const demoUser = { username: 'Guest' };
+                                    STATE.isLoggedIn = true;
+                                    STATE.sessionUser = demoUser;
+                                    localStorage.setItem('vphone_user', JSON.stringify(demoUser));
+                                    updateProfileUI(demoUser);
+                                    hideLoginPanel();
+                                    toggleLogoutButton(true);
+                                    renderStorageApp();
+                                } else {
+                                    showLoginPanel();
+                                }
+                            })
+                            .catch(() => showLoginPanel());
+                    }, 300);
+                }
+
+                // ─── Event bindings ──────────────────────────────────────
+                document.addEventListener('touchstart', onTouchStart, { passive: true });
+                document.addEventListener('touchmove', onTouchMove, { passive: true });
+                document.addEventListener('wheel', onWheel, { passive: true });
+                document.addEventListener('click', onDocumentClick);
+
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.addEventListener('click', (e) => { e.stopPropagation();
+                        showLoginPanel(); });
+                }
+                if (DOM.loginPanel) {
+                    DOM.loginPanel.addEventListener('click', (e) => e.stopPropagation());
+                }
+
+                DOM.usernameInput.addEventListener('click', (e) => { e.stopPropagation();
+                    showKeyboard(DOM.usernameInput); });
+                DOM.passwordInput.addEventListener('click', (e) => { e.stopPropagation();
+                    showKeyboard(DOM.passwordInput); });
+                DOM.allKeys.forEach(key => key.addEventListener('click', onKeyClick));
+                DOM.keyboard.addEventListener('click', (e) => e.stopPropagation());
+                document.addEventListener('keydown', onPhysicalKeyDown);
+                DOM.loginForm.addEventListener('submit', handleLogin);
+
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.addEventListener('click', (e) => { e.stopPropagation();
+                        logout(); });
+                }
+                if (DOM.storageApp) {
+                    DOM.storageApp.addEventListener('click', (e) => { e.stopPropagation();
+                        handleAppLaunch('storage'); });
+                }
+
+                document.querySelectorAll('.app[data-app]').forEach(el => {
+                    const appName = el.dataset.app;
+                    if (appName === 'storage') return;
+                    el.addEventListener('click', (e) => { e.stopPropagation();
+                        handleAppLaunch(appName); });
+                });
+
+                if (DOM.profileApp) {
+                    DOM.profileApp.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (STATE.isLoggedIn) {
+                            showNotification('👤 Logged in as ' + (STATE.sessionUser ? STATE.sessionUser
+                                .username : 'User'), 'success');
+                        } else {
+                            showLoginPanel();
+                        }
+                    });
+                }
+
+                if (DOM.appCloseBtn) {
+                    DOM.appCloseBtn.addEventListener('click', closeAppOverlay);
+                }
+                if (DOM.appOverlay) {
+                    DOM.appOverlay.addEventListener('click', (e) => {
+                        if (e.target === DOM.appOverlay) closeAppOverlay();
+                    });
+                }
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') closeAppOverlay();
+                });
+
+                window.vphone = window.vphone || {};
+                window.vphone.logout = logout;
+                window.vphone.showNotification = showNotification;
+                window.vphone.getUser = () => STATE.sessionUser;
+                window.vphone.isLoggedIn = () => STATE.isLoggedIn;
+                window.vphone.openStorage = renderStorageApp;
+                window.vphone.refreshStorage = () => { if (window._refreshStorage) window._refreshStorage(); };
+
+                console.log('[Virtual Phone] ✅ API‑driven version ready.');
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>

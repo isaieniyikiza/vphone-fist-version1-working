@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Video AI</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #0f1218; color: #e6ebf2; }
+  header { padding: 16px 24px; border-bottom: 1px solid #222a35; font-weight: 700; font-size: 18px; color: #2fd3e8; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  form { display: flex; gap: 8px; }
+  input, textarea { flex: 1; padding: 12px 14px; border-radius: 12px; border: 1px solid #2a3340; background: #161b23; color: inherit; font-size: 15px; }
+  button { padding: 12px 18px; border: 0; border-radius: 12px; background: #2fd3e8; color: #0f1218; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-top: 20px; }
+  .card { background: #161b23; border: 1px solid #222a35; border-radius: 12px; overflow: hidden; cursor: pointer; }
+  .card img { width: 100%; display: block; }
+  .card p { margin: 10px; font-size: 14px; }
+  .watch { display: none; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-top: 20px; }
+  .watch.on { display: grid; }
+  iframe { width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 12px; }
+  .chat { background: #161b23; border: 1px solid #222a35; border-radius: 12px; display: flex; flex-direction: column; height: 480px; }
+  .msgs { flex: 1; overflow-y: auto; padding: 12px; font-size: 14px; line-height: 1.5; }
+  .m { margin-bottom: 10px; white-space: pre-wrap; }
+  .m.user { color: #2fd3e8; }
+  .chat form { padding: 10px; border-top: 1px solid #222a35; }
+  .back { background: transparent; color: #2fd3e8; padding: 0; margin-top: 16px; }
+  @media (max-width: 800px) { .watch.on { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>My Video AI</header>
+<main>
+  <form id="searchForm"><input id="q" placeholder="What do you want to learn?" /><button>Search</button></form>
+  <div class="grid" id="results"></div>
+  <button class="back" id="back" style="display:none">&larr; Back to results</button>
+  <div class="watch" id="watch">
+    <div><iframe id="player" allowfullscreen></iframe><h3 id="vtitle"></h3></div>
+    <div class="chat">
+      <div class="msgs" id="msgs"></div>
+      <form id="chatForm"><input id="ask" placeholder="Ask about this video..." /><button>Send</button></form>
+    </div>
+  </div>
+</main>
+<script>
+const API_KEY = "mk_9b33cbaa61df41908c919c99fc3e1cf8581cb8fb5a989b95";
+const ENDPOINT = "https://ddhvadvkfkygeadebkqk.lovable.cloud/functions/v1/menya-api";
+let current = null, transcript = "", history = [];
+
+function api(body) {
+  return fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": API_KEY }, body: JSON.stringify(body) });
+}
+const $ = (id) => document.getElementById(id);
+
+$("searchForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const q = $("q").value.trim(); if (!q) return;
+  $("results").innerHTML = "Searching...";
+  const r = await api({ action: "search", query: q });
+  const data = await r.json();
+  $("results").innerHTML = "";
+  (data.videos || []).forEach((v) => {
+    const c = document.createElement("div"); c.className = "card";
+    c.innerHTML = '<img src="' + v.thumbnail + '"><p></p>';
+    c.querySelector("p").textContent = v.title;
+    c.onclick = () => openVideo(v);
+    $("results").appendChild(c);
+  });
+};
+
+async function openVideo(v) {
+  current = v; history = []; transcript = "";
+  $("results").style.display = "none"; $("searchForm").style.display = "none";
+  $("back").style.display = "block"; $("watch").classList.add("on");
+  $("player").src = "https://www.youtube.com/embed/" + v.id;
+  $("vtitle").textContent = v.title;
+  $("msgs").innerHTML = "";
+  addMsg("assistant", "Loading the video transcript...");
+  try {
+    const r = await api({ action: "transcript", videoId: v.id });
+    const d = await r.json();
+    transcript = d.transcript || "";
+  } catch {}
+  $("msgs").innerHTML = "";
+  addMsg("assistant", transcript ? "Ready! Ask me to summarize, give examples, or explain minute 1 to 3." : "No transcript found, but you can still ask me about this video.");
+}
+
+$("back").onclick = () => {
+  $("watch").classList.remove("on"); $("player").src = "";
+  $("results").style.display = ""; $("searchForm").style.display = ""; $("back").style.display = "none";
+};
+
+function addMsg(role, text) {
+  const d = document.createElement("div"); d.className = "m " + role; d.textContent = text;
+  $("msgs").appendChild(d); $("msgs").scrollTop = 1e9; return d;
+}
+
+$("chatForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const text = $("ask").value.trim(); if (!text || !current) return;
+  $("ask").value = ""; addMsg("user", text);
+  history.push({ role: "user", content: text });
+  const out = addMsg("assistant", "...");
+  const r = await api({ action: "chat", messages: history, videoTitle: current.title, videoId: current.id, transcript });
+  if (!r.ok || !r.body) { out.textContent = "Something went wrong."; return; }
+  const reader = r.body.getReader(); const dec = new TextDecoder();
+  let buf = "", answer = "";
+  while (true) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line.startsWith("data:")) continue;
+      const json = line.slice(5).trim(); if (json === "[DONE]") continue;
+      try { const t = JSON.parse(json).choices?.[0]?.delta?.content; if (t) { answer += t; out.textContent = answer; $("msgs").scrollTop = 1e9; } } catch {}
+    }
+  }
+  history.push({ role: "assistant", content: answer });
+};
+</script>
+</body>
+</html>

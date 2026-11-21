@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Phone – Photo Gallery</title>
+    <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css" />
+    <script defer src="/virtual-phone/user/settings/theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+    <style>
+        /* ===== Reset ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #eef2f3 0%, #8e9eab 100%);
+            overflow: hidden;
+        }
+
+       .phone {
+            width: 300px;
+            height: 500px;
+            background: linear-gradient(180deg, #060606 0%, #121212 100%);
+            border-radius: 48px;
+            padding: 12px;
+            position: relative;
+            box-shadow:
+                0 28px 70px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .phone::before {
+            content: "";
+            position: absolute;
+            left: -5px;
+            top: 130px;
+            width: 5px;
+            height: 50px;
+            background: #2c2c2c;
+            border-radius: 5px 0 0 5px;
+            box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .phone-power-btn {
+            position: absolute;
+            right: -5px;
+            top: 170px;
+            width: 5px;
+            height: 75px;
+            background: #2c2c2c;
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 1px 0 2px rgba(255, 255, 255, 0.2);
+        }
+
+        /* ===== Screen ===== */
+        .screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        .screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 32px;
+            pointer-events: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+
+        /* ===== Dynamic Island ===== */
+        .dynamic-island {
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 25px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            font-size: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .dynamic-island.notify-error {
+            width: 220px;
+            height: 38px;
+            background: #ff3b30;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            padding: 0 15px;
+        }
+        .dynamic-island.notify-success {
+            width: 220px;
+            height: 38px;
+            background: #34c759;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+            padding: 0 15px;
+        }
+        .dynamic-island.notify-info {
+            width: 220px;
+            height: 38px;
+            background: #007aff;
+            border-radius: 19px;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+            padding: 0 15px;
+        }
+
+        /* ===== Status Bar ===== */
+        .status {
+            position: absolute;
+            top: 14px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 90;
+            pointer-events: none;
+        }
+        .icons i {
+            margin-left: 5px;
+            font-size: 10px;
+        }
+
+        /* ===== Wallpaper ===== */
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #3b82f6, #1d4ed8, #0f172a);
+            background-size: cover;
+            background-position: center;
+            animation: bgMove 12s infinite alternate ease-in-out;
+            z-index: 1;
+            transition: background 1s ease, transform 1s ease;
+        }
+        @keyframes bgMove {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            100% {
+                transform: scale(1.15) rotate(2deg);
+            }
+        }
+
+        /* ===== Clock ===== */
+        .clock {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            z-index: 5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .clock h1 {
+            font-size: 42px;
+            font-weight: 600;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .clock p {
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* ===== Swipe Indicator ===== */
+        .scroll-indicator {
+            position: absolute;
+            top: 155px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 10px;
+            font-weight: 500;
+            text-align: center;
+            animation: bounce 2s infinite;
+            z-index: 5;
+            cursor: pointer;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        }
+        .scroll-indicator i {
+            display: block;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        @keyframes bounce {
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translate(-50%, 0);
+            }
+            40% {
+                transform: translate(-50%, 6px);
+            }
+            60% {
+                transform: translate(-50%, 3px);
+            }
+        }
+
+        /* ===== Apps Grid ===== */
+        .apps {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+            z-index: 5;
+        }
+
+        .app {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .app:active {
+            transform: scale(0.9);
+        }
+
+        .icon {
+            width: 44px;
+            height: 44px;
+            margin: auto;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+        }
+
+        .instagram {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+        .whatsapp {
+            background: #25D366;
+        }
+        .facebook {
+            background: #1877F2;
+        }
+        .camera {
+            background: linear-gradient(45deg, #434343 0%, #000000 100%);
+        }
+        .gallery {
+            background: #ff9800;
+        }
+        .settings {
+            background: #555;
+        }
+        .browser {
+            background: #00BCD4;
+        }
+        .phoneicon {
+            background: #4CAF50;
+        }
+        .logout-icon {
+            background: #ff3b30;
+        }
+
+        .app span {
+            display: block;
+            margin-top: 5px;
+            font-size: 9px;
+            font-weight: 500;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        /* ===== Dock ===== */
+        .dock {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        /* ===== App Overlay ===== */
+        .app-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .app-overlay.show {
+            display: flex;
+        }
+
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: linear-gradient(90deg, #fdf2f8, #f5f3ff);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+        .app-header .app-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+        }
+        .app-header button {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            color: #111;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .app-header button:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .app-body {
+            flex: 1;
+            position: relative;
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        .app-body .app-placeholder {
+            padding: 12px;
+            height: 100%;
+            overflow-y: auto;
+            font-size: 13px;
+            color: #444;
+            background: #f8fafc;
+        }
+
+        /* ===== Gallery Styles ===== */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .gallery-grid .photo-item {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #e5e7eb;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .gallery-grid .photo-item:hover {
+            transform: scale(1.02);
+        }
+        .gallery-grid .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .gallery-grid .photo-item .delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 59, 48, 0.85);
+            color: #fff;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .gallery-grid .photo-item .delete-btn:hover {
+            background: #ff3b30;
+        }
+        .gallery-grid .photo-item .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 4px 6px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+            font-size: 8px;
+            color: #fff;
+            text-align: right;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .gallery-grid .photo-item:hover .photo-overlay {
+            opacity: 1;
+        }
+
+        .gallery-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 14px;
+            gap: 8px;
+        }
+        .gallery-empty i {
+            font-size: 42px;
+            opacity: 0.4;
+        }
+
+        /* ===== Camera / Upload Styles ===== */
+        .camera-upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            gap: 16px;
+        }
+        .camera-upload-area .upload-drop {
+            width: 100%;
+            border: 2px dashed #ccc;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: border-color 0.3s, background 0.3s;
+            cursor: pointer;
+            background: #fff;
+        }
+        .camera-upload-area .upload-drop.dragover {
+            border-color: #007aff;
+            background: rgba(0, 122, 255, 0.05);
+        }
+        .camera-upload-area .upload-drop i {
+            font-size: 40px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        .camera-upload-area .upload-drop p {
+            font-size: 13px;
+            color: #666;
+        }
+        .camera-upload-area .upload-drop .hint {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+        .camera-upload-area .upload-preview {
+            display: none;
+            width: 100%;
+            max-height: 160px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #e5e7eb;
+        }
+        .camera-upload-area .upload-preview img {
+            width: 100%;
+            height: auto;
+            max-height: 160px;
+            object-fit: contain;
+        }
+        .camera-upload-area .upload-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .camera-upload-area .upload-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .camera-upload-area .upload-actions button:active {
+            transform: scale(0.97);
+        }
+        .camera-upload-area .upload-actions .btn-upload {
+            background: #007aff;
+            color: #fff;
+        }
+        .camera-upload-area .upload-actions .btn-upload:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .camera-upload-area .upload-actions .btn-cancel {
+            background: #e5e7eb;
+            color: #444;
+        }
+        .camera-upload-area .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+        }
+        .camera-upload-area .upload-progress .bar {
+            height: 100%;
+            width: 0%;
+            background: #007aff;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* ===== Login Panel ===== */
+        .login-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -430px;
+            height: 420px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 45px rgba(0, 0, 0, .35);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            transition: bottom 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            padding: 18px 18px 22px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-panel.show {
+            bottom: 0;
+        }
+        .login-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 28px 28px 0 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+            pointer-events: none;
+        }
+        .login-panel .handle {
+            width: 40px;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            cursor: pointer;
+        }
+        .login-panel h2 {
+            text-align: center;
+            margin-bottom: 2px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #111;
+        }
+        .login-panel p {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+        .login-panel input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.03);
+            color: #111;
+            transition: all 0.25s ease;
+        }
+        .login-panel input:focus {
+            border-color: #007AFF;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        }
+        .login-panel button {
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            background: #007AFF;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-panel button:active {
+            opacity: 0.9;
+            transform: scale(0.98);
+        }
+        .login-panel button.signup {
+            background: #34C759;
+        }
+        .login-panel button:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .login-panel .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== Keyboard ===== */
+        .keyboard {
+            position: absolute;
+            bottom: -240px;
+            left: 0;
+            right: 0;
+            height: 210px;
+            background: rgba(220, 224, 230, 0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 18px 18px 0 0;
+            padding: 8px 5px 24px;
+            box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.2);
+            transition: bottom 0.35s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .keyboard.active {
+            bottom: 0;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .key {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            height: 38px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: background 0.1s, transform 0.05s;
+            user-select: none;
+        }
+        .key:active,
+        .key.physical-active {
+            background: #abb4be !important;
+            transform: scale(0.92);
+        }
+        .key.special {
+            background: #acb5be;
+            flex: 1.35;
+            font-size: 13px;
+        }
+        .key.space {
+            flex: 5.2;
+        }
+        .login-panel.keyboard-open {
+            height: 460px;
+        }
+
+        /* ===== Logout App ===== */
+        #logoutApp {
+            display: none;
+        }
+        #logoutApp.show {
+            display: block;
+        }
+
+        /* ===== Lightbox ===== */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.92);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .lightbox.show {
+            display: flex;
+        }
+        .lightbox img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            object-fit: contain;
+        }
+        .lightbox .close-lb {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            background: none;
+            border: none;
+        }
+        .lightbox .close-lb:hover {
+            opacity: 1;
+        }
+        .lightbox .lb-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 32px;
+            cursor: pointer;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            transition: background 0.2s;
+            border: none;
+        }
+        .lightbox .lb-nav:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .lightbox .lb-prev {
+            left: 16px;
+        }
+        .lightbox .lb-next {
+            right: 16px;
+        }
+        .lightbox .lb-counter {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 16px;
+            border-radius: 20px;
+        }
+
+        /* ===== Scrollbar ===== */
+        .app-body .app-placeholder::-webkit-scrollbar {
+            width: 3px;
+        }
+        .app-body .app-placeholder::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .app-body .app-placeholder::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        /* ===== Debug / Status bar ===== */
+        .api-status {
+            position: absolute;
+            bottom: 28px;
+            right: 16px;
+            font-size: 7px;
+            color: rgba(255, 255, 255, 0.25);
+            z-index: 10;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Loading overlay for gallery ===== */
+        .gallery-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 12px;
+            color: #999;
+        }
+        .gallery-loading .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #007aff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .gallery-loading span {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* ===== Dashboard redirect notice ===== */
+        .redirect-notice {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            z-index: 99999;
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        .redirect-notice.show {
+            display: flex;
+        }
+        .redirect-notice i {
+            color: #34c759;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== REDIRECT NOTICE ===== -->
+    <div class="redirect-notice" id="redirectNotice">
+        <i class="fas fa-check-circle"></i>
+        <span>Closing app &amp; going to dashboard…</span>
+    </div>
+
+    <!-- ===== LIGHTBOX (outside phone) ===== -->
+    <div class="lightbox" id="lightbox">
+        <button class="close-lb" id="lbClose">&times;</button>
+        <button class="lb-nav lb-prev" id="lbPrev">‹</button>
+        <button class="lb-nav lb-next" id="lbNext">›</button>
+        <img src="" alt="Photo" id="lbImage" />
+        <div class="lb-counter" id="lbCounter">1 / 1</div>
+    </div>
+
+    <!-- ===== PHONE ===== -->
+    <div class="phone">
+        <div class="phone-power-btn"></div>
+        <div class="screen">
+
+            <div class="wallpaper" id="wallpaper"></div>
+
+            <div class="dynamic-island" id="dynamicIsland"></div>
+
+            <div class="status">
+                <div class="time" id="time">12:00</div>
+                <div class="icons">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+
+            <div class="clock">
+                <h1 id="clock">12:00</h1>
+                <p id="date">Tuesday, July 14</p>
+            </div>
+
+            <div class="scroll-indicator" id="scrollIndicator">
+                Swipe up or Scroll for Login
+                <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <div class="apps">
+                <div class="app" data-app="instagram"><div class="icon instagram"><i class="fab fa-instagram"></i></div><span>Instagram</span></div>
+                <div class="app" data-app="whatsapp"><div class="icon whatsapp"><i class="fab fa-whatsapp"></i></div><span>WhatsApp</span></div>
+                <div class="app" data-app="facebook"><div class="icon facebook"><i class="fab fa-facebook-f"></i></div><span>Facebook</span></div>
+                <div class="app" data-app="browser"><div class="icon browser"><i class="fas fa-globe"></i></div><span>Browser</span></div>
+
+                <!-- GALLERY APP -->
+                <div class="app" id="galleryApp"><div class="icon gallery"><i class="fas fa-image"></i></div><span>Gallery</span></div>
+
+                <!-- CAMERA APP -->
+                <div class="app" id="cameraApp"><div class="icon camera"><i class="fas fa-camera"></i></div><span>upload image</span></div>
+
+                <div class="app" data-app="settings"><div class="icon settings"><i class="fas fa-cog"></i></div><span>Settings</span></div>
+                <div class="app" id="profileApp"><div class="icon phoneicon"><i class="fas fa-phone"></i></div><span>Phone</span></div>
+
+                <div class="app" id="logoutApp"><div class="icon logout-icon"><i class="fas fa-power-off"></i></div><span>Logout</span></div>
+            </div>
+
+            <div class="dock"></div>
+            <div class="api-status" id="apiStatus">API: /user/api/photo-api.php</div>
+
+            <!-- ===== APP OVERLAY ===== -->
+            <div class="app-overlay" id="appOverlay">
+                <div class="app-shell">
+                    <div class="app-header">
+                        <button id="appCloseBtn" title="Close app"><i class="fas fa-times"></i></button>
+                        <div class="app-title" id="appTitle">App</div>
+                        <div style="width:28px;"></div>
+                    </div>
+                    <div class="app-body" id="appBody"></div>
+                </div>
+            </div>
+
+            <!-- ===== LOGIN PANEL ===== -->
+            <div id="loginPanel" class="login-panel">
+                <div class="handle"></div>
+                <h2>Welcome</h2>
+                <p>Sign in to your Virtual Phone</p>
+                <form id="loginForm" onsubmit="return false;">
+                    <input type="text" id="usernameInput" name="username" placeholder="Username" inputmode="none" autocomplete="off" required />
+                    <input type="password" id="passwordInput" name="password" placeholder="Password" inputmode="none" required />
+                    <button type="submit" id="loginBtn">
+                        <i class="fas fa-spinner spinner" id="loginSpinner"></i>
+                        <span id="btnText">Login</span>
+                    </button>
+                    <button type="button" class="signup" id="signupBtn">Create Account</button>
+                </form>
+            </div>
+
+            <!-- ===== KEYBOARD ===== -->
+            <div id="keyboard" class="keyboard">
+                <div class="keyboard-row" id="row-1">
+                    <button class="key" data-key="q">q</button>
+                    <button class="key" data-key="w">w</button>
+                    <button class="key" data-key="e">e</button>
+                    <button class="key" data-key="r">r</button>
+                    <button class="key" data-key="t">t</button>
+                    <button class="key" data-key="y">y</button>
+                    <button class="key" data-key="u">u</button>
+                    <button class="key" data-key="i">i</button>
+                    <button class="key" data-key="o">o</button>
+                    <button class="key" data-key="p">p</button>
+                </div>
+                <div class="keyboard-row" id="row-2">
+                    <button class="key" data-key="a">a</button>
+                    <button class="key" data-key="s">s</button>
+                    <button class="key" data-key="d">d</button>
+                    <button class="key" data-key="f">f</button>
+                    <button class="key" data-key="g">g</button>
+                    <button class="key" data-key="h">h</button>
+                    <button class="key" data-key="j">j</button>
+                    <button class="key" data-key="k">k</button>
+                    <button class="key" data-key="l">l</button>
+                </div>
+                <div class="keyboard-row" id="row-3">
+                    <button class="key special" id="shift-btn" data-key="shift">⇧</button>
+                    <button class="key" data-key="z">z</button>
+                    <button class="key" data-key="x">x</button>
+                    <button class="key" data-key="c">c</button>
+                    <button class="key" data-key="v">v</button>
+                    <button class="key" data-key="b">b</button>
+                    <button class="key" data-key="n">n</button>
+                    <button class="key" data-key="m">m</button>
+                    <button class="key special" id="backspace-btn" data-key="backspace">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key special" id="mode-btn" data-key="mode">123</button>
+                    <button class="key space" id="space-btn" data-key=" ">space</button>
+                    <button class="key special" id="close-keyboard-btn" data-key="close">▼</button>
+                </div>
+            </div>
+
+        </div><!-- /screen -->
+    </div><!-- /phone -->
+
+    <script>
+        /**
+         * ============================================================
+         *  VIRTUAL PHONE – FULL APPLICATION
+         *  - Auto-opens Gallery on load (if logged in)
+         *  - Close button → navigates to /virtual-phone/user/user_phone_dashboard.html
+         *  - Integrated with photo-api.php for Gallery & Camera
+         * ============================================================
+         */
+        (function() {
+            'use strict';
+
+            // ============================================================
+            // 0. CONFIGURATION – EDIT THIS TO MATCH YOUR SERVER
+            // ============================================================
+            const CONFIG = {
+                // **** CHANGE THIS to the correct path on your server ****
+                API_BASE: '/virtual-phone/user/photo/api/photo-api.php',
+                LOGIN_API: '/virtual-phone/user/api/login_api.php',
+                LOGOUT_API: '/api/logout_api.php',
+                DASHBOARD_URL: '/virtual-phone/user/user_phone_dashboard.html',
+                WALLPAPER_INTERVAL: 9000,
+                CLOCK_INTERVAL: 1000,
+                NOTIFICATION_DURATION: 2800,
+                LOGIN_TIMEOUT: 15000,
+                SWIPE_THRESHOLD: 50,
+                SCROLL_THRESHOLD: 15,
+                STORAGE_KEY: 'vphone_user',
+                GALLERY_AUTO_OPEN_DELAY: 600, // ms delay before auto-opening gallery
+            };
+
+            // ============================================================
+            // 1. DOM REFERENCES
+            // ============================================================
+            const DOM = {
+                clock: document.getElementById('clock'),
+                time: document.getElementById('time'),
+                date: document.getElementById('date'),
+                wallpaper: document.getElementById('wallpaper'),
+                loginPanel: document.getElementById('loginPanel'),
+                scrollIndicator: document.getElementById('scrollIndicator'),
+                keyboard: document.getElementById('keyboard'),
+                usernameInput: document.getElementById('usernameInput'),
+                passwordInput: document.getElementById('passwordInput'),
+                loginForm: document.getElementById('loginForm'),
+                loginBtn: document.getElementById('loginBtn'),
+                btnText: document.getElementById('btnText'),
+                loginSpinner: document.getElementById('loginSpinner'),
+                signupBtn: document.getElementById('signupBtn'),
+                dynamicIsland: document.getElementById('dynamicIsland'),
+                profileApp: document.querySelector('#profileApp'),
+                profileIcon: document.querySelector('#profileApp .icon'),
+                profileName: document.querySelector('#profileApp span'),
+                logoutApp: document.getElementById('logoutApp'),
+                appOverlay: document.getElementById('appOverlay'),
+                appBody: document.getElementById('appBody'),
+                appTitle: document.getElementById('appTitle'),
+                appCloseBtn: document.getElementById('appCloseBtn'),
+                galleryApp: document.getElementById('galleryApp'),
+                cameraApp: document.getElementById('cameraApp'),
+                allKeys: document.querySelectorAll('.key'),
+                row1: document.getElementById('row-1'),
+                row2: document.getElementById('row-2'),
+                row3: document.getElementById('row-3'),
+                shiftBtn: document.getElementById('shift-btn'),
+                backspaceBtn: document.getElementById('backspace-btn'),
+                spaceBtn: document.getElementById('space-btn'),
+                modeBtn: document.getElementById('mode-btn'),
+                lightbox: document.getElementById('lightbox'),
+                lbImage: document.getElementById('lbImage'),
+                lbClose: document.getElementById('lbClose'),
+                lbPrev: document.getElementById('lbPrev'),
+                lbNext: document.getElementById('lbNext'),
+                lbCounter: document.getElementById('lbCounter'),
+                apiStatus: document.getElementById('apiStatus'),
+                redirectNotice: document.getElementById('redirectNotice'),
+            };
+
+            // Show API path in status
+            if (DOM.apiStatus) {
+                DOM.apiStatus.textContent = 'API: ' + CONFIG.API_BASE.replace(/^.*\/api\//, '…/api/');
+            }
+
+            // ============================================================
+            // 2. STATE
+            // ============================================================
+            const STATE = {
+                isShifted: false,
+                isNumMode: false,
+                activeInput: null,
+                isLoggedIn: false,
+                isLoginPending: false,
+                isLoggingOut: false,
+                wallpaperIndex: 0,
+                sessionUser: null,
+                photos: [],
+                lightboxIndex: 0,
+                isUploading: false,
+                galleryOpened: false, // prevent double-open
+            };
+
+            // ============================================================
+            // 3. WALLPAPERS
+            // ============================================================
+            const WALLPAPERS = [
+                "linear-gradient(135deg, rgba(3,37,65,0.9), rgba(10,78,120,0.9)), url('https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(35,23,68,0.9), rgba(98,0,234,0.8)), url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80')",
+                "linear-gradient(135deg, rgba(7,46,74,0.9), rgba(6,101,166,0.85)), url('https://images.unsplash.com/photo-1499696017737-6d9c6015f3ea?auto=format&fit=crop&w=900&q=80')"
+            ];
+
+            const KEYS_ALPHABET = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k',
+                'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm'
+            ];
+            const KEYS_NUMBERS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/', ':', ';', '(', '7', '&', '@',
+                '"', '.', ',', '?', '!', "'", '_'
+            ];
+
+            // ============================================================
+            // 4. UTILITIES
+            // ============================================================
+            function safeParseJSON(text) {
+                try { return JSON.parse(text); } catch (_) { return null; }
+            }
+
+            function isOnline() { return navigator.onLine !== false; }
+
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+
+            function getApiUrl(action, params) {
+                let url = CONFIG.API_BASE + '?action=' + encodeURIComponent(action);
+                if (params) {
+                    for (const [k, v] of Object.entries(params)) {
+                        url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(v);
+                    }
+                }
+                return url;
+            }
+
+            // ============================================================
+            // 5. NAVIGATION TO DASHBOARD
+            // ============================================================
+            function goToDashboard() {
+                // Show a brief notice
+                const notice = DOM.redirectNotice;
+                if (notice) {
+                    notice.classList.add('show');
+                    setTimeout(() => {
+                        notice.classList.remove('show');
+                    }, 1500);
+                }
+                // Close any open overlays
+                closeApp();
+                closeLightbox();
+                // Navigate after a tiny delay so the notice is visible
+                setTimeout(function() {
+                    window.location.href = CONFIG.DASHBOARD_URL;
+                }, 400);
+            }
+
+            // ============================================================
+            // 6. NOTIFICATION (Dynamic Island)
+            // ============================================================
+            function showNotification(message, type) {
+                const island = DOM.dynamicIsland;
+                if (!island) return;
+                island.textContent = message;
+                island.className = 'dynamic-island';
+                if (type === 'success') island.classList.add('notify-success');
+                else if (type === 'error') island.classList.add('notify-error');
+                else if (type === 'info') island.classList.add('notify-info');
+                clearTimeout(island._hideTimer);
+                island._hideTimer = setTimeout(() => {
+                    island.className = 'dynamic-island';
+                    island.textContent = '';
+                }, CONFIG.NOTIFICATION_DURATION);
+            }
+
+            // ============================================================
+            // 7. APP OVERLAY
+            // ============================================================
+            function openApp(title, content) {
+                if (!DOM.appOverlay || !DOM.appBody) return;
+                DOM.appTitle.textContent = title;
+                DOM.appBody.innerHTML = content;
+                DOM.appOverlay.classList.add('show');
+            }
+
+            function closeApp() {
+                DOM.appOverlay.classList.remove('show');
+            }
+
+            // ============================================================
+            // 8. CLOCK & DATE
+            // ============================================================
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const timeStr = h + ':' + m;
+                if (DOM.clock) DOM.clock.textContent = timeStr;
+                if (DOM.time) DOM.time.textContent = timeStr;
+                if (DOM.date) {
+                    DOM.date.textContent = now.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+
+            // ============================================================
+            // 9. WALLPAPER
+            // ============================================================
+            function rotateWallpaper() {
+                const el = DOM.wallpaper;
+                if (!el) return;
+                el.style.background = WALLPAPERS[STATE.wallpaperIndex];
+                el.style.transform = 'scale(1)';
+                requestAnimationFrame(() => { el.style.transform = 'scale(1.02)'; });
+                STATE.wallpaperIndex = (STATE.wallpaperIndex + 1) % WALLPAPERS.length;
+            }
+
+            // ============================================================
+            // 10. LOGIN DRAWER
+            // ============================================================
+            let touchStartY = 0;
+
+            function showLoginPanel() {
+                if (STATE.isLoggedIn) return;
+                DOM.loginPanel.classList.add('show');
+                if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'none';
+            }
+
+            function hideLoginPanel() {
+                DOM.loginPanel.classList.remove('show');
+                hideKeyboard();
+                if (DOM.scrollIndicator) DOM.scrollIndicator.style.display = 'block';
+            }
+
+            function onTouchStart(e) { touchStartY = e.touches[0].clientY; }
+
+            function onTouchMove(e) {
+                const currentY = e.touches[0].clientY;
+                if (touchStartY - currentY > CONFIG.SWIPE_THRESHOLD) showLoginPanel();
+            }
+
+            function onWheel(e) {
+                if (e.deltaY > CONFIG.SCROLL_THRESHOLD) showLoginPanel();
+            }
+
+            function onDocumentClick(e) {
+                const panel = DOM.loginPanel;
+                const indicator = DOM.scrollIndicator;
+                if (panel && !panel.contains(e.target) && indicator !== e.target && !e.target.closest('.keyboard')) {
+                    hideLoginPanel();
+                }
+            }
+
+            // ============================================================
+            // 11. KEYBOARD
+            // ============================================================
+            function showKeyboard(inputTarget) {
+                if (!inputTarget) return;
+                STATE.activeInput = inputTarget;
+                DOM.keyboard.classList.add('active');
+                DOM.loginPanel.classList.add('keyboard-open');
+                inputTarget.focus();
+            }
+
+            function hideKeyboard() {
+                DOM.keyboard.classList.remove('active');
+                DOM.loginPanel.classList.remove('keyboard-open');
+                if (STATE.activeInput) {
+                    STATE.activeInput.blur();
+                    STATE.activeInput = null;
+                }
+            }
+
+            function handleKeyInput(char) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                switch (char) {
+                    case 'space':
+                        input.value += ' ';
+                        break;
+                    case '⌫':
+                    case 'backspace':
+                        input.value = input.value.slice(0, -1);
+                        break;
+                    case '⇧':
+                        toggleShift();
+                        break;
+                    case '123':
+                    case 'ABC':
+                        toggleMode();
+                        break;
+                    case '▼':
+                        hideKeyboard();
+                        break;
+                    default:
+                        input.value += char;
+                        if (STATE.isShifted) toggleShift();
+                        break;
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            function toggleShift() {
+                STATE.isShifted = !STATE.isShifted;
+                if (DOM.shiftBtn) {
+                    DOM.shiftBtn.style.background = STATE.isShifted ? '#ffffff' : '#acb5be';
+                }
+                DOM.allKeys.forEach(key => {
+                    const val = key.getAttribute('data-key');
+                    if (val && val.length === 1 && /^[a-zA-Z]$/.test(val)) {
+                        key.textContent = STATE.isShifted ? val.toUpperCase() : val.toLowerCase();
+                    }
+                });
+            }
+
+            function toggleMode() {
+                STATE.isNumMode = !STATE.isNumMode;
+                if (DOM.modeBtn) DOM.modeBtn.textContent = STATE.isNumMode ? 'ABC' : '123';
+                if (DOM.shiftBtn) DOM.shiftBtn.textContent = STATE.isNumMode ? '#+=' : '⇧';
+                const currentSet = STATE.isNumMode ? KEYS_NUMBERS : KEYS_ALPHABET;
+                const rows = [DOM.row1, DOM.row2, DOM.row3];
+                let idx = 0;
+                rows.forEach(row => {
+                    if (!row) return;
+                    const keys = row.querySelectorAll('.key');
+                    keys.forEach(key => {
+                        if (key.id === 'shift-btn' || key.id === 'backspace-btn' || key.id === 'mode-btn')
+                            return;
+                        if (idx < currentSet.length) {
+                            key.textContent = currentSet[idx];
+                            key.setAttribute('data-key', currentSet[idx]);
+                            idx++;
+                        }
+                    });
+                });
+            }
+
+            function onKeyClick(e) {
+                const key = e.currentTarget;
+                if (!key || !STATE.activeInput) return;
+                const text = key.textContent.trim();
+                let char = text;
+                if (key.id === 'shift-btn') char = '⇧';
+                else if (key.id === 'backspace-btn') char = '⌫';
+                else if (key.id === 'mode-btn') char = STATE.isNumMode ? 'ABC' : '123';
+                else if (key.id === 'space-btn') char = 'space';
+                handleKeyInput(char);
+            }
+
+            function onPhysicalKeyDown(e) {
+                const input = STATE.activeInput;
+                if (!input) return;
+                const key = e.key;
+                if (key === 'Backspace') { handleKeyInput('⌫');
+                    e.preventDefault();
+                    highlightPhysicalKey(DOM.backspaceBtn); return; }
+                if (key === ' ') { handleKeyInput('space');
+                    e.preventDefault();
+                    highlightPhysicalKey(DOM.spaceBtn); return; }
+                if (key === 'Shift') { toggleShift();
+                    e.preventDefault();
+                    highlightPhysicalKey(DOM.shiftBtn); return; }
+                if (key === 'Enter') {
+                    if (input === DOM.usernameInput) { DOM.passwordInput.focus();
+                        showKeyboard(DOM.passwordInput); } else { hideKeyboard();
+                        DOM.loginForm.dispatchEvent(new Event('submit', { bubbles: true })); }
+                    e.preventDefault();
+                    return;
+                }
+                if (key.length === 1) {
+                    const targetKey = Array.from(DOM.allKeys).find(
+                        k => k.getAttribute('data-key') === key.toLowerCase()
+                    );
+                    if (targetKey) {
+                        const char = STATE.isShifted ? key.toUpperCase() : key.toLowerCase();
+                        handleKeyInput(char);
+                        e.preventDefault();
+                        highlightPhysicalKey(targetKey);
+                    }
+                }
+            }
+
+            function highlightPhysicalKey(el) {
+                if (!el) return;
+                el.classList.add('physical-active');
+                clearTimeout(el._phyTimer);
+                el._phyTimer = setTimeout(() => { el.classList.remove('physical-active'); }, 100);
+            }
+
+            // ============================================================
+            // 12. API HELPER
+            // ============================================================
+            async function apiRequest(endpoint, options = {}) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.LOGIN_TIMEOUT);
+                try {
+                    const response = await fetch(endpoint, {
+                        ...options,
+                        signal: controller.signal,
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json', ...(options.headers || {}) }
+                    });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        let errorMsg = 'HTTP ' + response.status;
+                        try {
+                            const text = await response.text();
+                            const data = safeParseJSON(text);
+                            if (data && data.message) errorMsg = data.message;
+                        } catch (_) { /* ignore */ }
+                        throw new Error(errorMsg);
+                    }
+                    const text = await response.text();
+                    const data = safeParseJSON(text);
+                    if (data === null) throw new Error('Invalid JSON response');
+                    return data;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') throw new Error('Request timed out');
+                    if (error.message === 'Invalid JSON response') throw new Error('Invalid JSON response');
+                    if (!isOnline()) throw new Error('No internet connection');
+                    throw error;
+                }
+            }
+
+            // ============================================================
+            // 13. PHOTO API – GALLERY
+            // ============================================================
+            async function fetchPhotos() {
+                try {
+                    const data = await apiRequest(getApiUrl('list'));
+                    STATE.photos = data.images || [];
+                    renderGallery();
+                    return STATE.photos;
+                } catch (error) {
+                    console.error('[Gallery] Fetch error:', error);
+                    let msg = '⚠ Could not load photos.';
+                    if (error.message === 'Unauthorized – please log in first') {
+                        msg = '⚠ Please login first.';
+                        showLoginPanel();
+                    } else if (error.message.includes('HTTP')) {
+                        msg = '⚠ Server error: ' + error.message;
+                    } else if (error.message === 'No internet connection') {
+                        msg = '⚠ No internet connection.';
+                    } else if (error.message === 'Request timed out') {
+                        msg = '⚠ Request timed out.';
+                    } else if (error.message) {
+                        msg = '⚠ ' + error.message;
+                    }
+                    showNotification(msg, 'error');
+                    STATE.photos = [];
+                    renderGallery();
+                    return [];
+                }
+            }
+
+            function getPhotoUrl(filename) {
+                return getApiUrl('serve', { file: filename });
+            }
+
+            async function deletePhoto(filename) {
+                if (!confirm('Delete this photo?')) return false;
+                try {
+                    const data = await apiRequest(getApiUrl('delete', { file: filename }), {
+                        method: 'DELETE'
+                    });
+                    if (data.success) {
+                        showNotification('🗑 Photo deleted.', 'success');
+                        await fetchPhotos();
+                        return true;
+                    } else {
+                        showNotification('⚠ ' + (data.message || 'Delete failed.'), 'error');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('[Delete] Error:', error);
+                    showNotification('⚠ Could not delete photo: ' + error.message, 'error');
+                    return false;
+                }
+            }
+
+            // ============================================================
+            // 14. RENDER GALLERY
+            // ============================================================
+            function renderGallery() {
+                const container = document.getElementById('galleryContainer');
+                if (!container) return;
+                if (STATE.photos.length === 0) {
+                    container.innerHTML = `
+                        <div class="gallery-empty">
+                            <i class="fas fa-images"></i>
+                            <span>No photos yet</span>
+                            <span style="font-size:11px;color:#bbb;">Upload from Camera app</span>
+                        </div>
+                    `;
+                    return;
+                }
+                let html = '<div class="gallery-grid">';
+                STATE.photos.forEach((photo, idx) => {
+                    const url = getPhotoUrl(photo.name);
+                    html += `
+                        <div class="photo-item" data-index="${idx}">
+                            <img src="${url}" alt="${photo.name}" loading="lazy" />
+                            <button class="delete-btn" data-filename="${photo.name}" title="Delete"><i class="fas fa-times"></i></button>
+                            <div class="photo-overlay">${formatFileSize(photo.size)}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+
+                container.querySelectorAll('.photo-item img').forEach(img => {
+                    img.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const idx = parseInt(this.closest('.photo-item').dataset.index);
+                        openLightbox(idx);
+                    });
+                });
+
+                container.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const filename = this.dataset.filename;
+                        deletePhoto(filename);
+                    });
+                });
+
+                const countEl = document.getElementById('photoCount');
+                if (countEl) countEl.textContent = STATE.photos.length + ' items';
+            }
+
+            // ============================================================
+            // 15. LIGHTBOX
+            // ============================================================
+            function openLightbox(index) {
+                if (!STATE.photos.length) return;
+                STATE.lightboxIndex = (index + STATE.photos.length) % STATE.photos.length;
+                updateLightbox();
+                DOM.lightbox.classList.add('show');
+            }
+
+            function closeLightbox() {
+                DOM.lightbox.classList.remove('show');
+            }
+
+            function updateLightbox() {
+                const photo = STATE.photos[STATE.lightboxIndex];
+                if (!photo) return;
+                DOM.lbImage.src = getPhotoUrl(photo.name);
+                DOM.lbImage.alt = photo.name;
+                DOM.lbCounter.textContent = (STATE.lightboxIndex + 1) + ' / ' + STATE.photos.length;
+            }
+
+            function prevPhoto() {
+                STATE.lightboxIndex = (STATE.lightboxIndex - 1 + STATE.photos.length) % STATE.photos.length;
+                updateLightbox();
+            }
+
+            function nextPhoto() {
+                STATE.lightboxIndex = (STATE.lightboxIndex + 1) % STATE.photos.length;
+                updateLightbox();
+            }
+
+            // ============================================================
+            // 16. CAMERA / UPLOAD
+            // ============================================================
+            async function uploadPhoto(file) {
+                if (STATE.isUploading) return;
+                if (!file || !file.type.startsWith('image/')) {
+                    showNotification('⚠ Please select an image file.', 'error');
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification('⚠ Image must be < 10MB.', 'error');
+                    return;
+                }
+
+                STATE.isUploading = true;
+                const formData = new FormData();
+                formData.append('photo', file);
+
+                const progressBar = document.getElementById('uploadProgressBar');
+                const progressWrap = document.getElementById('uploadProgressWrap');
+                const uploadBtn = document.getElementById('uploadBtn');
+                if (progressWrap) progressWrap.style.display = 'block';
+                if (uploadBtn) uploadBtn.disabled = true;
+
+                try {
+                    const data = await apiRequest(getApiUrl('upload'), {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (data.success) {
+                        showNotification('✅ Photo uploaded!', 'success');
+                        resetUploadUI();
+                        await fetchPhotos();
+                        openGalleryApp();
+                    } else {
+                        showNotification('⚠ ' + (data.message || 'Upload failed.'), 'error');
+                    }
+                } catch (error) {
+                    console.error('[Upload] Error:', error);
+                    let msg = '⚠ Upload failed: ' + error.message;
+                    if (error.message === 'No internet connection') msg = '⚠ No internet connection.';
+                    else if (error.message === 'Request timed out') msg = '⚠ Upload timed out.';
+                    showNotification(msg, 'error');
+                } finally {
+                    STATE.isUploading = false;
+                    if (progressWrap) progressWrap.style.display = 'none';
+                    if (uploadBtn) uploadBtn.disabled = false;
+                    if (progressBar) progressBar.style.width = '0%';
+                }
+            }
+
+            function resetUploadUI() {
+                const preview = document.getElementById('uploadPreview');
+                const previewImg = document.getElementById('uploadPreviewImg');
+                const fileName = document.getElementById('uploadFileName');
+                const dropArea = document.getElementById('uploadDrop');
+                if (preview) preview.style.display = 'none';
+                if (previewImg) previewImg.src = '';
+                if (fileName) fileName.textContent = 'No file selected';
+                if (dropArea) dropArea.style.borderColor = '#ccc';
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) fileInput.value = '';
+                const uploadBtn = document.getElementById('uploadBtn');
+                if (uploadBtn) uploadBtn.disabled = true;
+            }
+
+            // ============================================================
+            // 17. OPEN APPS
+            // ============================================================
+            function openGalleryApp() {
+                const content = `
+                    <div class="app-placeholder" style="padding:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <span style="font-weight:600;font-size:13px;color:#333;">📸 My Photos</span>
+                            <span style="font-size:11px;color:#999;" id="photoCount">${STATE.photos.length} items</span>
+                        </div>
+                        <div id="galleryContainer">
+                            <div class="gallery-loading">
+                                <div class="spinner"></div>
+                                <span>Loading photos…</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                openApp('Gallery', content);
+                // Mark that we've opened the gallery
+                STATE.galleryOpened = true;
+                requestAnimationFrame(() => {
+                    renderGallery();
+                });
+            }
+
+            function openCameraApp() {
+                const content = `
+                    <div class="app-placeholder" style="padding:10px;">
+                        <div class="camera-upload-area">
+                            <div class="upload-drop" id="uploadDrop">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Tap to select a photo</p>
+                                <div class="hint">or drag & drop (PNG, JPG, WEBP)</div>
+                                <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+                            </div>
+                            <div class="upload-preview" id="uploadPreview">
+                                <img id="uploadPreviewImg" src="" alt="Preview" />
+                            </div>
+                            <div style="font-size:12px;color:#666;" id="uploadFileName">No file selected</div>
+                            <div class="upload-progress" id="uploadProgressWrap">
+                                <div class="bar" id="uploadProgressBar" style="width:0%;"></div>
+                            </div>
+                            <div class="upload-actions">
+                                <button class="btn-upload" id="uploadBtn" disabled>
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                                <button class="btn-cancel" id="cancelUploadBtn">Cancel</button>
+                            </div>
+                            <div style="margin-top:12px;font-size:11px;color:#999;text-align:center;">
+                                <i class="fas fa-info-circle"></i> Photos are saved to your private folder
+                            </div>
+                        </div>
+                    </div>
+                `;
+                openApp('Camera', content);
+
+                requestAnimationFrame(() => {
+                    const fileInput = document.getElementById('fileInput');
+                    const dropArea = document.getElementById('uploadDrop');
+                    const preview = document.getElementById('uploadPreview');
+                    const previewImg = document.getElementById('uploadPreviewImg');
+                    const fileName = document.getElementById('uploadFileName');
+                    const uploadBtn = document.getElementById('uploadBtn');
+                    const cancelBtn = document.getElementById('cancelUploadBtn');
+                    const progressWrap = document.getElementById('uploadProgressWrap');
+
+                    if (!fileInput || !dropArea) return;
+
+                    dropArea.addEventListener('click', () => fileInput.click());
+
+                    fileInput.addEventListener('change', function() {
+                        if (this.files && this.files[0]) {
+                            const file = this.files[0];
+                            preview.style.display = 'block';
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                previewImg.src = e.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                            fileName.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+                            uploadBtn.disabled = false;
+                            dropArea.style.borderColor = '#007aff';
+                            uploadBtn._file = file;
+                        } else {
+                            resetUploadUI();
+                        }
+                    });
+
+                    uploadBtn.addEventListener('click', function() {
+                        if (this._file) {
+                            uploadPhoto(this._file);
+                        }
+                    });
+
+                    cancelBtn.addEventListener('click', function() {
+                        resetUploadUI();
+                        if (progressWrap) progressWrap.style.display = 'none';
+                        if (uploadBtn) uploadBtn.disabled = true;
+                        if (dropArea) dropArea.style.borderColor = '#ccc';
+                        showNotification('Upload cancelled.', 'info');
+                    });
+
+                    dropArea.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        this.style.borderColor = '#007aff';
+                        this.style.background = 'rgba(0,122,255,0.05)';
+                    });
+                    dropArea.addEventListener('dragleave', function(e) {
+                        e.preventDefault();
+                        this.style.borderColor = '#ccc';
+                        this.style.background = 'transparent';
+                    });
+                    dropArea.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.style.borderColor = '#ccc';
+                        this.style.background = 'transparent';
+                        const files = e.dataTransfer.files;
+                        if (files && files[0]) {
+                            fileInput.files = files;
+                            fileInput.dispatchEvent(new Event('change'));
+                        }
+                    });
+                });
+            }
+
+            // ============================================================
+            // 18. LOGIN
+            // ============================================================
+            async function handleLogin(e) {
+                e.preventDefault();
+                if (STATE.isLoginPending) return;
+                const username = DOM.usernameInput.value.trim();
+                const password = DOM.passwordInput.value;
+                if (!username || !password) {
+                    showNotification('⚠ Username and password required.', 'error');
+                    return;
+                }
+                if (!isOnline()) {
+                    showNotification('⚠ No internet connection.', 'error');
+                    return;
+                }
+
+                STATE.isLoginPending = true;
+                DOM.loginBtn.disabled = true;
+                DOM.btnText.textContent = 'Signing in…';
+                DOM.loginSpinner.style.display = 'inline-block';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    formData.append('password', password);
+                    const data = await apiRequest(CONFIG.LOGIN_API, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (data.success && data.user) {
+                        STATE.isLoggedIn = true;
+                        STATE.sessionUser = data.user;
+                        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data.user));
+                        showNotification('✅ Welcome, ' + data.user.username + '!', 'success');
+                        updateProfileUI(data.user);
+                        hideLoginPanel();
+                        toggleLogoutButton(true);
+                        // Load photos & open gallery
+                        await fetchPhotos();
+                        // Auto-open gallery after login
+                        setTimeout(function() {
+                            openGalleryApp();
+                        }, 300);
+                    } else {
+                        showNotification('⚠ ' + (data.message || 'Login failed.'), 'error');
+                    }
+                } catch (error) {
+                    let msg = '⚠ Connection error: ' + error.message;
+                    if (error.message === 'No internet connection') msg = '⚠ No internet connection.';
+                    else if (error.message === 'Request timed out') msg = '⚠ Request timed out.';
+                    showNotification(msg, 'error');
+                    console.error('[Login]', error);
+                } finally {
+                    STATE.isLoginPending = false;
+                    DOM.loginBtn.disabled = false;
+                    DOM.btnText.textContent = 'Login';
+                    DOM.loginSpinner.style.display = 'none';
+                }
+            }
+
+            // ============================================================
+            // 19. SESSION & LOGOUT
+            // ============================================================
+            function loadCurrentUser() {
+                try {
+                    const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                    if (!stored) return null;
+                    const user = JSON.parse(stored);
+                    if (user && user.id) {
+                        STATE.sessionUser = user;
+                        STATE.isLoggedIn = true;
+                        return user;
+                    }
+                    return null;
+                } catch (_) { return null; }
+            }
+
+            function updateProfileUI(user) {
+                if (!user) return;
+                if (DOM.profileIcon) {
+                    if (user.profile_image) {
+                        DOM.profileIcon.style.backgroundImage = 'url(' + user.profile_image + ')';
+                        DOM.profileIcon.style.backgroundSize = 'cover';
+                        DOM.profileIcon.style.backgroundPosition = 'center';
+                        DOM.profileIcon.textContent = '';
+                    } else {
+                        DOM.profileIcon.style.backgroundImage = '';
+                        DOM.profileIcon.textContent = user.username.charAt(0).toUpperCase();
+                    }
+                }
+                if (DOM.profileName) DOM.profileName.textContent = user.username;
+            }
+
+            function toggleLogoutButton(show) {
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.classList.toggle('show', show);
+                }
+            }
+
+            function checkSession() {
+                const user = loadCurrentUser();
+                if (user) {
+                    updateProfileUI(user);
+                    hideLoginPanel();
+                    toggleLogoutButton(true);
+                    // Load photos in background and auto-open gallery
+                    setTimeout(async function() {
+                        await fetchPhotos();
+                        // Auto-open gallery after session restore
+                        if (!STATE.galleryOpened) {
+                            setTimeout(function() {
+                                openGalleryApp();
+                            }, 200);
+                        }
+                    }, 300);
+                    return true;
+                } else {
+                    toggleLogoutButton(false);
+                    return false;
+                }
+            }
+
+            function resetUIAfterLogout() {
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+                STATE.isLoggedIn = false;
+                STATE.sessionUser = null;
+                STATE.photos = [];
+                STATE.galleryOpened = false;
+                if (DOM.profileIcon) {
+                    DOM.profileIcon.style.backgroundImage = '';
+                    DOM.profileIcon.textContent = '👤';
+                }
+                if (DOM.profileName) DOM.profileName.textContent = 'Profile';
+                DOM.usernameInput.value = '';
+                DOM.passwordInput.value = '';
+                toggleLogoutButton(false);
+                closeApp();
+                closeLightbox();
+            }
+
+            async function logout() {
+                if (STATE.isLoggingOut) return;
+                STATE.isLoggingOut = true;
+                showNotification('⏳ Logging out…', 'info');
+
+                try {
+                    const data = await apiRequest(CONFIG.LOGOUT_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    if (data && data.success === true) {
+                        showNotification('✅ Logged out.', 'success');
+                    } else {
+                        showNotification('⚠ ' + (data.message || 'Logout response error.'), 'error');
+                    }
+                } catch (error) {
+                    let msg = '⚠ Logout failed: ' + error.message;
+                    if (error.message === 'No internet connection') msg = '⚠ Offline – logged out locally.';
+                    showNotification(msg, 'error');
+                    console.error('[Logout API]', error);
+                } finally {
+                    resetUIAfterLogout();
+                    STATE.isLoggingOut = false;
+                    showLoginPanel();
+                }
+            }
+
+            // ============================================================
+            // 20. NETWORK STATUS
+            // ============================================================
+            function onOnlineStatus() {
+                if (isOnline()) {
+                    showNotification('📶 Back online.', 'success');
+                    if (STATE.isLoggedIn) fetchPhotos();
+                } else {
+                    showNotification('📡 You are offline.', 'error');
+                }
+            }
+
+            // ============================================================
+            // 21. INITIALIZATION
+            // ============================================================
+            function init() {
+                // Clock
+                updateClock();
+                setInterval(updateClock, CONFIG.CLOCK_INTERVAL);
+
+                // Wallpaper
+                rotateWallpaper();
+                setInterval(rotateWallpaper, CONFIG.WALLPAPER_INTERVAL);
+
+                // Session
+                const loggedIn = checkSession();
+
+                // Login drawer events
+                document.addEventListener('touchstart', onTouchStart, { passive: true });
+                document.addEventListener('touchmove', onTouchMove, { passive: true });
+                document.addEventListener('wheel', onWheel, { passive: true });
+                document.addEventListener('click', onDocumentClick);
+
+                if (DOM.scrollIndicator) {
+                    DOM.scrollIndicator.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showLoginPanel();
+                    });
+                }
+                if (DOM.loginPanel) {
+                    DOM.loginPanel.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                    const handle = DOM.loginPanel.querySelector('.handle');
+                    if (handle) handle.addEventListener('click', hideLoginPanel);
+                }
+
+                // Input focus → keyboard
+                DOM.usernameInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showKeyboard(this);
+                });
+                DOM.passwordInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showKeyboard(this);
+                });
+
+                // Keyboard keys
+                DOM.allKeys.forEach(key => key.addEventListener('click', onKeyClick));
+                DOM.keyboard.addEventListener('click', function(e) { e.stopPropagation(); });
+
+                // Physical keyboard
+                document.addEventListener('keydown', onPhysicalKeyDown);
+
+                // Login form
+                DOM.loginForm.addEventListener('submit', handleLogin);
+
+                // Signup button → go to dashboard (or signup page)
+                if (DOM.signupBtn) {
+                    DOM.signupBtn.addEventListener('click', function() {
+                        // If you have a signup page, navigate there.
+                        // For now, show a message and go to dashboard.
+                        showNotification('🔑 Create account at dashboard.', 'info');
+                        setTimeout(function() {
+                            goToDashboard();
+                        }, 600);
+                    });
+                }
+
+                // Network
+                window.addEventListener('online', onOnlineStatus);
+                window.addEventListener('offline', onOnlineStatus);
+
+                // Logout
+                const logoutEls = document.querySelectorAll('#logoutBtn, .logout-btn, [data-action="logout"]');
+                logoutEls.forEach(el => el.addEventListener('click', function(e) { e.preventDefault();
+                    logout(); }));
+                if (DOM.logoutApp) {
+                    DOM.logoutApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        logout();
+                    });
+                }
+
+                // Gallery app
+                if (DOM.galleryApp) {
+                    DOM.galleryApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (!STATE.isLoggedIn) {
+                            showNotification('⚠ Please login first.', 'error');
+                            showLoginPanel();
+                            return;
+                        }
+                        openGalleryApp();
+                    });
+                }
+
+                // Camera app
+                if (DOM.cameraApp) {
+                    DOM.cameraApp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (!STATE.isLoggedIn) {
+                            showNotification('⚠ Please login first.', 'error');
+                            showLoginPanel();
+                            return;
+                        }
+                        openCameraApp();
+                    });
+                }
+
+                // ===== CLOSE BUTTON → GO TO DASHBOARD =====
+                if (DOM.appCloseBtn) {
+                    DOM.appCloseBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        // Close the app overlay and navigate to dashboard
+                        closeApp();
+                        goToDashboard();
+                    });
+                }
+
+                if (DOM.appOverlay) {
+                    DOM.appOverlay.addEventListener('click', function(e) {
+                        if (e.target === DOM.appOverlay) {
+                            // Clicking the backdrop also goes to dashboard
+                            closeApp();
+                            goToDashboard();
+                        }
+                    });
+                }
+
+                // Escape key → close app & go to dashboard
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        if (DOM.appOverlay.classList.contains('show')) {
+                            closeApp();
+                            goToDashboard();
+                        }
+                        closeLightbox();
+                    }
+                });
+
+                // Lightbox
+                if (DOM.lbClose) DOM.lbClose.addEventListener('click', closeLightbox);
+                if (DOM.lbPrev) DOM.lbPrev.addEventListener('click', prevPhoto);
+                if (DOM.lbNext) DOM.lbNext.addEventListener('click', nextPhoto);
+                document.addEventListener('keydown', function(e) {
+                    if (DOM.lightbox.classList.contains('show')) {
+                        if (e.key === 'ArrowLeft') prevPhoto();
+                        else if (e.key === 'ArrowRight') nextPhoto();
+                        else if (e.key === 'Escape') closeLightbox();
+                    }
+                });
+                DOM.lightbox.addEventListener('click', function(e) {
+                    if (e.target === DOM.lightbox) closeLightbox();
+                });
+
+                // If already logged in, auto-open gallery after a short delay
+                if (loggedIn && !STATE.galleryOpened) {
+                    setTimeout(function() {
+                        openGalleryApp();
+                    }, CONFIG.GALLERY_AUTO_OPEN_DELAY);
+                }
+
+                // Expose public API
+                window.vphone = window.vphone || {};
+                window.vphone.logout = logout;
+                window.vphone.showNotification = showNotification;
+                window.vphone.getUser = function() { return STATE.sessionUser; };
+                window.vphone.isLoggedIn = function() { return STATE.isLoggedIn; };
+                window.vphone.refreshGallery = fetchPhotos;
+                window.vphone.goToDashboard = goToDashboard;
+
+                console.log('[Virtual Phone] Initialized. API endpoint: ' + CONFIG.API_BASE);
+                if (!loggedIn) {
+                    console.log('[Virtual Phone] Not logged in. Use the login panel.');
+                } else {
+                    console.log('[Virtual Phone] Logged in as: ' + (STATE.sessionUser ? STATE.sessionUser.username :
+                        'unknown'));
+                    console.log('[Virtual Phone] Gallery will auto-open in ' + CONFIG.GALLERY_AUTO_OPEN_DELAY +
+                        'ms');
+                }
+            }
+
+            // ============================================================
+            // 22. START
+            // ============================================================
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

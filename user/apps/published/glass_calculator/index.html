@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#cfe3ef">
+  <title>Glass Calculator</title>
+  <link rel="stylesheet" href="/virtual-phone/user/settings/theme.css">
+  <script defer src="/virtual-phone/user/settings/theme.js"></script>
+  <style>
+    :root {
+      --blue: #0789dc;
+      --blue-dark: #0872bd;
+      --ink: #17354b;
+      --muted: #6b879a;
+      --glass: rgba(255,255,255,.46);
+      --glass-border: rgba(255,255,255,.72);
+      --shadow: 0 24px 60px rgba(27,82,119,.15), inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      padding: 32px 18px; overflow-x: hidden; color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(7,137,220,.20) 0 245px, transparent 246px),
+        radial-gradient(circle at 15% 12%, rgba(255,255,255,.72), transparent 32%),
+        linear-gradient(135deg, #dcebf3, #c4dce9 55%, #e7f1f6);
+    }
+    .ambient {
+      position: fixed; width: 420px; height: 420px; border-radius: 50%;
+      background: linear-gradient(145deg, rgba(0,133,218,.92), rgba(0,83,150,.92));
+      filter: blur(.2px); left: 50%; top: 50%; transform: translate(-50%,-47%);
+      z-index: -1; box-shadow: 0 35px 90px rgba(0,87,148,.22);
+    }
+    .page { width: min(100%, 940px); }
+    .heading { text-align: center; margin: 0 0 24px; color: #28536e; }
+    .heading h1 { font-size: clamp(1.35rem, 3vw, 1.9rem); margin: 0 0 7px; letter-spacing: -.04em; }
+    .heading p { margin: 0; color: #52758b; font-size: .92rem; }
+    .calculators {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px; align-items: stretch;
+    }
+    .calculator {
+      min-width: 0; padding: 22px 19px 20px; border-radius: 30px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      position: relative; overflow: hidden;
+    }
+    .calculator::before {
+      content: ""; position: absolute; inset: 0 0 auto; height: 42%;
+      background: linear-gradient(145deg, rgba(255,255,255,.42), transparent);
+      pointer-events: none;
+    }
+    .calculator.dark {
+      color: #f2f8fc; background: rgba(10,22,33,.83);
+      border-color: rgba(255,255,255,.14);
+      box-shadow: 0 28px 65px rgba(0,23,42,.30), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .calculator > * { position: relative; }
+    .calc-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .calc-name { font-size: .77rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; opacity: .78; }
+    .mode { border: 1px solid rgba(110,150,176,.28); border-radius: 99px; padding: 6px 10px; font-size: .72rem; color: inherit; background: rgba(255,255,255,.18); }
+    .screen {
+      min-height: 124px; display: flex; flex-direction: column; justify-content: flex-end;
+      align-items: flex-end; text-align: right; padding: 14px 5px 18px; overflow: hidden;
+    }
+    .expression { width: 100%; min-height: 25px; color: var(--muted); font-size: clamp(.85rem, 2vw, 1.05rem); overflow-wrap: anywhere; }
+    .dark .expression { color: #9fb5c5; }
+    .result { width: 100%; font-size: clamp(2rem, 4vw, 2.65rem); line-height: 1.15; font-weight: 700; letter-spacing: -.055em; overflow-wrap: anywhere; }
+    .utility { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 11px; }
+    .keys { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 9px; }
+    button {
+      border: 1px solid rgba(255,255,255,.58); min-width: 0; min-height: 52px;
+      border-radius: 15px; cursor: pointer; color: #52758c;
+      background: rgba(255,255,255,.66);
+      box-shadow: 0 5px 12px rgba(42,93,125,.09), inset 0 1px 0 rgba(255,255,255,.85);
+      font: inherit; font-size: 1.12rem; transition: transform .12s ease, filter .12s ease, background .12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    button:active { transform: translateY(1px) scale(.98); }
+    button:focus-visible { outline: 3px solid rgba(0,137,220,.42); outline-offset: 2px; }
+    .utility button { min-height: 38px; font-size: .82rem; border-radius: 12px; }
+    .operator { color: #087fca; background: rgba(232,247,255,.83); }
+    .equals {
+      grid-column: 4; grid-row: 4 / span 2; color: white; background: linear-gradient(145deg, #1599eb, #0875c7);
+      border-color: rgba(0,112,190,.3); font-size: 1.35rem; box-shadow: 0 9px 18px rgba(0,116,194,.24);
+    }
+    .dark button { color: #edf6fc; background: rgba(255,255,255,.075); border-color: rgba(255,255,255,.06); box-shadow: 0 5px 12px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.04); }
+    .dark .operator { color: #65c7ff; background: rgba(0,125,195,.17); }
+    .dark .utility button { color: #d2e4f0; background: rgba(255,255,255,.065); }
+    .dark .equals { color: white; background: linear-gradient(145deg, #1599eb, #0875c7); }
+    .dark .mode { border-color: rgba(255,255,255,.15); }
+    .hint { text-align: center; color: #416b84; font-size: .8rem; margin: 20px 0 0; }
+    .dark .hint { color: #9fb5c5; }
+    @media (max-width: 680px) {
+      body { padding: 24px 14px; background: linear-gradient(145deg,#dcebf3,#c6dfec); }
+      .ambient { width: 310px; height: 310px; top: 52%; }
+      .calculators { grid-template-columns: 1fr; max-width: 420px; margin: auto; gap: 16px; }
+      .calculator { padding: 18px 16px; border-radius: 25px; }
+      .screen { min-height: 105px; }
+      button { min-height: 48px; }
+      .heading { margin-bottom: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <main class="page">
+    <header class="heading">
+      <h1>Glass Calculator</h1>
+      <p>Two beautiful calculators. One simple workspace.</p>
+    </header>
+
+    <section class="calculators" aria-label="Calculators">
+      <article class="calculator" data-calculator="light">
+        <div class="calc-top"><span class="calc-name">Classic</span><span class="mode">Standard</span></div>
+        <div class="screen" aria-live="polite">
+          <div class="expression">Ready</div><div class="result">0</div>
+        </div>
+        <div class="utility">
+          <button data-action="clear">AC</button><button data-action="sign">+/−</button>
+          <button data-action="percent">%</button><button data-action="backspace">⌫</button>
+        </div>
+        <div class="keys">
+          <button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button><button class="operator" data-value="÷">÷</button>
+          <button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button><button class="operator" data-value="×">×</button>
+          <button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button><button class="operator" data-value="−">−</button>
+          <button data-value="0">0</button><button data-value=".">.</button><button class="operator" data-value="+">+</button><button class="equals" data-action="equals">=</button>
+        </div>
+      </article>
+
+      <article class="calculator dark" data-calculator="dark">
+        <div class="calc-top"><span class="calc-name">Scientific</span><span class="mode">Advanced</span></div>
+        <div class="screen" aria-live="polite">
+          <div class="expression">Ready</div><div class="result">0</div>
+        </div>
+        <div class="utility">
+          <button data-action="clear">AC</button><button data-value="(">(</button>
+          <button data-value=")">)</button><button data-action="percent">%</button>
+        </div>
+        <div class="utility">
+          <button data-value="sin(">sin</button><button data-value="cos(">cos</button>
+          <button data-value="tan(">tan</button><button data-value="√(">√</button>
+        </div>
+        <div class="keys">
+          <button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button><button class="operator" data-value="÷">÷</button>
+          <button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button><button class="operator" data-value="×">×</button>
+          <button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button><button class="operator" data-value="−">−</button>
+          <button data-value="0">0</button><button data-value=".">.</button><button class="operator" data-value="+">+</button><button class="equals" data-action="equals">=</button>
+        </div>
+      </article>
+    </section>
+    <p class="hint">Tip: You can also use your keyboard — numbers, + − * /, Enter and Backspace.</p>
+  </main>
+
+  <script>
+    // A small expression parser: evaluates arithmetic and the supported scientific functions
+    // without using eval() or Function().
+    function tokenize(input) {
+      const s = input.replaceAll("×", "*").replaceAll("÷", "/").replaceAll("−", "-").replace(/\s+/g, "");
+      const tokens = []; let i = 0;
+      while (i < s.length) {
+        const rest = s.slice(i);
+        const number = rest.match(/^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i);
+        const name = rest.match(/^(sin|cos|tan|sqrt|√|pi|π)/i);
+        if (number) { tokens.push({type:"number", value:Number(number[0])}); i += number[0].length; }
+        else if (name) { tokens.push({type:"name", value:name[0].toLowerCase()}); i += name[0].length; }
+        else if ("+-*/%^()".includes(s[i])) { tokens.push({type:s[i], value:s[i]}); i++; }
+        else throw new Error("Invalid input");
+      }
+      return tokens;
+    }
+    function calculate(input) {
+      const t = tokenize(input); let p = 0;
+      const peek = () => t[p];
+      const take = () => t[p++];
+      function primary() {
+        const x = take();
+        if (!x) throw new Error("Incomplete expression");
+        if (x.type === "number") return x.value;
+        if (x.type === "name") {
+          if (x.value === "pi" || x.value === "π") return Math.PI;
+          if (x.value === "√" || x.value === "sqrt") {
+            if (take()?.type !== "(") throw new Error("Use √(number)");
+            const v = expression();
+            if (take()?.type !== ")") throw new Error("Missing )");
+            if (v < 0) throw new Error("Invalid square root");
+            return Math.sqrt(v);
+          }
+          if (take()?.type !== "(") throw new Error("Use function(number)");
+          const v = expression();
+          if (take()?.type !== ")") throw new Error("Missing )");
+          const radians = v * Math.PI / 180;
+          return x.value === "sin" ? Math.sin(radians) : x.value === "cos" ? Math.cos(radians) : Math.tan(radians);
+        }
+        if (x.type === "(") {
+          const v = expression();
+          if (take()?.type !== ")") throw new Error("Missing )");
+          return v;
+        }
+        if (x.type === "-") return -primary();
+        if (x.type === "+") return primary();
+        throw new Error("Invalid expression");
+      }
+      function power() {
+        let v = primary();
+        if (peek()?.type === "^") { take(); v = Math.pow(v, power()); }
+        return v;
+      }
+      function term() {
+        let v = power();
+        while (["*","/","%"].includes(peek()?.type)) {
+          const op = take().type, n = power();
+          if ((op === "/" || op === "%") && n === 0) throw new Error("Cannot divide by zero");
+          v = op === "*" ? v*n : op === "/" ? v/n : v%n;
+        }
+        return v;
+      }
+      function expression() {
+        let v = term();
+        while (["+","-"].includes(peek()?.type)) {
+          const op = take().type, n = term(); v = op === "+" ? v+n : v-n;
+        }
+        return v;
+      }
+      if (!t.length) return 0;
+      const answer = expression();
+      if (p !== t.length || !Number.isFinite(answer)) throw new Error("Invalid calculation");
+      return answer;
+    }
+
+    document.querySelectorAll(".calculator").forEach(calc => {
+      let expression = "";
+      const expressionEl = calc.querySelector(".expression");
+      const resultEl = calc.querySelector(".result");
+      const update = (preview = false) => {
+        expressionEl.textContent = expression || "Ready";
+        if (!expression) { resultEl.textContent = "0"; return; }
+        if (preview) {
+          try { resultEl.textContent = format(calculate(expression)); }
+          catch { resultEl.textContent = "…"; }
+        }
+      };
+      const format = n => Number(n.toPrecision(11)).toLocaleString("en-US", {maximumFractionDigits: 10});
+      const append = value => {
+        if (resultEl.textContent !== "0" && expression === "") expression = "";
+        expression += value; update(true);
+      };
+      const clear = () => { expression = ""; update(); };
+      const equals = () => {
+        if (!expression) return;
+        try { const answer = calculate(expression); expression = String(Number(answer.toPrecision(12))); expressionEl.textContent = "Answer"; resultEl.textContent = format(answer); }
+        catch (e) { expressionEl.textContent = e.message; resultEl.textContent = "Error"; expression = ""; }
+      };
+      calc.addEventListener("click", e => {
+        const button = e.target.closest("button"); if (!button) return;
+        const action = button.dataset.action, value = button.dataset.value;
+        if (action === "clear") clear();
+        else if (action === "backspace") { expression = expression.slice(0,-1); update(true); }
+        else if (action === "equals") equals();
+        else if (action === "sign") {
+          if (expression) { expression = expression.startsWith("-") ? expression.slice(1) : "-" + expression; update(true); }
+        } else if (action === "percent") {
+          if (expression) { try { expression = String(calculate(expression)/100); update(true); } catch { } }
+        } else if (value) append(value);
+      });
+      calc.addEventListener("keydown", e => handleKeyboard(e, append, equals, clear));
+    });
+
+    function handleKeyboard(e, append, equals, clear) {
+      if (/^[0-9.]$/.test(e.key)) { append(e.key); e.preventDefault(); }
+      else if (["+", "-", "*", "/", "(", ")", "^", "%"].includes(e.key)) { append(e.key); e.preventDefault(); }
+      else if (e.key === "Enter" || e.key === "=") { equals(); e.preventDefault(); }
+      else if (e.key === "Backspace") { append(""); e.preventDefault(); }
+      else if (e.key === "Escape") { clear(); e.preventDefault(); }
+    }
+
+    // Keyboard input is sent to both displays, so either calculator stays in sync.
+    document.addEventListener("keydown", e => {
+      if (e.target.matches("input, textarea")) return;
+      const calculators = [...document.querySelectorAll(".calculator")];
+      calculators.forEach(calc => {
+        const buttons = calc.querySelectorAll("button");
+        if (/^[0-9.]$/.test(e.key)) buttons.forEach(b => { if (b.dataset.value === e.key) b.click(); });
+        else {
+          const map = {"+":"+","-":"−","*":"×","/":"÷","%":"%","^":"^","(":"(",")":")"};
+          if (map[e.key]) buttons.forEach(b => { if (b.dataset.value === map[e.key]) b.click(); });
+          else if (e.key === "Enter" || e.key === "=") calc.querySelector('[data-action="equals"]').click();
+          else if (e.key === "Escape") calc.querySelector('[data-action="clear"]').click();
+          else if (e.key === "Backspace") calc.querySelector('[data-action="backspace"]').click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
